@@ -25,6 +25,7 @@ import torch.distributed as dist
 from gsplat import quat_scale_to_covar_preci
 from gsplat.relocation import compute_relocation
 import random
+import math
 
 lr_scale_fns = {
     "linear": lambda x: x,
@@ -1450,6 +1451,11 @@ class GaussianModel:
         torch.cuda.empty_cache()
 
     def _update_params(self, idxs, ratio):
+        N_MAX = 51
+        BINOMS = torch.zeros((N_MAX, N_MAX)).float().cuda()
+        for n in range(N_MAX):
+            for k in range(n + 1):
+                BINOMS[n, k] = math.comb(n, k)
         new_opacity, new_scaling = compute_relocation(
             opacities=self.get_opacity[idxs, 0],
             scales=self.get_scaling[idxs],
