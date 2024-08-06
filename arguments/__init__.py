@@ -65,8 +65,8 @@ class AuxiliaryParams(ParamGroup):
     def __init__(self, parser, sentinel=False):
         self.debug_from = -1
         self.detect_anomaly = False
-        self.test_iterations = [7_000, 30_000]
-        self.save_iterations = [7_000, 30_000]
+        self.test_iterations = [7_000,20000, 30_000, 50_000, 70_000, 100_000, 120_000, 140_000, 160_000, 180_000, 200_000, 250_000, 300_000, 350_000, 400_000, 450_000, 500_000, 550_000, 600_000, 650_000, 700_000, 750_000, 800_000]
+        self.save_iterations = [7_000, 20000, 30_000, 50_000, 70_000, 100_000, 120_000, 140_000, 160_000, 180_000, 200_000,250_000, 300_000, 350_000, 400_000, 450_000, 500_000, 550_000, 600_000, 650_000, 700_000, 750_000, 800_000]
         self.quiet = False
         self.checkpoint_iterations = []
         self.start_checkpoint = ""
