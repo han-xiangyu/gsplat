@@ -13,6 +13,7 @@ import torch
 import torch.distributed as dist
 from scene import Scene, SceneDataset
 import os
+import imageio
 from tqdm import tqdm
 from os import makedirs
 from gaussian_renderer import (
@@ -37,6 +38,7 @@ from gaussian_renderer.workload_division import (
     start_strategy_final,
     DivisionStrategyHistoryFinal,
 )
+from torchvision.utils import make_grid,save_image
 from arguments import (
     AuxiliaryParams,
     ModelParams,
@@ -58,7 +60,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     makedirs(render_path, exist_ok=True)
     makedirs(gts_path, exist_ok=True)
 
-    dataset = SceneDataset(views)
+    dataset = SceneDataset(views,shuffle=False)
 
     set_cur_iter(iteration)
     generated_cnt = 0
@@ -72,6 +74,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         desc="Rendering progress",
         disable=(utils.LOCAL_RANK != 0),
     )
+    vis_img_list= []
     for idx in range(1, num_cameras + 1, args.bsz):
         progress_bar.update(args.bsz)
 
@@ -93,7 +96,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             mode="test",
         )
         batched_image, _ = render_final(batched_screenspace_pkg, batched_strategies)
-
         for camera_id, (image, gt_camera) in enumerate(
             zip(batched_image, batched_cameras)
         ):
@@ -128,19 +130,32 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             gt_image = torch.clamp(gt_camera.original_image / 255.0, 0.0, 1.0)
 
             if utils.GLOBAL_RANK == 0:
-                torchvision.utils.save_image(
-                    image,
+                grid = [image, gt_image]
+                grid = make_grid(grid, nrow=2)
+                save_image(
+                    grid,
                     os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png"),
                 )
-                torchvision.utils.save_image(
-                    gt_image,
-                    os.path.join(gts_path, "{0:05d}".format(actual_idx) + ".png"),
-                )
+                vis_img_list.append(grid.cpu())
+                # torchvision.utils.save_image(
+                #     image,
+                #     os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png"),
+                # )
+                # torchvision.utils.save_image(
+                #     gt_image,
+                #     os.path.join(gts_path, "{0:05d}".format(actual_idx) + ".png"),
+                # )
 
             gt_camera.original_image = None
-
         if generated_cnt == args.generate_num:
             break
+    vis_img_list = torch.stack(vis_img_list).permute(0, 2, 3, 1)
+    print("vis_img_list shape: ", vis_img_list.shape)
+    vis_img_list = (vis_img_list * 255).clamp(0, 255).to(torch.uint8)
+    imageio.mimsave(os.path.join(model_path, name, "ours_{}".format(iteration), "renders.mp4"), vis_img_list.cpu().numpy())
+    print("Video saved at: ", os.path.join(model_path, name, "ours_{}".format(iteration), "renders.mp4"))
+
+        
 
 
 def render_sets(
@@ -157,6 +172,9 @@ def render_sets(
 
         bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+
+        # for cam in scene.getTrainCameras():
+        #     print("Image: ",cam.image_name)
 
         if not skip_train:
             render_set(
