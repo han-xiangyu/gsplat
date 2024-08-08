@@ -129,6 +129,8 @@ class Scene:
 
         # Train on original resolution, no downsampling in our implementation.
         utils.print_rank_0("Decoding Training Cameras")
+        self.train_cameras = None
+        self.test_cameras = None
         (train_cameras,
          test_cameras,
          self.whether_train_cameras_locally_loaded,
