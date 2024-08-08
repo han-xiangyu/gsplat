@@ -255,7 +255,7 @@ class Scene:
 
 
 class SceneDataset:
-    def __init__(self, cameras):
+    def __init__(self, cameras,shuffle=True):
         self.cameras = cameras
         self.camera_size = len(self.cameras)
         self.sample_camera_idx = []
@@ -276,6 +276,7 @@ class SceneDataset:
         self.last_time_point = None
         self.epoch_time = []
         self.epoch_n_sample = []
+        self.shuffle = shuffle
 
     @property
     def cur_epoch(self):
@@ -293,7 +294,8 @@ class SceneDataset:
                 self.cur_epoch_cameras = self.sample_camera_idx.copy()
             else:
                 self.cur_epoch_cameras = list(range(self.camera_size))
-            random.shuffle(self.cur_epoch_cameras)
+            if self.shuffle:
+                random.shuffle(self.cur_epoch_cameras)
 
         self.cur_iteration += 1
 
