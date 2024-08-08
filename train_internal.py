@@ -386,8 +386,7 @@ def training_report(
             {
                 "name": "test",
                 "cameras": scene.getTestCameras(),
-                "num_cameras": len(scene.getTestCameras()),
-            },
+                "num_cameras": len(scene.getTestCameras()) if scene.getTestCameras() else 0},
             {
                 "name": "train",
                 "cameras": scene.getTrainCameras(),
