@@ -19,6 +19,7 @@ from scene.gaussian_model import GaussianModel
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
 import utils.general_utils as utils
 from scene.smart_placement import aerial_image_placement_k_means
+import torch
 
 class Scene:
 
@@ -297,7 +298,9 @@ class SceneDataset:
             else:
                 self.cur_epoch_cameras = list(range(self.camera_size))
             if self.shuffle:
-                random.shuffle(self.cur_epoch_cameras)
+                # random.shuffle(self.cur_epoch_cameras)
+                indices = torch.randperm(len(self.cur_epoch_cameras))
+                self.cur_epoch_cameras = [self.cur_epoch_cameras[i] for i in indices]
 
         self.cur_iteration += 1
 
