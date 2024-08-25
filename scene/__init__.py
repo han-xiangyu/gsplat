@@ -97,7 +97,10 @@ class Scene:
 
         utils.log_cpu_memory_usage("before decoding images")
 
-        self.cameras_extent = scene_info.nerf_normalization["radius"]
+        # The original approach considers the distribution of the cameras and scales the learning rate accordingly, so Gaussians will move faster if the cameras are 1,000 units apart than if it's only 1
+        # Since we have already aligned the colmap camera poses to the GT pose, the coordinate system is fixed, thus we no longer need to scale the learning rate based on the camera distribution.
+        # self.cameras_extent = scene_info.nerf_normalization["radius"]
+        self.cameras_extent = 1.0
 
         # Set image size to global variable
         orig_w, orig_h = (
