@@ -104,10 +104,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
                 continue
             if generated_cnt == args.generate_num:
                 break
-            if os.path.exists(
-                os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png")
-            ):
-                continue
             if args.l != -1 and args.r != -1:
                 if actual_idx < args.l or actual_idx >= args.r:
                     continue
@@ -132,10 +128,13 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             if utils.GLOBAL_RANK == 0:
                 grid = [image, gt_image]
                 grid = make_grid(grid, nrow=2)
-                save_image(
-                    grid,
-                    os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png"),
-                )
+                if not os.path.exists(
+                os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png")
+                ):
+                    save_image(
+                        grid,
+                        os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png"),
+                    )
                 vis_img_list.append(grid.cpu())
                 # torchvision.utils.save_image(
                 #     image,
