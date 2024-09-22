@@ -138,6 +138,11 @@ class OptimizationParams(ParamGroup):
         self.lr_scale_mode = "sqrt"  # can be "linear", "sqrt", or "accumu"
         self.opacity_reg = 0.001
         self.scale_reg = 0.001
+
+        # For color gaussian
+        self.embedding_lr = 0.01
+        self.semantic_lr = 0.001
+        self.rgbhead_lr= 0.01
         super().__init__(parser, "Optimization Parameters")
 
 
