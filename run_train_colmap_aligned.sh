@@ -1,10 +1,10 @@
 #!/bin/bash
-LOC=loc0_2
+# LOC=loc0_2
 # LOC=loc0_4
 # LOC=loc1975_1
 # LOC=loc1200_2
 # LOC=loc1200_1
-# LOC=loc2450_1
+LOC=loc2450_1
 # LOC=loc2450_100
 
 GPU_NUM=8
