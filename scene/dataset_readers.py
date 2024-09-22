@@ -552,7 +552,7 @@ def readCityInfo(
     return scene_info
 
 
-def readIthacaSceneInfo(root_path, images, eval, llffhold=8,time_duration=[-0.5,0.5]):
+def readIthacaSceneInfo(root_path, images, eval, llffhold=8,time_duration=[-0.5,0.5],init_type=None):
     reading_dir = "images" if images == None else images 
     cam_infos= []
     points = []
@@ -777,24 +777,44 @@ def readIthacaSceneInfo(root_path, images, eval, llffhold=8,time_duration=[-0.5,
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
-    
-    ply_path = os.path.join(path, "lidar_pc", "points3D.ply")
-    os.makedirs(os.path.join(path, "lidar_pc"), exist_ok=True)
-
-    if utils.GLOBAL_RANK == 0:
-        rgbs = np.random.random((pointcloud.shape[0], 3))
-        storePly(ply_path, pointcloud, rgbs)
+    if init_type == "random_cube" or init_type == "random_plane":
+        if init_type == "random_cube":
+            ply_path = os.path.join(path, "random_cube.ply")
+        elif init_type == "random_plane":
+            ply_path = os.path.join(path, "random_plane.ply")
+        print(f"Generating random point cloud ({num_pts})...")
+        if init_type == "random_cube":
+            xyz = np.random.random((num_pts, 3)) * nerf_normalization["radius"] * 3 * 2 - (
+                nerf_normalization["radius"] * 3
+            )
+        elif init_type == "random_plane":
+            cam_plane = utils.fit_plane(getCamCenter(train_cam_infos))
+            nor_vec = np.hstack([cam_plane[0], cam_plane[1], -1])
+            xy = (np.random.random((num_pts, 2)) * 2 - 1) * nerf_normalization["radius"]
+            z = xy[:, 0] * cam_plane[0] + xy[:, 1] * cam_plane[1] + cam_plane[2]
+            h = -0.7
+            xyz = np.hstack([xy,z[:,np.newaxis]]) + h * nor_vec
+        num_pts = xyz.shape[0]
+        shs = np.random.random((num_pts, 3)) / 255.0
+        storePly(ply_path, xyz, SH2RGB(shs) * 255)
         if utils.DEFAULT_GROUP.size() > 1:
             torch.distributed.barrier()
+        try:
+            pcd = fetchPly(ply_path)
+        except:
+            pcd = None
     else:
-        if utils.DEFAULT_GROUP.size() > 1:
-            torch.distributed.barrier()
-    try:
-        pcd = fetchPly(ply_path)
-    except:
-        pcd = None
-        
-    pcd = BasicPointCloud(pointcloud, colors=np.zeros([pointcloud.shape[0],3]), normals=None)
+        ply_path = os.path.join(path, "lidar_pc", "points3D.ply")
+        os.makedirs(os.path.join(path, "lidar_pc"), exist_ok=True)
+        if utils.GLOBAL_RANK == 0:
+            rgbs = np.random.random((pointcloud.shape[0], 3))
+            storePly(ply_path, pointcloud, rgbs)
+            if utils.DEFAULT_GROUP.size() > 1:
+                torch.distributed.barrier()
+        else:
+            if utils.DEFAULT_GROUP.size() > 1:
+                torch.distributed.barrier()
+        pcd = BasicPointCloud(pointcloud, colors=np.zeros([pointcloud.shape[0],3]), normals=None)
 
 
     
