@@ -48,7 +48,7 @@ class Scene:
         utils.log_cpu_memory_usage("before loading images meta data")
         if "Ithaca" in args.source_path:
             scene_info = sceneLoadTypeCallbacks["Ithaca"](
-                args.source_path, args.images, args.eval, args.llffhold
+                args.source_path, args.images, args.eval, args.llffhold, num_pts=args.init_num_pts,
             )
         elif os.path.exists(
             os.path.join(args.source_path, "sparse")

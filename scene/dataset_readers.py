@@ -552,7 +552,7 @@ def readCityInfo(
     return scene_info
 
 
-def readIthacaSceneInfo(root_path, images, eval, llffhold=8,time_duration=[-0.5,0.5],init_type=None):
+def readIthacaSceneInfo(root_path, images, eval, llffhold=8,time_duration=[-0.5,0.5],init_type=None,num_pts=1000000):
     reading_dir = "images" if images == None else images 
     cam_infos= []
     points = []
@@ -754,7 +754,7 @@ def readIthacaSceneInfo(root_path, images, eval, llffhold=8,time_duration=[-0.5,
     # pointcloud = (np.pad(pointcloud, ((0, 0), (0, 1)), constant_values=1) @ transform.T)[:, :3]
 
     # num_pts = pointcloud.shape[0] // 20
-    num_pts = 1000000 
+    # num_pts = 1000000
     pcd_path = os.path.join(root_path, f"points_total.npy")
     np.save(pcd_path, pointcloud)
     print("Saved total pointcloud to ", pcd_path)
