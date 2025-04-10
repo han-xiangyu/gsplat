@@ -1,0 +1,6 @@
+# Ignore compiled binaries and temp build files
+*.so
+*.egg-info/
+build/
+submodules/simple-knn/build/
+submodules/simple-knn/*.egg-info/
