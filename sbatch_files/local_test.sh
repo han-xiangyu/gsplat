@@ -1,3 +1,5 @@
+# local test script
+
 LOC=loc2450_1
 
 GPU_NUM=1
