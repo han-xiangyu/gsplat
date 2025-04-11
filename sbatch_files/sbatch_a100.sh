@@ -2,9 +2,9 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:8
-#SBATCH --time=48:00:00
+#SBATCH --cpus-per-task=20
+#SBATCH --gres=gpu:a100:4
+#SBATCH --time=12:00:00
 #SBATCH --mem=64GB 
 #SBATCH --job-name=CityGS
 #SBATCH --output=output_%j.log
