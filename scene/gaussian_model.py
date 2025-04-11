@@ -1460,7 +1460,7 @@ class GaussianModel:
             opacities=self.get_opacity[idxs, 0],
             scales=self.get_scaling[idxs],
             ratios=ratio,
-            binoms=BINOMS,
+            # binoms=BINOMS,
         )
 
         new_opacity = torch.clamp(
