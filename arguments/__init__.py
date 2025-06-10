@@ -138,6 +138,7 @@ class OptimizationParams(ParamGroup):
         self.lr_scale_mode = "sqrt"  # can be "linear", "sqrt", or "accumu"
         self.opacity_reg = 0.001
         self.scale_reg = 0.001
+        self.project_name = "default_citygs_project"
         self.experiment_name = "default_citygs_experiment"
 
         # For color gaussian
