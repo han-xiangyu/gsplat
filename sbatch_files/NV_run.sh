@@ -1,7 +1,7 @@
 # NV cluster script
 
 # source /home/ymingli/miniconda3/bin/activate
-eval "$(/home/ymingli/miniconda3/bin/conda shell.bash hook)"
+source /lustre/fs12/portfolios/nvr/users/ymingli/miniconda3/etc/profile.d/conda.sh
 conda activate citygs
 
 # Force to shield site-packages
