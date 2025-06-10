@@ -400,11 +400,11 @@ def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
                 timers.stop("optimizer_step")
                 utils.check_initial_gpu_memory_usage("after optimizer step")
 
-                # —— Pose refinement optimization ——
-                if opt_args.pose_refine:
-                    for optim in pose_optimizers:
-                        optim.step()
-                        optim.zero_grad(set_to_none=True)
+                # # —— Pose refinement optimization ——
+                # if opt_args.pose_refine:
+                #     for optim in pose_optimizers:
+                #         optim.step()
+                #         optim.zero_grad(set_to_none=True)
 
                 # Add noise to gaussians
                 if args.mcmc:
