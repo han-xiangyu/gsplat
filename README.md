@@ -123,8 +123,11 @@ Ensure you have Conda, GPU with compatible driver and cuda environment installed
 
 We provide a yml file for easy environment setup. However, you should choose the versions to match your local running environment. 
 ```
-conda env create --file environment.yml
-conda activate gaussian_splatting
+# conda env create --file environment.yml
+# conda activate gaussian_splatting
+conda create -n citygs python=3.9
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+ 
 ```
 
 NOTES: We kept additional dependencies minimal compared to the original 3DGS. For environment setup issues, maybe you could refer to the [original 3DGS repo issue section](https://github.com/graphdeco-inria/gaussian-splatting/issues) first.

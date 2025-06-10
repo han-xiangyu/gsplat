@@ -28,7 +28,7 @@ from utils.image_utils import psnr
 import torch.distributed as dist
 from densification import densification, gsplat_densification, mcmc_densification
 
-from utils.camera_utils import CameraOptModule
+# from utils.camera_utils import CameraOptModule
 import math
 from torch.nn.parallel import DistributedDataParallel as DDP
 import wandb
@@ -98,18 +98,18 @@ def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
 
     # Init pose refinement
     pose_optimizers = []
-    if opt_args.pose_refine:
-        pose_adjust = CameraOptModule(train_dataset.camera_size).to("cuda")
-        pose_adjust.zero_init()
-        pose_optimizers = [
-            torch.optim.Adam(
-                pose_adjust.parameters(),
-                lr=opt_args.pose_refine_lr * math.sqrt(args.bsz),
-                weight_decay=opt_args.pose_refine_reg,
-            )
-        ]
-        if WORLD_SIZE > 1:
-            pose_adjust = DDP(pose_adjust)
+    # if opt_args.pose_refine:
+        # pose_adjust = CameraOptModule(train_dataset.camera_size).to("cuda")
+        # pose_adjust.zero_init()
+        # pose_optimizers = [
+        #     torch.optim.Adam(
+        #         pose_adjust.parameters(),
+        #         lr=opt_args.pose_refine_lr * math.sqrt(args.bsz),
+        #         weight_decay=opt_args.pose_refine_reg,
+        #     )
+        # ]
+        # if WORLD_SIZE > 1:
+        #     pose_adjust = DDP(pose_adjust)
 
     # Training Loop
     end2end_timers = End2endTimer(args)
