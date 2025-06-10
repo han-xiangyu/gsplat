@@ -80,7 +80,7 @@ if __name__ == "__main__":
     print_all_args(args, log_file)
 
     train_internal.training(
-        lp.extract(args), op.extract(args), pp.extract(args), args, log_file
+        lp.extract(args), op.extract(args), pp.extract(args), args, log_file, WORLD_SIZE=utils.WORLD_SIZE,
     )
 
     # All done

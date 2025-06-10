@@ -178,10 +178,10 @@ def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
             camtowolrds = torch.eye(4, device="cuda")
             camtowolrds[:3, :3] = torch.tensor(current_camera.R)
             camtowolrds[:3, 3] = torch.tensor(current_camera.T)
-            if opt_args.pose_refine:
-                camtowolrds = pose_adjust(camtowolrds, cam_ids)
-                batched_cameras[0].R = camtowolrds[:3, :3]
-                batched_cameras[0].T = camtowolrds[:3, 3]
+            # if opt_args.pose_refine:
+            #     camtowolrds = pose_adjust(camtowolrds, cam_ids)
+            #     batched_cameras[0].R = camtowolrds[:3, :3]
+            #     batched_cameras[0].T = camtowolrds[:3, 3]
 
 
 
