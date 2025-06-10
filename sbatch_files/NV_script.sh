@@ -19,6 +19,8 @@ INIT_TYPE=sfm
 RANDOM_INIT_NUM=1000000
 
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
+export WANDB_PROJECT=CityGS_xiangyu_test
+export WANDB_ENTITY=xiangyu-han
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
             -s /lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/data/long_video_processed \
