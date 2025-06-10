@@ -1,5 +1,6 @@
 # NV cluster script
 
+source /home/ymingli/miniconda3/bin/activate
 conda activate citygs
 # 强制屏蔽用户和系统 site-packages
 export PYTHONNOUSERSITE=1
@@ -28,7 +29,7 @@ RANDOM_INIT_NUM=1000000
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
 export WANDB_MODE=disabled
 
-
+cd /lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/code/citygs
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
             -s /lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/data/long_video_processed \
