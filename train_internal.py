@@ -28,9 +28,12 @@ from utils.image_utils import psnr
 import torch.distributed as dist
 from densification import densification, gsplat_densification, mcmc_densification
 
-
-def training(dataset_args, opt_args, pipe_args, args, log_file):
-
+from utils.camera_utils import CameraOptModule
+import math
+from torch.nn.parallel import DistributedDataParallel as DDP
+import wandb
+import numpy as np
+def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
     # Init auxiliary tools
 
     timers = Timer(args)
@@ -41,6 +44,19 @@ def training(dataset_args, opt_args, pipe_args, args, log_file):
 
     # Init parameterized scene
     gaussians = GaussianModel(dataset_args.sh_degree)
+
+    # Logging into wandb
+    if utils.DEFAULT_GROUP.rank() == 0:
+        wandb.init(
+            project="CityGS",
+            name=args.experiment_name or None,
+            config={
+                "dataset": vars(dataset_args),
+                "optimization": vars(opt_args),
+                "pipeline": vars(pipe_args),
+                "general_args": vars(args),
+            }
+        )
 
     with torch.no_grad():
         scene = Scene(args, gaussians)
@@ -79,6 +95,21 @@ def training(dataset_args, opt_args, pipe_args, args, log_file):
 
     if bg_color is not None:
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+
+    # Init pose refinement
+    pose_optimizers = []
+    if opt_args.pose_refine:
+        pose_adjust = CameraOptModule(train_dataset.camera_size).to("cuda")
+        pose_adjust.zero_init()
+        pose_optimizers = [
+            torch.optim.Adam(
+                pose_adjust.parameters(),
+                lr=opt_args.pose_refine_lr * math.sqrt(args.bsz),
+                weight_decay=opt_args.pose_refine_reg,
+            )
+        ]
+        if WORLD_SIZE > 1:
+            pose_adjust = DDP(pose_adjust)
 
     # Training Loop
     end2end_timers = End2endTimer(args)
@@ -140,6 +171,19 @@ def training(dataset_args, opt_args, pipe_args, args, log_file):
                 batched_cameras, strategy_history
             )
             timers.stop("prepare_strategies")
+
+            # Apply pose refinement deltas before GPU
+            current_camera = batched_cameras[0].to("cuda")  # [B,4,4] B=1
+            cam_ids  = torch.tensor(batched_cameras[0].uid).to("cuda")  # [B]
+            camtowolrds = torch.eye(4, device="cuda")
+            camtowolrds[:3, :3] = torch.tensor(current_camera.R)
+            camtowolrds[:3, 3] = torch.tensor(current_camera.T)
+            if opt_args.pose_refine:
+                camtowolrds = pose_adjust(camtowolrds, cam_ids)
+                batched_cameras[0].R = camtowolrds[:3, :3]
+                batched_cameras[0].T = camtowolrds[:3, 3]
+
+
 
             # Load ground-truth images to GPU
             timers.start("load_cameras")
@@ -247,6 +291,20 @@ def training(dataset_args, opt_args, pipe_args, args, log_file):
             log_file.write(log_string)
             timers.stop("sync_loss_and_log")
 
+            if utils.DEFAULT_GROUP.rank() == 0:
+                stats, exp_avg_dict, exp_avg_sq_dict = gaussians.log_gaussian_stats()
+                wandb.log({
+                    "iteration": iteration,
+                    "loss": loss_sum.item(),
+                    "ema_loss": ema_loss_for_log,
+                    "lr": lr,
+                    "num_3dgs": stats["num_3dgs"],
+                    "avg_size": stats["avg_size"],
+                    "avg_opacity": stats["avg_opacity"],
+                    "exp_avg_dict": exp_avg_dict,
+                    "exp_avg_sq_dict": exp_avg_sq_dict,
+                }, step=iteration)
+
             # Evaluation
             end2end_timers.stop()
             training_report(
@@ -341,9 +399,17 @@ def training(dataset_args, opt_args, pipe_args, args, log_file):
                 timers.stop("optimizer_step")
                 utils.check_initial_gpu_memory_usage("after optimizer step")
 
+                # —— Pose refinement optimization ——
+                if opt_args.pose_refine:
+                    for optim in pose_optimizers:
+                        optim.step()
+                        optim.zero_grad(set_to_none=True)
+
                 # Add noise to gaussians
                 if args.mcmc:
                     gaussians.add_noise(lr)
+
+
 
         # Finish a iteration and clean up
         torch.cuda.synchronize()
@@ -398,6 +464,10 @@ def training_report(
 
         # init workload division strategy
         for config in validation_configs:
+            # ←–––––––– START: prepare to stash up to 4 image pairs
+            eval_pairs = []
+            max_to_log = min(4, config["num_cameras"])
+
             if config["cameras"] and len(config["cameras"]) > 0:
                 l1_test = torch.scalar_tensor(0.0, device="cuda")
                 psnr_test = torch.scalar_tensor(0.0, device="cuda")
@@ -494,6 +564,10 @@ def training_report(
                             gt_camera.original_image / 255.0, 0.0, 1.0
                         )
 
+                        # ←–––––– collect up to max_to_log pairs
+                        if len(eval_pairs) < max_to_log:
+                            eval_pairs.append((image, gt_image))
+
                         if idx + camera_id < num_cameras + 1:
                             l1_test += l1_loss(image, gt_image).mean().double()
                             psnr_test += psnr(image, gt_image).mean().double()
@@ -510,5 +584,22 @@ def training_report(
                         iteration, config["name"], l1_test, psnr_test
                     )
                 )
+                # ←–––––––– NOW: log both your eval scalars and the image pairs
+                if utils.DEFAULT_GROUP.rank() == 0:
+                    wandb_imgs = []
+                    for i, (r, g) in enumerate(eval_pairs):
+                        # convert to H×W×C uint8
+                        r_np = (r.detach().cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+                        g_np = (g.detach().cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+                        wandb_imgs.append(wandb.Image(r_np, caption=f"{config['name']} render #{i}"))
+                        wandb_imgs.append(wandb.Image(g_np, caption=f"{config['name']} GT     #{i}"))
+
+                    wandb.log({
+                        f"eval/{config['name']}/L1":    l1_test.item(),
+                        f"eval/{config['name']}/PSNR":  psnr_test.item(),
+                        f"eval/{config['name']}/pairs": wandb_imgs,
+                    }, step=iteration)
 
         torch.cuda.empty_cache()
+
+
