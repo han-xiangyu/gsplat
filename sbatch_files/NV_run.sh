@@ -1,11 +1,12 @@
 # NV cluster script
 
-source /home/ymingli/miniconda3/bin/activate
+# source /home/ymingli/miniconda3/bin/activate
+eval "$(/home/ymingli/miniconda3/bin/conda shell.bash hook)"
 conda activate citygs
-# 强制屏蔽用户和系统 site-packages
-export PYTHONNOUSERSITE=1
 
-# 清除 PYTHONPATH 和 LD_LIBRARY_PATH
+# Force to shield site-packages
+export PYTHONNOUSERSITE=1
+# Clear PYTHONPATH and  LD_LIBRARY_PATH
 unset PYTHONPATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
