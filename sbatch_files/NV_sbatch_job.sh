@@ -1,5 +1,5 @@
 
-job_name="citygs_train"
+job_name="3DfoundationModel"
 training_logs_dir="/lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/logs/citygs_train"
 
 submit_job --gpu 1 --cpu 16 --nodes 1 --partition=grizzly,polar,polar3,polar4 --account=nvr_av_end2endav \
