@@ -27,14 +27,17 @@ POS_LR_FINAL=2e-5
 INIT_TYPE=sfm
 RANDOM_INIT_NUM=1000000
 
+PROJECT_NAME=CityGS_long_video
+EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_masked
+
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
-# export WANDB_MODE=disabled
+
 
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
             -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed \
-            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_gs_model  \
+            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_gs_model  \
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
@@ -51,5 +54,5 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --opacity_reset_interval $OPACITY_RESET \
             --init_type $INIT_TYPE \
             --init_num_pts $RANDOM_INIT_NUM \
-            --experiment_name cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_masked \
-            --project_name CityGS_xiangyu_test 
+            --experiment_name  $EXPERIENT_NAME\
+            --project_name $PROJECT_NAME 
