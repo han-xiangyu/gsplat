@@ -48,7 +48,7 @@ def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
     # Logging into wandb
     if utils.DEFAULT_GROUP.rank() == 0:
         wandb.init(
-            entity="xiangyu-han",
+            entity="xiangyu-han-university-of-pennsylvania",
             project=args.project_name or "CityGS",
             name=args.experiment_name or None,
             config={
