@@ -30,11 +30,11 @@ RANDOM_INIT_NUM=1000000
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
 # export WANDB_MODE=disabled
 
-cd /lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/code/citygs
+cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
-            -s /lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/data/long_video_processed \
-            -m /lustre/fsw/portfolios/nvr/users/ymingli/xiangyu/data/long_video_gs_model  \
+            -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed \
+            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_gs_model  \
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
