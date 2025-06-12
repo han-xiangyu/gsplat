@@ -12,7 +12,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
 
 GPU_NUM=1
-CAP_MAX=2000000
+CAP_MAX=4000000
 NOISE_SCALE=500000
 OPACITY_REG=0
 SCALE_REG=0.01
@@ -28,7 +28,7 @@ INIT_TYPE=sfm
 RANDOM_INIT_NUM=1000000
 
 PROJECT_NAME=CityGS_long_video
-EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_masked
+EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_frames6000
 
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
 
@@ -36,8 +36,8 @@ export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
-            -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed \
-            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_gs_model  \
+            -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000 \
+            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000  \
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
