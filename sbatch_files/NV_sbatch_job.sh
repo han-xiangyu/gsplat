@@ -1,6 +1,6 @@
 
 job_name="3DfoundationModel"
-training_logs_dir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_6000"
+training_logs_dir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_12000"
 
 submit_job --gpu 8 --cpu 24 --nodes 1 --partition=grizzly,polar,polar3,polar4 --account=nvr_av_end2endav \
                 --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/cu118.sqsh  \
