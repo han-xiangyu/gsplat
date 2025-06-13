@@ -32,6 +32,28 @@ def loadCam(args, id, cam_info, decompressed_image=None, return_image=False, is_
     resolution = orig_w, orig_h
     # NOTE: we do not support downsampling here.
 
+    ######## Resolution handling ########
+    resolution_scale = 1.0
+    if args.resolution in [1, 2, 4, 8]:
+        resolution = round(orig_w/(resolution_scale * args.resolution)), round(orig_h/(resolution_scale * args.resolution))
+    else:  # should be a type that converts to float
+        if args.resolution == -1:
+            if orig_w > 1600:
+                global WARNED
+                if not WARNED:
+                    print("[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.\n "
+                        "If this is not desired, please explicitly specify '--resolution/-r' as 1")
+                    WARNED = True
+                global_down = orig_w / 1600
+            else:
+                global_down = 1
+        else:
+            global_down = orig_w / args.resolution
+    
+
+        scale = float(global_down) * float(resolution_scale)
+        resolution = (int(orig_w / scale), int(orig_h / scale))
+
     # may use cam_info.uid
     if is_locally_loaded:
         if args.time_image_loading:

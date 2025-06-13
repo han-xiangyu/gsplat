@@ -145,6 +145,9 @@ class OptimizationParams(ParamGroup):
         self.embedding_lr = 0.01
         self.semantic_lr = 0.001
         self.rgbhead_lr= 0.01
+
+        # For resolution
+        self.resolution = 1.0  # resolution of the model, 1.0 means original resolution, 0.5 means half resolution, etc.
         super().__init__(parser, "Optimization Parameters")
 
 

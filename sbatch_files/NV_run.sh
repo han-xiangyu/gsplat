@@ -55,4 +55,5 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --init_type $INIT_TYPE \
             --init_num_pts $RANDOM_INIT_NUM \
             --experiment_name  $EXPERIENT_NAME\
-            --project_name $PROJECT_NAME 
+            --project_name $PROJECT_NAME \
+            --resolution 4
