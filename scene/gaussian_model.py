@@ -1482,6 +1482,17 @@ class GaussianModel:
         )
 
     def relocate_gs(self, min_opacity=0.005):
+        MAX_GS_LIMIT = 16_777_215  # 2^24 - 1
+        cur_num_gaussians = self.get_xyz.shape[0]
+
+        if cur_num_gaussians > MAX_GS_LIMIT:
+            print(f"[WARNING] Gaussian count ({cur_num_gaussians}) exceeds 2^24, randomly trimming to {MAX_GS_LIMIT}")
+            keep_indices = torch.randperm(cur_num_gaussians, device=self.get_xyz.device)[:MAX_GS_LIMIT]
+            mask = torch.ones(cur_num_gaussians, dtype=torch.bool, device=self.get_xyz.device)
+            mask[keep_indices] = False  # False -> reserve, True -> prune
+            self.prune_points(mask)
+
+
         dead_mask = self.get_opacity <= min_opacity
         dead_indices = dead_mask.nonzero(as_tuple=True)[0]
         alive_indices = (~dead_mask).nonzero(as_tuple=True)[0]
