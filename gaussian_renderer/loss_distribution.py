@@ -2567,6 +2567,7 @@ def final_system_loss_computation(
     start_time = time.time()
     print("shape of local_image_rect is:", local_image_rect.shape)
     print("shape of local_image_rect_gt is:",local_image_rect_gt.shape)
+    print("shape of local_image_rect_pixels_compute_locally is:", local_image_rect_pixels_compute_locally.shape)
     pixelwise_Ll1 = pixelwise_l1_with_mask(
         local_image_rect, local_image_rect_gt, local_image_rect_pixels_compute_locally
     )
