@@ -33,6 +33,7 @@ import math
 from torch.nn.parallel import DistributedDataParallel as DDP
 import wandb
 import numpy as np
+from utils.system_utils import generate_wandb_id
 def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
     # Init auxiliary tools
 
@@ -51,6 +52,8 @@ def training(dataset_args, opt_args, pipe_args, args, log_file, WORLD_SIZE):
             entity="xiangyu-han-university-of-pennsylvania",
             project=args.project_name or "CityGS",
             name=args.experiment_name or None,
+            id=generate_wandb_id(args.experiment_name),
+            resume="auto",  # or "must" if you want it to error when not resuming
             config={
                 "dataset": vars(dataset_args),
                 "optimization": vars(opt_args),

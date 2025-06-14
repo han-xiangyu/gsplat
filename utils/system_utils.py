@@ -28,3 +28,10 @@ def mkdir_p(folder_path):
 def searchForMaxIteration(folder):
     saved_iters = [int(fname.split("_")[-1]) for fname in os.listdir(folder)]
     return max(saved_iters)
+
+
+import hashlib
+
+def generate_wandb_id(experiment_name):
+    base = experiment_name
+    return hashlib.md5(base.encode()).hexdigest()

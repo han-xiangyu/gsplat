@@ -11,7 +11,7 @@ unset PYTHONPATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
 
-GPU_NUM=1
+GPU_NUM=8
 CAP_MAX=2000000
 NOISE_SCALE=500000
 OPACITY_REG=0
@@ -28,10 +28,10 @@ INIT_TYPE=sfm
 RANDOM_INIT_NUM=1000000
 
 PROJECT_NAME=CityGS_long_video
-EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_frames6000_downsample
+EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_frames6000_downsample_autoresume
 
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
-export WANDB_MODE=disabled
+# export WANDB_MODE=disabled
 
 
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
@@ -57,4 +57,5 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --init_num_pts $RANDOM_INIT_NUM \
             --experiment_name  $EXPERIENT_NAME\
             --project_name $PROJECT_NAME \
-            --resolution 4
+            --resolution 4 \
+            --auto_start_checkpoint
