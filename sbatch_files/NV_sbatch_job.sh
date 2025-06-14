@@ -10,4 +10,5 @@ submit_job --gpu 8 --cpu 24 --nodes 1 --partition=grizzly,polar,polar3,polar4 --
                 --name $job_name \
                 --logdir $training_logs_dir \
                 --notimestamp \
+                --exclusive \
                 --command  "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs/sbatch_files/NV_run.sh"

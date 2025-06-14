@@ -11,6 +11,10 @@ unset PYTHONPATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
 
+export CUDA_LAUNCH_BLOCKING=1
+export TORCH_USE_CUDA_DSA=1 
+
+
 GPU_NUM=8
 CAP_MAX=2000000
 NOISE_SCALE=500000
