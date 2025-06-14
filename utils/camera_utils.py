@@ -22,37 +22,37 @@ from PIL import Image
 import copy
 
 def loadCam(args, id, cam_info, decompressed_image=None, return_image=False, is_locally_loaded=False):
-    orig_w, orig_h = cam_info.width, cam_info.height
+    width, height = cam_info.width, cam_info.height
     assert (
-        orig_w == utils.get_img_width() and orig_h == utils.get_img_height()
+        width == utils.get_img_width() and height == utils.get_img_height()
     ), "All images should have the same size. "
 
     args = get_args()
     log_file = get_log_file()
-    resolution = orig_w, orig_h
-    # NOTE: we do not support downsampling here.
+    resolution = width, height
+    # # NOTE: we do not support downsampling here.
 
-    ######## Resolution handling ########
-    resolution_scale = 1.0
-    if args.resolution in [1, 2, 4, 8]:
-        resolution = round(orig_w/(resolution_scale * args.resolution)), round(orig_h/(resolution_scale * args.resolution))
-    else:  # should be a type that converts to float
-        if args.resolution == -1:
-            if orig_w > 1600:
-                global WARNED
-                if not WARNED:
-                    print("[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.\n "
-                        "If this is not desired, please explicitly specify '--resolution/-r' as 1")
-                    WARNED = True
-                global_down = orig_w / 1600
-            else:
-                global_down = 1
-        else:
-            global_down = orig_w / args.resolution
+    # ######## Resolution handling ########
+    # resolution_scale = 1.0
+    # if args.resolution in [1, 2, 4, 8]:
+    #     resolution = round(orig_w/(resolution_scale * args.resolution)), round(orig_h/(resolution_scale * args.resolution))
+    # else:  # should be a type that converts to float
+    #     if args.resolution == -1:
+    #         if orig_w > 1600:
+    #             global WARNED
+    #             if not WARNED:
+    #                 print("[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.\n "
+    #                     "If this is not desired, please explicitly specify '--resolution/-r' as 1")
+    #                 WARNED = True
+    #             global_down = orig_w / 1600
+    #         else:
+    #             global_down = 1
+    #     else:
+    #         global_down = orig_w / args.resolution
     
 
-        scale = float(global_down) * float(resolution_scale)
-        resolution = (int(orig_w / scale), int(orig_h / scale))
+    #     scale = float(global_down) * float(resolution_scale)
+    #     resolution = (int(orig_w / scale), int(orig_h / scale))
 
     # may use cam_info.uid
     if is_locally_loaded:

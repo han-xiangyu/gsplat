@@ -113,8 +113,8 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
         extr = cam_extrinsics[key]
         intr = cam_intrinsics[extr.camera_id]
-        orig_h = intr.height
-        orig_w = intr.width
+        orig_w = intr.height
+        orig_h = intr.width
 
         ######## Resolution handling ########
         resolution_scale = 1.0
@@ -137,8 +137,6 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
             scale = float(global_down) * float(resolution_scale)
             resolution = (int(orig_w / scale), int(orig_h / scale))
-        width = resolution[0]
-        height = resolution[1]
 
         uid = intr.id
         R = np.transpose(qvec2rotmat(extr.qvec))
@@ -146,19 +144,19 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
         if intr.model == "SIMPLE_PINHOLE":
             focal_length_x = intr.params[0]
-            FovY = focal2fov(focal_length_x, height)
-            FovX = focal2fov(focal_length_x, width)
+            FovY = focal2fov(focal_length_x, intr.height)
+            FovX = focal2fov(focal_length_x, intr.width)
         elif intr.model == "PINHOLE":
             focal_length_x = intr.params[0]
             focal_length_y = intr.params[1]
-            FovY = focal2fov(focal_length_y, height)
-            FovX = focal2fov(focal_length_x, width)
+            FovY = focal2fov(focal_length_y, intr.height)
+            FovX = focal2fov(focal_length_x, intr.width)
         elif intr.model == "OPENCV":
             # we're ignoring the 4 distortion
             focal_length_x = intr.params[0]
             focal_length_y = intr.params[1]
-            FovY = focal2fov(focal_length_y, height)
-            FovX = focal2fov(focal_length_x, width)
+            FovY = focal2fov(focal_length_y, intr.height)
+            FovX = focal2fov(focal_length_x, intr.width)
         else:
             assert (
                 False
@@ -180,8 +178,8 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
             image=None,
             image_path=image_path,
             image_name=image_name,
-            width=width,
-            height=height,
+            width=resolution[0],
+            height=resolution[1],
         )
 
         # # release memory
