@@ -113,8 +113,32 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
         extr = cam_extrinsics[key]
         intr = cam_intrinsics[extr.camera_id]
-        height = intr.height
-        width = intr.width
+        orig_h = intr.height
+        orig_w = intr.width
+
+        ######## Resolution handling ########
+        resolution_scale = 1.0
+        if args.resolution in [1, 2, 4, 8]:
+            resolution = round(orig_w/(resolution_scale * args.resolution)), round(orig_h/(resolution_scale * args.resolution))
+        else:  # should be a type that converts to float
+            if args.resolution == -1:
+                if orig_w > 1600:
+                    global WARNED
+                    if not WARNED:
+                        print("[ INFO ] Encountered quite large input images (>1.6K pixels width), rescaling to 1.6K.\n "
+                            "If this is not desired, please explicitly specify '--resolution/-r' as 1")
+                        WARNED = True
+                    global_down = orig_w / 1600
+                else:
+                    global_down = 1
+            else:
+                global_down = orig_w / args.resolution
+        
+
+            scale = float(global_down) * float(resolution_scale)
+            resolution = (int(orig_w / scale), int(orig_h / scale))
+        width = resolution[0]
+        height = resolution[1]
 
         uid = intr.id
         R = np.transpose(qvec2rotmat(extr.qvec))
@@ -142,10 +166,10 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
         image_path = os.path.join(images_folder, os.path.basename(extr.name))
         image_name = os.path.basename(image_path).split(".")[0]
-        image = Image.open(
-            image_path
-        )  # this is a lazy load, the image is not loaded yet
-        width, height = image.size
+        # image = Image.open(
+        #     image_path
+        # )  # this is a lazy load, the image is not loaded yet
+        # width, height = image.size
 
         cam_info = CameraInfo(
             uid=uid,
@@ -160,9 +184,9 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
             height=height,
         )
 
-        # release memory
-        image.close()
-        image = None
+        # # release memory
+        # image.close()
+        # image = None
 
         cam_infos.append(cam_info)
     return cam_infos

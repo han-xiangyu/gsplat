@@ -31,6 +31,7 @@ PROJECT_NAME=CityGS_long_video
 EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_frames6000_downsample
 
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
+export WANDB_MODE=disabled
 
 
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
