@@ -113,8 +113,8 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
         extr = cam_extrinsics[key]
         intr = cam_intrinsics[extr.camera_id]
-        orig_w = intr.height
-        orig_h = intr.width
+        orig_h = intr.height
+        orig_w = intr.width
 
         ######## Resolution handling ########
         resolution_scale = 1.0
