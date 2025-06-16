@@ -1,6 +1,6 @@
 
 job_name="3DfoundationModel"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_6000_dspl_autoresume"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_6000_dspl_4_autoresume"
 
 
 for i in {1..2}; do
