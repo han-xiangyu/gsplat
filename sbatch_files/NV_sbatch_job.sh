@@ -13,6 +13,6 @@ for i in {1..2}; do
                     --logdir ${base_logdir}/run_${i} \
                     --notimestamp \
                     --exclusive \
-                    --copy_user_code /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs:code:[*] \
+                    # --copy_user_code /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs:code:[*] \
                     --command  "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs/sbatch_files/NV_run.sh"
 done
