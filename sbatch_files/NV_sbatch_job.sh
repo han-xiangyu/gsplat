@@ -1,5 +1,5 @@
 
-job_name="3DfoundationModel"
+job_name="3DfoundationModelDistributed8GPU"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_6000_full_autoresume_8GPU"
 
 
