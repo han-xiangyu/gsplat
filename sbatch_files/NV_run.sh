@@ -10,9 +10,9 @@ export PYTHONNOUSERSITE=1
 unset PYTHONPATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
-# # Debug
-# export CUDA_LAUNCH_BLOCKING=1
-# export TORCH_USE_CUDA_DSA=1 
+# Debug
+export CUDA_LAUNCH_BLOCKING=1
+export TORCH_USE_CUDA_DSA=1 
 
 
 GPU_NUM=8
