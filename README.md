@@ -127,6 +127,10 @@ We provide a yml file for easy environment setup. However, you should choose the
 # conda activate gaussian_splatting
 conda create -n citygs python=3.9
 pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+
+# When this error occur: /citygs/submodules/gsplat/gsplat/cuda_legacy/csrc/backward.cu(110): error: no suitable conversion function from "__half" to "int" exists
+# Solution
+unset TORCH_CUDA_ARCH_LIST
  
 ```
 
