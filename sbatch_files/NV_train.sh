@@ -15,8 +15,8 @@ export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
 
 
-GPU_NUM=8
-CAP_MAX=2000000
+GPU_NUM=2
+CAP_MAX=40000000
 NOISE_SCALE=500000
 OPACITY_REG=0
 SCALE_REG=0.01
@@ -35,7 +35,7 @@ PROJECT_NAME=CityGS_long_video
 EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_frames12000_full_distributed8GPU
 
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
-# export WANDB_MODE=disabled
+export WANDB_MODE=disabled
 
 
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
@@ -47,7 +47,7 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
-            --mcmc --mcmc_noise_scale $NOISE_SCALE \
+            --backend gsplat \
             --cap_max $CAP_MAX \
             --enable_timer --end2end_time --check_gpu_memory --check_cpu_memory --preload_dataset_to_gpu_threshold 0 \
             --opacity_reg $OPACITY_REG \
@@ -63,3 +63,4 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --project_name $PROJECT_NAME \
             --auto_start_checkpoint
             # --resolution 4 \
+            # --mcmc --mcmc_noise_scale $NOISE_SCALE \
