@@ -22,4 +22,4 @@ export WANDB_MODE=disabled
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
 
 
-python render.py -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames12000_pts_downsample  --model_path /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames12000_full_distributed8GPU
+python render.py -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000_pts_downsample  --model_path /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU

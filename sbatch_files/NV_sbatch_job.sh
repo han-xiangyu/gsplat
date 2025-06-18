@@ -19,8 +19,8 @@
 
 # --copy_user_code /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs:code:[*] \
 
-job_name="3DfoundationModelRender12000"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_12000_full_render"
+job_name="3DfoundationModelRender6000"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/citygs_partial_6000_full_render"
 # Render
 
 submit_job --gpu 1 --cpu 48 --nodes 1 --partition=grizzly,polar,polar3,polar4 --account=nvr_av_end2endav \
