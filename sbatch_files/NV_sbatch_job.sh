@@ -1,10 +1,10 @@
 
 job_name="3DfoundationModelDistributed8GPU"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/long_video_spatial05_sampling24000_8GPU"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/long_video_spatial05_sampling6000_8GPU"
 
 
 # Train
-for i in {1..2}; do
+for i in {1..1}; do
     submit_job --gpu 8 --cpu 24 --nodes 1 --partition=grizzly,polar,polar3,polar4 --account=nvr_av_end2endav \
                     --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/cu118.sqsh  \
                     --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
