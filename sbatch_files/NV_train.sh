@@ -34,8 +34,8 @@ POS_LR_FINAL=2e-5
 INIT_TYPE=sfm
 
 
-SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling8000
-MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_spatial05_sampling8000_pts_30M
+SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000 
+MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_processed_frames6000_test
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
 
