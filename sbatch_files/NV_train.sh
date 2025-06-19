@@ -15,8 +15,8 @@ export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
 
 
-GPU_NUM=2
-CAP_MAX=40000000
+GPU_NUM=1
+CAP_MAX=30000000
 NOISE_SCALE=500000
 OPACITY_REG=0
 SCALE_REG=0.01
@@ -42,8 +42,8 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
 
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
-            -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000_pts_downsample \
-            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_gsplat \
+            -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000  \
+            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_processed_frames6000_pts_30M \
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
