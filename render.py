@@ -218,10 +218,21 @@ if __name__ == "__main__":
     parser.add_argument("--r", default=-1, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
-    init_distributed(args)
+    if args.distributed_load:
+        init_distributed(args)
+    else:
+        # fallback to single-GPU manually
+        utils.GLOBAL_RANK = 0
+        utils.LOCAL_RANK = 0
+        utils.WORLD_SIZE = 1
+    # init_distributed(args)
     # This script only supports single-gpu rendering.
     # I need to put the flags here because the render() function need it.
     # However, disable them during render.py because they are only needed during training.
+
+
+
+
 
     log_file = open(
         args.model_path
