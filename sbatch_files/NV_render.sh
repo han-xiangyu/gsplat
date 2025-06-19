@@ -23,3 +23,7 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
 
 
 python render.py -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000_pts_downsample  --model_path /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU
+
+python render_video.py
+
+rclone copy /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU/train_set_video.mp4 xiangyuDrive:Research/CityGS/RenderVideos/long_video_partial6000_full.mp4 -P

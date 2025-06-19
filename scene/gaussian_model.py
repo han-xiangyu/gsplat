@@ -1493,7 +1493,6 @@ class GaussianModel:
         #     mask[keep_indices] = False  # False -> reserve, True -> prune
         #     self.prune_points(mask)
 
-
         dead_mask = self.get_opacity <= min_opacity
         dead_indices = dead_mask.nonzero(as_tuple=True)[0]
         alive_indices = (~dead_mask).nonzero(as_tuple=True)[0]
@@ -1501,12 +1500,20 @@ class GaussianModel:
         if num_gs <= 0:
             return num_gs
 
-        # Sample for new GSs
-        eps = torch.finfo(torch.float32).eps
-        probs = self.get_opacity[alive_indices, 0]
-        probs = probs / (probs.sum() + eps)
-        sampled_idxs = torch.multinomial(probs, num_gs, replacement=True)
-        sampled_idxs = alive_indices[sampled_idxs]
+        # # Sample for new GSs
+        # eps = torch.finfo(torch.float32).eps
+        # probs = self.get_opacity[alive_indices, 0]
+        # probs = probs / (probs.sum() + eps)
+        # sampled_idxs = torch.multinomial(probs, num_gs, replacement=True)
+        # sampled_idxs = alive_indices[sampled_idxs]
+
+        # -------------- Prevent torch index out of range error --------------
+        # 强制 fallback 到 CPU，然后传回 GPU
+        probs_cpu = self.get_opacity[alive_indices, 0].detach().cpu()
+        probs_cpu = probs_cpu / (probs_cpu.sum() + 1e-9)
+        sampled_cpu = torch.multinomial(probs_cpu, num_gs, replacement=True)
+        sampled_idxs = alive_indices[sampled_cpu.to(self._xyz.device)]
+        # --------------------------------------------------------------------
 
         ratio = torch.bincount(sampled_idxs)[sampled_idxs] + 1
 

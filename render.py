@@ -135,7 +135,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
                 #         grid,
                 #         os.path.join(render_path, gt_camera.image_name + ".jpg"),
                 #     )
-                # vis_img_list.append(grid.cpu())
+                vis_img_list.append(grid.cpu())
                 torchvision.utils.save_image(
                     image,
                     os.path.join(render_path, gt_camera.image_name + ".jpg"),
