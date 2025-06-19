@@ -1,5 +1,7 @@
 # NV cluster script
 
+cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
+
 # source /home/ymingli/miniconda3/bin/activate
 source /lustre/fs12/portfolios/nvr/users/ymingli/miniconda3/etc/profile.d/conda.sh
 conda activate citygs
@@ -15,7 +17,8 @@ export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
 
 
-GPU_NUM=1
+# Configuration
+GPU_NUM=2
 CAP_MAX=30000000
 NOISE_SCALE=500000
 OPACITY_REG=0
@@ -31,19 +34,23 @@ POS_LR_FINAL=2e-5
 INIT_TYPE=sfm
 
 
-PROJECT_NAME=CityGS_long_video
-EXPERIENT_NAME=cap_max_8M_opacityREG0_scaleLR001_opacityLR005_posLR2e3_posLRfinal2e5_densifyFrom500Final100kIter100_frames6000_gsplat
+SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling8000
+MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_spatial05_sampling8000_pts_30M
+source_name=$(basename "$SOURCE_PATH")
+model_name=$(basename "$MODEL_PATH")
 
+# wandb configuration
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
 export WANDB_MODE=disabled
-
-
-cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
-
+PROJECT_NAME=CityGS_long_video
+# EXPERIENT_NAME="${source_name}_cap${CAP_MAX}_opacityREG${OPACITY_REG}_scaleLR${SCALE_LR}_opacityLR005_posLR${POS_LR}_posLRfinal${POS_LR_FINAL}_densifyFrom${DENSIFY_FROM}Final${DENSIFY_UNTIL}Iter${ITER}"
+EXPERIENT_NAME=$MODEL_PATH
+video_output_path="${MODEL_PATH}/${model_name}_train_set_video.mp4"
+remote_video_name="${source_name}_$(date +%m%d_%H%M).mp4"
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
-            -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000  \
-            -m /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_processed_frames6000_pts_30M \
+            -s $SOURCE_PATH \
+            -m $MODEL_PATH \
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
@@ -64,4 +71,10 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --mcmc --mcmc_noise_scale $NOISE_SCALE 
             # --backend gsplat \
             # --resolution 4 \
-            
+
+
+# python render.py -s $SOURCE_PATH  --model_path $MODEL_PATH
+
+# python render_video.py $MODEL_PATH --fps 15
+
+# rclone copy "${video_output_path}"  "xiangyuDrive:Research/CityGS/RenderVideos/${remote_video_name}" -P

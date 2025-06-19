@@ -221,16 +221,16 @@ def generate_video_from_folders(base_paths, output_video_path, baseline_labels, 
     print(f"视频已保存到 {output_video_path}")
 
 if __name__ == "__main__":
-    model_folder = "/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU/"
-    baseline_labels = ["Ground truth", "GrendelGS"]
+    # model_folder = "/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU/"
+    # baseline_labels = ["Ground truth", "GrendelGS"]
 
-    train_paths = [
-        os.path.join(model_folder, "train/ours_99993/gt"),
-        os.path.join(model_folder, "train/ours_99993/renders"),
-    ]
+    # train_paths = [
+    #     os.path.join(model_folder, "train/ours_99993/gt"),
+    #     os.path.join(model_folder, "train/ours_99993/renders"),
+    # ]
 
-    output_video_path = os.path.join(model_folder, "train_set_video.mp4")
-    generate_video_from_folders(train_paths, output_video_path, baseline_labels=baseline_labels, fps=10)
+    # output_video_path = os.path.join(model_folder, "train_set_video.mp4")
+    # generate_video_from_folders(train_paths, output_video_path, baseline_labels=baseline_labels, fps=10)
 
     # test_paths = [
     #     os.path.join(model_folder, "test/ours_80000/gt"),
@@ -239,3 +239,49 @@ if __name__ == "__main__":
 
     # output_video_path = os.path.join(model_folder, "test_set_video.mp4")
     # generate_video_from_folders(test_paths, output_video_path, baseline_labels=baseline_labels, fps=7)
+
+
+
+    import argparse
+    import re
+    from pathlib import Path
+    # ---------- 解析命令行 ----------
+    parser = argparse.ArgumentParser(description="Generate comparison video")
+    parser.add_argument("model_folder", help="Root folder of the model outputs")
+    parser.add_argument("--fps", type=int, default=10, help="Video FPS (default: 10)")
+    args = parser.parse_args()
+
+    model_folder = args.model_folder.rstrip("/")
+    model_name = Path(model_folder).name
+    train_root   = os.path.join(model_folder, "train")
+
+    # ---------- 找到数字最大的 ours_xxxxx ----------
+    ours_dirs = [
+        d for d in os.listdir(train_root)
+        if re.fullmatch(r"ours_\d{1,}", d) and os.path.isdir(os.path.join(train_root, d))
+    ]
+    if not ours_dirs:
+        raise RuntimeError(f"No ours_* directory found in {train_root}")
+
+    latest_ours = max(ours_dirs, key=lambda d: int(d.split("_")[1]))
+    print(f"[INFO] Using '{latest_ours}' as the latest checkpoint")
+
+    
+    # ---------- 构建路径 ----------
+    train_paths = [
+        os.path.join(train_root, latest_ours, "gt"),
+        os.path.join(train_root, latest_ours, "renders"),
+    ]
+    baseline_labels = ["Ground truth", "GrendelGS"]
+
+    output_video_path = os.path.join(
+        model_folder, f"{model_name}_train_set_video.mp4"
+    )
+
+    # ---------- 生成视频 ----------
+    generate_video_from_folders(
+        train_paths,
+        output_video_path,
+        baseline_labels=baseline_labels,
+        fps=args.fps,
+    )
