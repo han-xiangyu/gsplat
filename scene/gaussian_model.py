@@ -1507,14 +1507,27 @@ class GaussianModel:
         # sampled_idxs = torch.multinomial(probs, num_gs, replacement=True)
         # sampled_idxs = alive_indices[sampled_idxs]
 
-        # -------------- Prevent torch index out of range error --------------
-        # 强制 fallback 到 CPU，然后传回 GPU
+        # # -------------- Prevent torch index out of range error --------------
+        # # 强制 fallback 到 CPU，然后传回 GPU
+        # probs_cpu = self.get_opacity[alive_indices, 0].detach().to('cpu', dtype=torch.float64)
+        # probs_cpu = probs_cpu / (probs_cpu.sum() + 1e-9)
+        # print(f"[rank {dist.get_rank()}] probs_cpu device: {probs_cpu.device}, dtype: {probs_cpu.dtype}, shape: {probs_cpu.shape}, num_gs: {num_gs}")
+        # sampled_cpu = torch.multinomial(probs_cpu, num_gs, replacement=True)
+        # sampled_idxs = alive_indices[sampled_cpu.to(self._xyz.device)]
+        # # --------------------------------------------------------------------
+        # -------------- Prevent torch multinomial 2^24 GPU bug by using numpy --------------
+        try:
+            rank = torch.distributed.get_rank()
+        except RuntimeError:
+            rank = 0 # Fallback to rank 0 if distributed is not initialized
+        if rank == 0:
+            print(f"[INFO] Using numpy multinomial fallback. Alive={alive_indices.shape[0]}, Dead={num_gs}")
         probs_cpu = self.get_opacity[alive_indices, 0].detach().to('cpu', dtype=torch.float64)
-        probs_cpu = probs_cpu / (probs_cpu.sum() + 1e-9)
-        print(f"[rank {dist.get_rank()}] probs_cpu device: {probs_cpu.device}, dtype: {probs_cpu.dtype}, shape: {probs_cpu.shape}, num_gs: {num_gs}")
-        sampled_cpu = torch.multinomial(probs_cpu, num_gs, replacement=True)
-        sampled_idxs = alive_indices[sampled_cpu.to(self._xyz.device)]
-        # --------------------------------------------------------------------
+        probs_cpu /= (probs_cpu.sum() + 1e-9)
+        probs_np = probs_cpu.numpy()
+        sampled_np = np.random.choice(len(probs_np), size=num_gs, p=probs_np, replace=True)
+        sampled_idxs = alive_indices[torch.from_numpy(sampled_np).to(self._xyz.device)]
+        # -------------------------------------------------------------------------------------
 
         ratio = torch.bincount(sampled_idxs)[sampled_idxs] + 1
 
