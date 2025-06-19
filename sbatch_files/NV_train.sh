@@ -73,7 +73,7 @@ remote_video_name="${source_name}_$(date +%m%d_%H%M).mp4"
 #             # --resolution 4 \
 
 
-python render.py -s $SOURCE_PATH  --model_path $MODEL_PATH
+torchrun --nproc_per_node=${GPU_NUM} render.py --distributed_load -s $SOURCE_PATH  --model_path $MODEL_PATH
 
 python render_video.py $MODEL_PATH --fps 15
 
