@@ -221,16 +221,16 @@ def generate_video_from_folders(base_paths, output_video_path, baseline_labels, 
     print(f"视频已保存到 {output_video_path}")
 
 if __name__ == "__main__":
-    model_folder = "/home/neptune/Data/MARS/city_gs_data/loc6_10_17_dense_voxel_050/output_grendalGS_no_densify_no_opacity_reset"
+    model_folder = "/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU/"
     baseline_labels = ["Ground truth", "GrendelGS"]
 
     train_paths = [
-        os.path.join(model_folder, "train/ours_80000/gt"),
-        os.path.join(model_folder, "train/ours_80000/renders"),
+        os.path.join(model_folder, "train/ours_99993/gt"),
+        os.path.join(model_folder, "train/ours_99993/renders"),
     ]
 
     output_video_path = os.path.join(model_folder, "train_set_video.mp4")
-    generate_video_from_folders(train_paths, output_video_path, baseline_labels=baseline_labels, fps=8)
+    generate_video_from_folders(train_paths, output_video_path, baseline_labels=baseline_labels, fps=10)
 
     # test_paths = [
     #     os.path.join(model_folder, "test/ours_80000/gt"),
