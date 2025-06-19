@@ -1511,6 +1511,7 @@ class GaussianModel:
         # 强制 fallback 到 CPU，然后传回 GPU
         probs_cpu = self.get_opacity[alive_indices, 0].detach().to('cpu', dtype=torch.float64)
         probs_cpu = probs_cpu / (probs_cpu.sum() + 1e-9)
+        print(f"[rank {dist.get_rank()}] probs_cpu device: {probs_cpu.device}, dtype: {probs_cpu.dtype}, shape: {probs_cpu.shape}, num_gs: {num_gs}")
         sampled_cpu = torch.multinomial(probs_cpu, num_gs, replacement=True)
         sampled_idxs = alive_indices[sampled_cpu.to(self._xyz.device)]
         # --------------------------------------------------------------------
