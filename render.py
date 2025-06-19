@@ -128,22 +128,22 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             if utils.GLOBAL_RANK == 0:
                 grid = [image, gt_image]
                 grid = make_grid(grid, nrow=2)
-                if not os.path.exists(
-                os.path.join(render_path, gt_camera.image_name + ".jpg")
-                ):
-                    save_image(
-                        grid,
-                        os.path.join(render_path, gt_camera.image_name + ".jpg"),
-                    )
-                vis_img_list.append(grid.cpu())
-                # torchvision.utils.save_image(
-                #     image,
-                #     os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png"),
-                # )
-                # torchvision.utils.save_image(
-                #     gt_image,
-                #     os.path.join(gts_path, "{0:05d}".format(actual_idx) + ".png"),
-                # )
+                # if not os.path.exists(
+                # os.path.join(render_path, gt_camera.image_name + ".jpg")
+                # ):
+                #     save_image(
+                #         grid,
+                #         os.path.join(render_path, gt_camera.image_name + ".jpg"),
+                #     )
+                # vis_img_list.append(grid.cpu())
+                torchvision.utils.save_image(
+                    image,
+                    os.path.join(render_path, gt_camera.image_name + ".png"),
+                )
+                torchvision.utils.save_image(
+                    gt_image,
+                    os.path.join(gts_path, gt_camera.image_name + ".png"),
+                )
 
             gt_camera.original_image = None
         if generated_cnt == args.generate_num:
