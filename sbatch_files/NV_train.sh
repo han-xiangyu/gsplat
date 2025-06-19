@@ -18,8 +18,8 @@ export TORCH_USE_CUDA_DSA=1
 
 
 # Configuration
-GPU_NUM=2
-CAP_MAX=30000000
+GPU_NUM=8
+CAP_MAX=20000000
 NOISE_SCALE=500000
 OPACITY_REG=0
 SCALE_REG=0.01
@@ -34,8 +34,8 @@ POS_LR_FINAL=2e-5
 INIT_TYPE=sfm
 
 
-SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000 
-MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_processed_frames6000_test
+SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling8000/
+MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling8000_8GPU
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
 
