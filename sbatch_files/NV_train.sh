@@ -19,7 +19,7 @@ export TORCH_USE_CUDA_DSA=1
 
 # Configuration
 GPU_NUM=8
-CAP_MAX=20000000
+CAP_MAX=5000000
 NOISE_SCALE=500000
 OPACITY_REG=0
 SCALE_REG=0.01
@@ -34,17 +34,17 @@ POS_LR_FINAL=2e-5
 INIT_TYPE=sfm
 
 
-SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling8000/
-MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling8000_8GPU
+SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling24000
+MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/model/long_video_spatial05_sampling24000_8GPU
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
 
 # wandb configuration
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
-export WANDB_MODE=disabled
+# export WANDB_MODE=disabled
 PROJECT_NAME=CityGS_long_video
 # EXPERIENT_NAME="${source_name}_cap${CAP_MAX}_opacityREG${OPACITY_REG}_scaleLR${SCALE_LR}_opacityLR005_posLR${POS_LR}_posLRfinal${POS_LR_FINAL}_densifyFrom${DENSIFY_FROM}Final${DENSIFY_UNTIL}Iter${ITER}"
-EXPERIENT_NAME=$MODEL_PATH
+EXPERIENT_NAME=$model_name
 video_output_path="${MODEL_PATH}/${model_name}_train_set_video.mp4"
 remote_video_name="${source_name}_$(date +%m%d_%H%M).mp4"
 
@@ -73,8 +73,8 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             # --resolution 4 \
 
 
-# python render.py -s $SOURCE_PATH  --model_path $MODEL_PATH
+python render.py -s $SOURCE_PATH  --model_path $MODEL_PATH
 
-# python render_video.py $MODEL_PATH --fps 15
+python render_video.py $MODEL_PATH --fps 15
 
-# rclone copy "${video_output_path}"  "xiangyuDrive:Research/CityGS/RenderVideos/${remote_video_name}" -P
+rclone copy "${video_output_path}"  "xiangyuDrive:Research/CityGS/RenderVideos/${remote_video_name}" -P
