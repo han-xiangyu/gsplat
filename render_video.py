@@ -12,7 +12,7 @@ def add_label_to_image(image, label):
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_pil = Image.fromarray(image_rgb)
     draw = ImageDraw.Draw(image_pil)
-    font_path = "/home/neptune/Downloads/optima/OPTIMA.TTF"  # 根据实际字体路径修改
+    font_path = "/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/font/OPTIMA.TTF"
     try:
         font = ImageFont.truetype(font_path, size=160)
     except IOError:
