@@ -47,12 +47,11 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --iterations $ITER  \
             --densify_from_iter $DENSIFY_FROM \
             --densify_until_iter $DENSIFY_UNTIL \
-            --backend gsplat \
+            --densification_interval $DENSIFY_INTER \
             --cap_max $CAP_MAX \
             --enable_timer --end2end_time --check_gpu_memory --check_cpu_memory --preload_dataset_to_gpu_threshold 0 \
             --opacity_reg $OPACITY_REG \
             --scale_reg $SCALE_REG \
-            --densification_interval $DENSIFY_INTER \
             --position_lr_init $POS_LR \
             --position_lr_final $POS_LR_FINAL \
             --position_lr_max_steps $ITER \
@@ -61,6 +60,8 @@ torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GP
             --init_type $INIT_TYPE \
             --experiment_name  $EXPERIENT_NAME\
             --project_name $PROJECT_NAME \
-            --auto_start_checkpoint
+            --auto_start_checkpoint \
+            --mcmc --mcmc_noise_scale $NOISE_SCALE 
+            # --backend gsplat \
             # --resolution 4 \
-            # --mcmc --mcmc_noise_scale $NOISE_SCALE \
+            

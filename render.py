@@ -129,11 +129,11 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
                 grid = [image, gt_image]
                 grid = make_grid(grid, nrow=2)
                 if not os.path.exists(
-                os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png")
+                os.path.join(render_path, gt_camera.image_name + ".jpg")
                 ):
                     save_image(
                         grid,
-                        os.path.join(render_path, "{0:05d}".format(actual_idx) + ".png"),
+                        os.path.join(render_path, gt_camera.image_name + ".jpg"),
                     )
                 vis_img_list.append(grid.cpu())
                 # torchvision.utils.save_image(
