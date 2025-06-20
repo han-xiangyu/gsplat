@@ -1,5 +1,7 @@
 # NV cluster script
 
+cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
+
 # source /home/ymingli/miniconda3/bin/activate
 source /lustre/fs12/portfolios/nvr/users/ymingli/miniconda3/etc/profile.d/conda.sh
 conda activate citygs
@@ -14,16 +16,41 @@ export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
 
+
+# Configuration
+GPU_NUM=2
+CAP_MAX=5000000
+NOISE_SCALE=500000
+OPACITY_REG=0
+SCALE_REG=0.01
+ITER=100000
+DENSIFY_FROM=500
+DENSIFY_UNTIL=100000
+DENSIFY_INTER=100
+SCALE_LR=0.001
+OPACITY_RESET=3000
+POS_LR=2e-3
+POS_LR_FINAL=2e-5
+INIT_TYPE=sfm
+
+
+SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_spatial05_sampling6000_nondownsampled
+MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/model/long_video_spatial05_sampling6000_8GPU
+source_name=$(basename "$SOURCE_PATH")
+model_name=$(basename "$MODEL_PATH")
+
 # wandb configuration
 export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
 export WANDB_MODE=disabled
+PROJECT_NAME=CityGS_long_video
+# EXPERIENT_NAME="${source_name}_cap${CAP_MAX}_opacityREG${OPACITY_REG}_scaleLR${SCALE_LR}_opacityLR005_posLR${POS_LR}_posLRfinal${POS_LR_FINAL}_densifyFrom${DENSIFY_FROM}Final${DENSIFY_UNTIL}Iter${ITER}"
+EXPERIENT_NAME=$model_name
+video_output_path="${MODEL_PATH}/${model_name}_train_set_video.mp4"
+remote_video_name="${source_name}_$(date +%m%d_%H%M).mp4"
 
 
-cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/citygs
+torchrun --nproc_per_node=${GPU_NUM} render.py --distributed_load -s $SOURCE_PATH  --model_path $MODEL_PATH
 
+python render_video.py $MODEL_PATH --fps 15
 
-python render.py -s /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/long_video_processed_frames6000_pts_downsample  --model_path /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU
-
-python render_video.py /path/to/your/model/folder --fps 12
-
-rclone copy /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/models/long_video_frames6000_full_autoresume_distributed8GPU/train_set_video.mp4 xiangyuDrive:Research/CityGS/RenderVideos/long_video_partial6000_full.mp4 -P
+rclone copy "${video_output_path}"  "xiangyuDrive:Research/CityGS/RenderVideos/${remote_video_name}" -P
