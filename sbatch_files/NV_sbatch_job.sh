@@ -1,6 +1,6 @@
 
 job_name="3DfoundationModelDistributed8GPU"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/long_video_spatial05_sampling6000_8GPU"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/spatial05_sampling6000_8GPU"
 
 
 # Train
