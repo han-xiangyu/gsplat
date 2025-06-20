@@ -135,7 +135,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
                 #         grid,
                 #         os.path.join(render_path, gt_camera.image_name + ".jpg"),
                 #     )
-                vis_img_list.append(grid.cpu())
+                # vis_img_list.append(grid.cpu())
                 torchvision.utils.save_image(
                     image,
                     os.path.join(render_path, gt_camera.image_name + ".jpg"),
@@ -148,11 +148,11 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             gt_camera.original_image = None
         if generated_cnt == args.generate_num:
             break
-    vis_img_list = torch.stack(vis_img_list).permute(0, 2, 3, 1)
-    print("vis_img_list shape: ", vis_img_list.shape)
-    vis_img_list = (vis_img_list * 255).clamp(0, 255).to(torch.uint8)
-    imageio.mimsave(os.path.join(model_path, name, "ours_{}".format(iteration), "renders.mp4"), vis_img_list.cpu().numpy())
-    print("Video saved at: ", os.path.join(model_path, name, "ours_{}".format(iteration), "renders.mp4"))
+    # vis_img_list = torch.stack(vis_img_list).permute(0, 2, 3, 1)
+    # print("vis_img_list shape: ", vis_img_list.shape)
+    # vis_img_list = (vis_img_list * 255).clamp(0, 255).to(torch.uint8)
+    # imageio.mimsave(os.path.join(model_path, name, "ours_{}".format(iteration), "renders.mp4"), vis_img_list.cpu().numpy())
+    # print("Video saved at: ", os.path.join(model_path, name, "ours_{}".format(iteration), "renders.mp4"))
 
         
 
