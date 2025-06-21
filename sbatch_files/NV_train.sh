@@ -34,8 +34,8 @@ POS_LR_FINAL=2e-5
 INIT_TYPE=sfm
 
 
-SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/data_process_spatial05_frames6000
-MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/model/data_process_spatial05_frames6000
+SOURCE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/spatial05_frames6000
+MODEL_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/model/spatial05_frames6000
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
 
