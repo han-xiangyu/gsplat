@@ -46,7 +46,7 @@ PROJECT_NAME=CityGS_long_video
 # EXPERIENT_NAME="${source_name}_cap${CAP_MAX}_opacityREG${OPACITY_REG}_scaleLR${SCALE_LR}_opacityLR005_posLR${POS_LR}_posLRfinal${POS_LR_FINAL}_densifyFrom${DENSIFY_FROM}Final${DENSIFY_UNTIL}Iter${ITER}"
 EXPERIENT_NAME=$model_name
 video_output_path="${MODEL_PATH}/${model_name}_train_set_video.mp4"
-remote_video_name="${source_name}_$(date +%m%d_%H%M).mp4"
+remote_video_name="${model_name}_$(date +%m%d_%H%M).mp4"
 
 torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
             -s $SOURCE_PATH \

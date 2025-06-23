@@ -8,3 +8,5 @@ submodules/simple-knn/*.egg-info/
 __pycache__/
 *.py[cod]
 *$py.class
+
+wandb/
