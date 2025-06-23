@@ -1,6 +1,6 @@
 
-job_name="3DfoundationModel12000"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/spatial025_frames12000_8GPU"
+job_name="3DfoundationModel6000"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/logs/spatial05_frames6000_per_8M_pts"
 
 
 # Train
