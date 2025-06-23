@@ -52,13 +52,13 @@ class Config:
     render_traj_path: str = "interp"
 
     # Path to the Mip-NeRF 360 dataset
-    data_dir: str = "data/360_v2/garden"
+    data_dir: str = "/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/spatial025_frames12000"
     # Downsample factor for the dataset
-    data_factor: int = 4
+    data_factor: int = 2
     # Directory to save results
-    result_dir: str = "results/garden"
+    result_dir: str = " /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/model/gsplat_mcmc_test"
     # Every N images there is a test image
-    test_every: int = 8
+    test_every: int = 20
     # Random crop size for training  (experimental)
     patch_size: Optional[int] = None
     # A global scaler that applies to the scene size related parameters
