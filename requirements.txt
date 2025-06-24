@@ -1,9 +1,0 @@
-plyfile
-pip==23.0.1
-tqdm
-psutil
-setuptools==69.1.1
-mkl==2024.0
-pandas
-scikit-learn
-pyquaternion
