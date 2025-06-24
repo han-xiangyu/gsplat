@@ -141,7 +141,6 @@ def spherical_harmonics(
         and coeffs.shape[:-2] == batch_dims
         and coeffs.shape[-1] == 3
     ), coeffs.shape
-    print('mashs shape is:', masks.shape)
     if masks is not None:
         assert masks.shape == batch_dims, masks.shape
         masks = masks.contiguous()
