@@ -38,33 +38,42 @@ from gsplat.rendering import rasterization
 from gsplat.strategy import DefaultStrategy, MCMCStrategy
 from gsplat_viewer import GsplatViewer, GsplatRenderTabState
 from nerfview import CameraState, RenderTabState, apply_float_colormap
-
+import wandb
+import torch.distributed as dist
 
 @dataclass
 class Config:
     # Disable viewer
-    disable_viewer: bool = False
+    disable_viewer: bool = True
     # Path to the .pt files. If provide, it will skip training and run evaluation only.
     ckpt: Optional[List[str]] = None
+    resume: bool = False                         # 是否继续训练
+    resume_ckpt: Optional[str] = None            # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
+    resume_dir: Optional[str] = None             # 或者给目录，自动找当前 rank 最新的 ckpt
     # Name of compression strategy to use
     compression: Optional[Literal["png"]] = None
     # Render trajectory path
-    render_traj_path: str = "interp"
+    render_traj_path: str = "original"
 
     # Path to the Mip-NeRF 360 dataset
     data_dir: str = "data/360_v2/garden"
     # Downsample factor for the dataset
-    data_factor: int = 4
+    data_factor: int = 1
     # Directory to save results
     result_dir: str = "results/garden"
     # Every N images there is a test image
-    test_every: int = 8
+    test_every: int = 60
+    use_val: bool = True
+    eval_max_images: Optional[int] = 64   # 每次评估最多评多少张（None=全量）
+    eval_stride: int = 50                  # 间隔抽样
+    eval_save_images: bool = True         # 评估时是否落盘示例图
+    eval_save_images_n: int = 2           # 最多保存多少张示例图
     # Random crop size for training  (experimental)
     patch_size: Optional[int] = None
     # A global scaler that applies to the scene size related parameters
     global_scale: float = 1.0
     # Normalize the world space
-    normalize_world_space: bool = True
+    normalize_world_space: bool = False
     # Camera model
     camera_model: Literal["pinhole", "ortho", "fisheye"] = "pinhole"
 
@@ -77,15 +86,17 @@ class Config:
     steps_scaler: float = 1.0
 
     # Number of training steps
-    max_steps: int = 30_000
+    max_steps: int = 200_000
     # Steps to evaluate the model
-    eval_steps: List[int] = field(default_factory=lambda: [7_000, 30_000])
+    eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 50_000, 75_000, 100_000, 125_000, 150_000, 175_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [7_000, 30_000])
+    save_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
     # Whether to save ply file (storage size can be large)
-    save_ply: bool = False
+    save_ply: bool = True
     # Steps to save the model as ply
-    ply_steps: List[int] = field(default_factory=lambda: [7_000, 30_000])
+    ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
+    # Steps to save the model as ply
+    video_render_steps: List[int] = field(default_factory=lambda: [200_000, 300_000, 400_000])
     # Whether to disable video generation during training and evaluation
     disable_video: bool = False
 
@@ -98,9 +109,9 @@ class Config:
     # Degree of spherical harmonics
     sh_degree: int = 3
     # Turn on another SH degree every this steps
-    sh_degree_interval: int = 1000
+    sh_degree_interval: int = 5000
     # Initial opacity of GS
-    init_opa: float = 0.1
+    init_opa: float = 0.8
     # Initial scale of GS
     init_scale: float = 1.0
     # Weight for SSIM loss
@@ -109,7 +120,7 @@ class Config:
     # Near plane clipping distance
     near_plane: float = 0.01
     # Far plane clipping distance
-    far_plane: float = 1e10
+    far_plane: float = 1000
 
     # Strategy for GS densification
     strategy: Union[DefaultStrategy, MCMCStrategy] = field(
@@ -120,19 +131,21 @@ class Config:
     # Use sparse gradients for optimization. (experimental)
     sparse_grad: bool = False
     # Use visible adam from Taming 3DGS. (experimental)
-    visible_adam: bool = False
+    visible_adam: bool = True
     # Anti-aliasing in rasterization. Might slightly hurt quantitative metrics.
     antialiased: bool = False
 
     # Use random background for training to discourage transparency
-    random_bkgd: bool = False
+    random_bkgd: bool = True
 
     # LR for 3D point positions
-    means_lr: float = 1.6e-4
+    means_lr: float = 2e-3
+    # Final LR for 3D point positions as a multiple of the initial LR
+    mean_lr_final_mult: float = 0.01
     # LR for Gaussian scale factors
     scales_lr: float = 5e-3
     # LR for alpha blending weights
-    opacities_lr: float = 5e-2
+    opacities_lr: float = 5e-3
     # LR for orientation (quaternions)
     quats_lr: float = 1e-3
     # LR for SH band 0 (brightness)
@@ -141,9 +154,9 @@ class Config:
     shN_lr: float = 2.5e-3 / 20
 
     # Opacity regularization
-    opacity_reg: float = 0.0
+    opacity_reg: float = 0.001
     # Scale regularization
-    scale_reg: float = 0.0
+    scale_reg: float = 0.01
 
     # Enable camera optimization.
     pose_opt: bool = False
@@ -169,7 +182,7 @@ class Config:
     bilateral_grid_shape: Tuple[int, int, int] = (16, 16, 8)
 
     # Enable depth loss. (experimental)
-    depth_loss: bool = False
+    depth_loss: bool = True
     # Weight for depth loss
     depth_lambda: float = 1e-2
 
@@ -187,10 +200,17 @@ class Config:
     # Whether use fused-bilateral grid
     use_fused_bilagrid: bool = False
 
+    wandb_project: Optional[str] = None
+    wandb_group: Optional[str] = None 
+    wandb_name: Optional[str] = None 
+    wandb_mode: Literal["online", "offline", "disabled"] = "offline"
+    wandb_dir: Optional[str] = None 
+    wandb_log_images_every: int = 50000 
+
     def adjust_steps(self, factor: float):
         self.eval_steps = [int(i * factor) for i in self.eval_steps]
         self.save_steps = [int(i * factor) for i in self.save_steps]
-        self.ply_steps = [int(i * factor) for i in self.ply_steps]
+        self.video_render_steps = [int(i * factor) for i in self.video_render_steps]
         self.max_steps = int(self.max_steps * factor)
         self.sh_degree_interval = int(self.sh_degree_interval * factor)
 
@@ -343,8 +363,9 @@ class Runner:
             patch_size=cfg.patch_size,
             load_depths=cfg.depth_loss,
         )
-        self.valset = Dataset(self.parser, split="val")
-        self.scene_scale = self.parser.scene_scale * 1.1 * cfg.global_scale
+        self.valset = Dataset(self.parser, split="val") if cfg.use_val else None
+        # self.scene_scale = self.parser.scene_scale * 1.1 * cfg.global_scale
+        self.scene_scale = cfg.global_scale
         print("Scene scale:", self.scene_scale)
 
         # Model
@@ -479,6 +500,24 @@ class Runner:
                 mode="training",
             )
 
+        self.wb = None
+        if self.world_rank == 0 and self.cfg.wandb_project:
+            wandb_dir = self.cfg.wandb_dir or self.cfg.result_dir
+            os.makedirs(wandb_dir, exist_ok=True)
+            run_name = (
+                self.cfg.wandb_name
+                or f"{Path(self.cfg.data_dir).name}_{self.cfg.strategy.__class__.__name__}_bs{self.cfg.batch_size}"
+            )
+            self.wb = wandb.init(
+                project=self.cfg.wandb_project,
+                group=self.cfg.wandb_group,
+                name=run_name,
+                dir=wandb_dir,
+                mode=self.cfg.wandb_mode,
+                config=vars(self.cfg),
+                resume="allow",
+            )
+
     def rasterize_splats(
         self,
         camtoworlds: Tensor,
@@ -559,7 +598,7 @@ class Runner:
         schedulers = [
             # means has a learning rate schedule, that end at 0.01 of the initial value
             torch.optim.lr_scheduler.ExponentialLR(
-                self.optimizers["means"], gamma=0.01 ** (1.0 / max_steps)
+                self.optimizers["means"], gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps)
             ),
         ]
         if cfg.pose_opt:
@@ -621,7 +660,7 @@ class Runner:
             image_ids = data["image_id"].to(device)
             masks = data["mask"].to(device) if "mask" in data else None  # [1, H, W]
             if cfg.depth_loss:
-                points = data["points"].to(device)  # [1, M, 2]
+                # points = data["points"].to(device)  # [1, M, 2]
                 depths_gt = data["depths"].to(device)  # [1, M]
 
             height, width = pixels.shape[1:3]
@@ -686,24 +725,35 @@ class Runner:
             )
             loss = l1loss * (1.0 - cfg.ssim_lambda) + ssimloss * cfg.ssim_lambda
             if cfg.depth_loss:
-                # query depths from depth map
-                points = torch.stack(
-                    [
-                        points[:, :, 0] / (width - 1) * 2 - 1,
-                        points[:, :, 1] / (height - 1) * 2 - 1,
-                    ],
-                    dim=-1,
-                )  # normalize to [-1, 1]
-                grid = points.unsqueeze(2)  # [1, M, 1, 2]
-                depths = F.grid_sample(
-                    depths.permute(0, 3, 1, 2), grid, align_corners=True
-                )  # [1, 1, M, 1]
-                depths = depths.squeeze(3).squeeze(1)  # [1, M]
-                # calculate loss in disparity space
-                disp = torch.where(depths > 0.0, 1.0 / depths, torch.zeros_like(depths))
-                disp_gt = 1.0 / depths_gt  # [1, M]
-                depthloss = F.l1_loss(disp, disp_gt) * self.scene_scale
+
+                #### Modified: Sample depth map at all valid pixels and use L1 loss
+                depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
+                valid = torch.isfinite(depth_gt) & (depth_gt > 0)
+                valid = valid & (depths > 0) 
+                # masked L1
+                depthloss = torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
                 loss += depthloss * cfg.depth_lambda
+
+
+                #### Oringinal: Sample depth map at query points and use disparity loss
+                # # query depths from depth map
+                # points = torch.stack(
+                #     [
+                #         points[:, :, 0] / (width - 1) * 2 - 1,
+                #         points[:, :, 1] / (height - 1) * 2 - 1,
+                #     ],
+                #     dim=-1,
+                # )  # normalize to [-1, 1]
+                # grid = points.unsqueeze(2)  # [1, M, 1, 2]
+                # depths = F.grid_sample(
+                #     depths.permute(0, 3, 1, 2), grid, align_corners=True
+                # )  # [1, 1, M, 1]
+                # depths = depths.squeeze(3).squeeze(1)  # [1, M]
+                # # calculate loss in disparity space
+                # disp = torch.where(depths > 0.0, 1.0 / depths, torch.zeros_like(depths))
+                # disp_gt = 1.0 / depths_gt  # [1, M]
+                # depthloss = F.l1_loss(disp, disp_gt) * self.scene_scale
+                # loss += depthloss * cfg.depth_lambda
             if cfg.use_bilateral_grid:
                 tvloss = 10 * total_variation_loss(self.bil_grids.grids)
                 loss += tvloss
@@ -743,20 +793,57 @@ class Runner:
 
             if world_rank == 0 and cfg.tb_every > 0 and step % cfg.tb_every == 0:
                 mem = torch.cuda.max_memory_allocated() / 1024**3
-                self.writer.add_scalar("train/loss", loss.item(), step)
-                self.writer.add_scalar("train/l1loss", l1loss.item(), step)
-                self.writer.add_scalar("train/ssimloss", ssimloss.item(), step)
-                self.writer.add_scalar("train/num_GS", len(self.splats["means"]), step)
-                self.writer.add_scalar("train/mem", mem, step)
-                if cfg.depth_loss:
-                    self.writer.add_scalar("train/depthloss", depthloss.item(), step)
-                if cfg.use_bilateral_grid:
-                    self.writer.add_scalar("train/tvloss", tvloss.item(), step)
-                if cfg.tb_save_image:
-                    canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
-                    canvas = canvas.reshape(-1, *canvas.shape[2:])
-                    self.writer.add_image("train/render", canvas, step)
-                self.writer.flush()
+                # self.writer.add_scalar("train/loss", loss.item(), step)
+                # self.writer.add_scalar("train/l1loss", l1loss.item(), step)
+                # self.writer.add_scalar("train/ssimloss", ssimloss.item(), step)
+                # self.writer.add_scalar("train/num_GS", len(self.splats["means"]), step)
+                # self.writer.add_scalar("train/mem", mem, step)
+                # if cfg.depth_loss:
+                #     self.writer.add_scalar("train/depthloss", depthloss.item(), step)
+                # if cfg.use_bilateral_grid:
+                #     self.writer.add_scalar("train/tvloss", tvloss.item(), step)
+                # if cfg.tb_save_image:
+                #     canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
+                #     canvas = canvas.reshape(-1, *canvas.shape[2:])
+                #     self.writer.add_image("train/render", canvas, step)
+                # self.writer.flush()
+
+                # ---- W&B logging (rank0 only) ----
+                if self.wb is not None:
+                    logs = {
+                        "train/loss": float(loss.item()),
+                        "train/l1": float(l1loss.item()),
+                        "train/ssimloss": float(ssimloss.item()),
+                        "train/num_GS": int(len(self.splats["means"])),
+                        "train/mem_gb": float(mem),
+                        "train/sh_degree": int(sh_degree_to_use),
+                    }
+                    # depth loss
+                    if cfg.depth_loss:
+                        logs["train/depthloss"] = float(depthloss.item())
+                    # means lr
+                    if len(schedulers) > 0:
+                        logs["lr/means"] = float(schedulers[0].get_last_lr()[0])
+
+
+                    opa = torch.sigmoid(self.splats["opacities"])
+                    sc  = torch.exp(self.splats["scales"])
+                    vis = (info["radii"] > 0).all(-1).any(0).float().mean()
+
+                    logs.update({
+                    "stats/alpha_mean": float(opa.mean()),
+                    "stats/scale_med":  float(sc.median()),
+                    "stats/vis_frac":   float(vis)
+                    })
+
+                    # Rendering Images
+                    if cfg.wandb_log_images_every > 0 and step % cfg.wandb_log_images_every == 0:
+                        canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
+                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(np.uint8)
+                        logs["train/render"] = wandb.Image(canvas, caption=f"step {step}")
+
+                    self.wb.log(logs, step=step)
+
 
             # save checkpoint before updating the model
             if step in [i - 1 for i in cfg.save_steps] or step == max_steps - 1:
@@ -810,16 +897,59 @@ class Runner:
                 scales = self.splats["scales"]
                 quats = self.splats["quats"]
                 opacities = self.splats["opacities"]
-                export_splats(
-                    means=means,
-                    scales=scales,
-                    quats=quats,
-                    opacities=opacities,
-                    sh0=sh0,
-                    shN=shN,
-                    format="ply",
-                    save_to=f"{self.ply_dir}/point_cloud_{step}.ply",
-                )
+
+
+                @torch.no_grad()
+                def gather_for_export(t: torch.Tensor) -> Optional[torch.Tensor]:
+                    if not dist.is_initialized():
+                        return t.detach().cpu()
+                    # 1) 收集各 rank 的长度
+                    local = t.detach()
+                    n_local = torch.tensor([local.shape[0]], device=local.device, dtype=torch.long)
+                    sizes = [torch.zeros_like(n_local) for _ in range(dist.get_world_size())]
+                    dist.all_gather(sizes, n_local)
+                    sizes = [int(s.item()) for s in sizes]
+                    maxN = max(sizes)
+
+                    # 2) pad 到同长后 all_gather
+                    if local.shape[0] < maxN:
+                        pad = torch.zeros((maxN - local.shape[0], *local.shape[1:]),
+                                        device=local.device, dtype=local.dtype)
+                        local = torch.cat([local, pad], 0)
+
+                    bufs = [torch.empty_like(local) for _ in range(dist.get_world_size())]
+                    dist.all_gather(bufs, local)
+
+                    # 3) 去 pad + 拼接（只在 rank0 返回，其他 rank 返回 None）
+                    if dist.get_rank() == 0:
+                        chunks = [bufs[r][:sizes[r]] for r in range(dist.get_world_size())]
+                        return torch.cat(chunks, 0).cpu()
+                    else:
+                        return None
+
+                # 只在 rank0 写盘：
+                if dist.is_initialized():
+                    means     = gather_for_export(self.splats["means"])
+                    scales    = gather_for_export(self.splats["scales"])
+                    quats     = gather_for_export(self.splats["quats"])
+                    opacities = gather_for_export(self.splats["opacities"])
+                    sh0       = gather_for_export(self.splats["sh0"])
+                    shN       = gather_for_export(self.splats["shN"])
+                    if (means is not None):   # 仅 rank0
+                        export_splats(means, scales, quats, opacities, sh0, shN,
+                                    format="ply", save_to=f"{self.ply_dir}/point_cloud_{step}.ply")
+
+
+                # export_splats(
+                #     means=means,
+                #     scales=scales,
+                #     quats=quats,
+                #     opacities=opacities,
+                #     sh0=sh0,
+                #     shN=shN,
+                #     format="ply",
+                #     save_to=f"{self.ply_dir}/point_cloud_{step}.ply",
+                # )
 
             # Turn Gradients into Sparse Tensor before running optimizer
             if cfg.sparse_grad:
@@ -889,7 +1019,10 @@ class Runner:
 
             # eval the full set
             if step in [i - 1 for i in cfg.eval_steps]:
-                self.eval(step)
+                self.eval(step, stage="train")
+                if cfg.use_val:
+                    self.eval(step, stage="val")
+            if step in [i - 1 for i in cfg.video_render_steps]:
                 self.render_traj(step)
 
             # run compression
@@ -908,33 +1041,58 @@ class Runner:
                 )
                 # Update the scene.
                 self.viewer.update(step, num_train_rays_per_step)
-
+    
     @torch.no_grad()
     def eval(self, step: int, stage: str = "val"):
-        """Entry for evaluation."""
+        """Evaluate metrics on a split with subset sampling and limited image saving."""
         print("Running evaluation...")
         cfg = self.cfg
         device = self.device
         world_rank = self.world_rank
-        world_size = self.world_size
 
-        valloader = torch.utils.data.DataLoader(
-            self.valset, batch_size=1, shuffle=False, num_workers=1
-        )
-        ellipse_time = 0
+        # 选择数据集
+        if stage == "train":
+            dataset = self.trainset
+        else:
+            dataset = self.valset if getattr(self, "valset", None) else None
+            if dataset is None or len(dataset) == 0:
+                dataset = self.trainset  # fallback
+
+        if dataset is None or len(dataset) == 0:
+            if world_rank == 0:
+                print(f"[eval] No data for stage='{stage}'. Skipped.")
+            return
+
+        # ---- 子集抽样：按 stride 抽样，再截断到 max_images ----
+        N = len(dataset)
+        idxs = list(range(0, N, max(1, cfg.eval_stride)))
+        if cfg.eval_max_images is not None:
+            idxs = idxs[: cfg.eval_max_images]
+        N_eval = len(idxs)
+        if N_eval == 0:
+            if world_rank == 0:
+                print(f"[eval] Nothing to evaluate for stage='{stage}'.")
+            return
+
+        ellipse_time = 0.0
         metrics = defaultdict(list)
-        for i, data in enumerate(valloader):
+        saved_cnt = 0
+        last_canvas = None
+
+        for i, idx in enumerate(idxs):
+            # 直接索引 dataset（无需 DataLoader），注意补 batch 维
+            data = dataset[idx]
             camtoworlds = data["camtoworld"].to(device)
             Ks = data["K"].to(device)
             pixels = data["image"].to(device) / 255.0
             masks = data["mask"].to(device) if "mask" in data else None
-            height, width = pixels.shape[1:3]
+            height, width = pixels.shape[0], pixels.shape[1]
 
-            torch.cuda.synchronize()
+            # 渲染
             tic = time.time()
             colors, _, _ = self.rasterize_splats(
-                camtoworlds=camtoworlds,
-                Ks=Ks,
+                camtoworlds=camtoworlds[None] if camtoworlds.ndim == 2 else camtoworlds,
+                Ks=Ks[None] if Ks.ndim == 2 else Ks,
                 width=width,
                 height=height,
                 sh_degree=cfg.sh_degree,
@@ -943,62 +1101,59 @@ class Runner:
                 masks=masks,
             )  # [1, H, W, 3]
             torch.cuda.synchronize()
-            ellipse_time += max(time.time() - tic, 1e-10)
+            ellipse_time += max(time.time() - tic, 1e-6)
 
             colors = torch.clamp(colors, 0.0, 1.0)
-            canvas_list = [pixels, colors]
 
             if world_rank == 0:
-                # write images
-                canvas = torch.cat(canvas_list, dim=2).squeeze(0).cpu().numpy()
-                canvas = (canvas * 255).astype(np.uint8)
-                imageio.imwrite(
-                    f"{self.render_dir}/{stage}_step{step}_{i:04d}.png",
-                    canvas,
-                )
-
-                pixels_p = pixels.permute(0, 3, 1, 2)  # [1, 3, H, W]
-                colors_p = colors.permute(0, 3, 1, 2)  # [1, 3, H, W]
+                # 指标
+                pixels_p = pixels.unsqueeze(0).permute(0, 3, 1, 2)  # [1,3,H,W]
+                colors_p = colors.permute(0, 3, 1, 2)               # [1,3,H,W]
                 metrics["psnr"].append(self.psnr(colors_p, pixels_p))
                 metrics["ssim"].append(self.ssim(colors_p, pixels_p))
                 metrics["lpips"].append(self.lpips(colors_p, pixels_p))
-                if cfg.use_bilateral_grid:
-                    cc_colors = color_correct(colors, pixels)
-                    cc_colors_p = cc_colors.permute(0, 3, 1, 2)  # [1, 3, H, W]
-                    metrics["cc_psnr"].append(self.psnr(cc_colors_p, pixels_p))
-                    metrics["cc_ssim"].append(self.ssim(cc_colors_p, pixels_p))
-                    metrics["cc_lpips"].append(self.lpips(cc_colors_p, pixels_p))
+
+                # 仅保存少量示例
+                if cfg.eval_save_images and saved_cnt < cfg.eval_save_images_n:
+                    canvas = torch.cat([pixels.unsqueeze(0), colors], dim=2).squeeze(0).cpu().numpy()
+                    canvas = (canvas * 255).astype(np.uint8)
+                    imageio.imwrite(f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas)
+                    saved_cnt += 1
+                    last_canvas = canvas
 
         if world_rank == 0:
-            ellipse_time /= len(valloader)
+            ellipse_time /= float(N_eval)
 
-            stats = {k: torch.stack(v).mean().item() for k, v in metrics.items()}
-            stats.update(
-                {
-                    "ellipse_time": ellipse_time,
-                    "num_GS": len(self.splats["means"]),
-                }
+            stats = {k: torch.stack(v).mean().item() for k, v in metrics.items() if len(v) > 0}
+            stats.update({"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])})
+
+            print(
+                f"[{stage}] PSNR: {stats.get('psnr', float('nan')):.3f}, "
+                f"SSIM: {stats.get('ssim', float('nan')):.4f}, "
+                f"LPIPS: {stats.get('lpips', float('nan')):.3f} | "
+                f"Time: {stats['ellipse_time']:.3f}s/img | "
+                f"GS: {stats['num_GS']}"
             )
-            if cfg.use_bilateral_grid:
-                print(
-                    f"PSNR: {stats['psnr']:.3f}, SSIM: {stats['ssim']:.4f}, LPIPS: {stats['lpips']:.3f} "
-                    f"CC_PSNR: {stats['cc_psnr']:.3f}, CC_SSIM: {stats['cc_ssim']:.4f}, CC_LPIPS: {stats['cc_lpips']:.3f} "
-                    f"Time: {stats['ellipse_time']:.3f}s/image "
-                    f"Number of GS: {stats['num_GS']}"
-                )
-            else:
-                print(
-                    f"PSNR: {stats['psnr']:.3f}, SSIM: {stats['ssim']:.4f}, LPIPS: {stats['lpips']:.3f} "
-                    f"Time: {stats['ellipse_time']:.3f}s/image "
-                    f"Number of GS: {stats['num_GS']}"
-                )
-            # save stats as json
+
+            # 保存统计
             with open(f"{self.stats_dir}/{stage}_step{step:04d}.json", "w") as f:
                 json.dump(stats, f)
-            # save stats to tensorboard
-            for k, v in stats.items():
-                self.writer.add_scalar(f"{stage}/{k}", v, step)
-            self.writer.flush()
+
+            # W&B
+            if self.wb is not None:
+                log_dict = {
+                    f"{stage}/psnr": float(stats.get("psnr", float("nan"))),
+                    f"{stage}/ssim": float(stats.get("ssim", float("nan"))),
+                    f"{stage}/lpips": float(stats.get("lpips", float("nan"))),
+                    f"{stage}/num_GS": int(stats["num_GS"]),
+                    f"{stage}/ellipse_time_s_per_img": float(stats["ellipse_time"]),
+                }
+                self.wb.log(log_dict, step=step)
+                try:
+                    if last_canvas is not None:
+                        self.wb.log({f"{stage}/example": wandb.Image(last_canvas)}, step=step)
+                except Exception:
+                    pass
 
     @torch.no_grad()
     def render_traj(self, step: int):
@@ -1025,20 +1180,23 @@ class Runner:
                 bounds=self.parser.bounds * self.scene_scale,
                 spiral_scale_r=self.parser.extconf["spiral_radius_scale"],
             )
+        elif cfg.render_traj_path == "original":
+            camtoworlds_all = self.parser.camtoworlds
         else:
             raise ValueError(
                 f"Render trajectory type not supported: {cfg.render_traj_path}"
             )
-
-        camtoworlds_all = np.concatenate(
-            [
-                camtoworlds_all,
-                np.repeat(
-                    np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0
-                ),
-            ],
-            axis=1,
-        )  # [N, 4, 4]
+        
+        if cfg.render_traj_path != "original":
+            camtoworlds_all = np.concatenate(
+                [
+                    camtoworlds_all,
+                    np.repeat(
+                        np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0
+                    ),
+                ],
+                axis=1,
+            )  # [N, 4, 4]
 
         camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
         K = torch.from_numpy(list(self.parser.Ks_dict.values())[0]).float().to(device)
@@ -1220,9 +1378,9 @@ if __name__ == "__main__":
         "mcmc": (
             "Gaussian splatting training using densification from the paper '3D Gaussian Splatting as Markov Chain Monte Carlo'.",
             Config(
-                init_opa=0.5,
-                init_scale=0.1,
-                opacity_reg=0.01,
+                init_opa=0.8,
+                init_scale=0.25,
+                opacity_reg=0.001,
                 scale_reg=0.01,
                 strategy=MCMCStrategy(verbose=True),
             ),

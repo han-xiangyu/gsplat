@@ -74,8 +74,8 @@ class Parser:
         assert os.path.exists(
             colmap_dir
         ), f"COLMAP directory {colmap_dir} does not exist."
-
-        manager = SceneManager(colmap_dir)
+        image_path = os.path.join(data_dir, "images/")
+        manager = SceneManager(colmap_dir, image_path=image_path)
         manager.load_cameras()
         manager.load_images()
         manager.load_points3D()
@@ -258,6 +258,8 @@ class Parser:
         self.points_rgb = points_rgb  # np.ndarray, (num_points, 3)
         self.point_indices = point_indices  # Dict[str, np.ndarray], image_name -> [M,]
         self.transform = transform  # np.ndarray, (4, 4)
+        self.rel_image_files = [colmap_to_image[f] for f in image_names]  # 例如 "seq/a/b/img_0001.png"
+        self.depth_dir = os.path.join(data_dir, "depth_map_gt")
 
         # load one image to check the size. In the case of tanksandtemples dataset, the
         # intrinsics stored in COLMAP corresponds to 2x upsampled images.
@@ -409,27 +411,40 @@ class Dataset:
             data["mask"] = torch.from_numpy(mask).bool()
 
         if self.load_depths:
+            ## Original: raycast 3D points as depths
             # projected points to image plane to get depths
-            worldtocams = np.linalg.inv(camtoworlds)
-            image_name = self.parser.image_names[index]
-            point_indices = self.parser.point_indices[image_name]
-            points_world = self.parser.points[point_indices]
-            points_cam = (worldtocams[:3, :3] @ points_world.T + worldtocams[:3, 3:4]).T
-            points_proj = (K @ points_cam.T).T
-            points = points_proj[:, :2] / points_proj[:, 2:3]  # (M, 2)
-            depths = points_cam[:, 2]  # (M,)
-            # filter out points outside the image
-            selector = (
-                (points[:, 0] >= 0)
-                & (points[:, 0] < image.shape[1])
-                & (points[:, 1] >= 0)
-                & (points[:, 1] < image.shape[0])
-                & (depths > 0)
-            )
-            points = points[selector]
-            depths = depths[selector]
-            data["points"] = torch.from_numpy(points).float()
-            data["depths"] = torch.from_numpy(depths).float()
+            # worldtocams = np.linalg.inv(camtoworlds)
+            # image_name = self.parser.image_names[index]
+            # point_indices = self.parser.point_indices[image_name]
+            # points_world = self.parser.points[point_indices]
+            # points_cam = (worldtocams[:3, :3] @ points_world.T + worldtocams[:3, 3:4]).T
+            # points_proj = (K @ points_cam.T).T
+            # points = points_proj[:, :2] / points_proj[:, 2:3]  # (M, 2)
+            # depths = points_cam[:, 2]  # (M,)
+            # # filter out points outside the image
+            # selector = (
+            #     (points[:, 0] >= 0)
+            #     & (points[:, 0] < image.shape[1])
+            #     & (points[:, 1] >= 0)
+            #     & (points[:, 1] < image.shape[0])
+            #     & (depths > 0)
+            # )
+            # points = points[selector]
+            # depths = depths[selector]
+            # data["points"] = torch.from_numpy(points).float()
+            # data["depths"] = torch.from_numpy(depths).float()
+
+            ## Alternative: load depth map from preprocessed lidar file
+            depth_rel = os.path.splitext(self.parser.rel_image_files[index])[0] + ".npy"
+            depth_path = os.path.join(self.parser.depth_dir, depth_rel)
+            if not os.path.exists(depth_path):
+                raise FileNotFoundError(f"Depth .npy not found: {depth_path}")
+            depth = np.load(depth_path).astype(np.float32)
+
+            if self.patch_size is not None:
+                depth = depth[y : y + self.patch_size, x : x + self.patch_size]
+
+            data["depths"] = torch.from_numpy(depth).float()
 
         return data
 
