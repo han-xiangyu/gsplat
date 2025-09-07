@@ -42,11 +42,6 @@ import wandb
 import torch.distributed as dist
 
 
-from difix3d.pipeline_difix import DifixPipeline
-from examples.utils import CameraPoseInterpolator
-import random
-from PIL import Image
-from copy import deepcopy
 
 @dataclass
 class Config:
@@ -54,9 +49,9 @@ class Config:
     disable_viewer: bool = True
     # Path to the .pt files. If provide, it will skip training and run evaluation only.
     ckpt: Optional[List[str]] = None
-    resume: bool = False                         # 是否继续训练
-    resume_ckpt: Optional[str] = None            # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
-    resume_dir: Optional[str] = None             # 或者给目录，自动找当前 rank 最新的 ckpt
+    resume: bool = False
+    resume_ckpt: Optional[str] = None
+    resume_dir: Optional[str] = None
     # Name of compression strategy to use
     compression: Optional[Literal["png"]] = None
     # Render trajectory path
@@ -71,10 +66,10 @@ class Config:
     # Every N images there is a test image
     test_every: int = 60
     use_val: bool = True
-    eval_max_images: Optional[int] = 64   # 每次评估最多评多少张（None=全量）
-    eval_stride: int = 50                  # 间隔抽样
-    eval_save_images: bool = True         # 评估时是否落盘示例图
-    eval_save_images_n: int = 2           # 最多保存多少张示例图
+    eval_max_images: Optional[int] = 64
+    eval_stride: int = 50
+    eval_save_images: bool = True
+    eval_save_images_n: int = 2
     # Random crop size for training  (experimental)
     patch_size: Optional[int] = None
     # A global scaler that applies to the scene size related parameters
@@ -98,15 +93,7 @@ class Config:
     eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 50_000, 75_000, 100_000, 125_000, 150_000, 175_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
     save_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
-    # Steps to fix the artifacts
-    fix_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000])
-    fix_mode: str = "extrapolate"
-    fix_distance: float = 1
-    # Weight for iterative 3d update
-    novel_data_lambda: float = 0.3
-    render_format: str = "jpg"   # png or jpg
-    render_batch: int = 4
-    fix_downsample_stride: int = 2
+
 
 
     # Whether to save ply file (storage size can be large)
@@ -538,24 +525,6 @@ class Runner:
                 resume="allow",
             )
 
-                    
-        # Fixer trajectory 
-        self.interpolator = CameraPoseInterpolator(rotation_weight=1.0, translation_weight=1.0)
-
-        self.base_novel_poses = self.parser.camtoworlds[self.trainset.indices]
-        self.current_novel_poses = self.base_novel_poses
-        self.current_parser = self.parser
-
-        self.novelloaders = []
-        self.novelloaders_iter = []
-
-        # ---- Difix: load once per-rank ----
-        self.difix = DifixPipeline.from_pretrained(
-            "nvidia/difix_ref", trust_remote_code=True
-        )
-        self.difix.set_progress_bar_config(disable=True)
-        self.difix.to(self.device if torch.cuda.is_available() else "cpu")
-
         
 
 
@@ -568,15 +537,8 @@ class Runner:
         masks: Optional[Tensor] = None,
         rasterize_mode: Optional[Literal["classic", "antialiased"]] = None,
         camera_model: Optional[Literal["pinhole", "ortho", "fisheye"]] = None,
-        distributed: Optional[bool] = True,
         **kwargs,
     ) -> Tuple[Tensor, Tensor, Dict]:
-
-        if distributed is False:
-            distributed_flag = distributed 
-        else:
-            distributed_flag = self.world_size > 1
-
         means = self.splats["means"]  # [N, 3]
         # quats = F.normalize(self.splats["quats"], dim=-1)  # [N, 4]
         # rasterization does normalization internally
@@ -619,7 +581,7 @@ class Runner:
             ),
             sparse_grad=self.cfg.sparse_grad,
             rasterize_mode=rasterize_mode,
-            distributed=distributed_flag,
+            distributed=self.world_size > 1,
             camera_model=self.cfg.camera_model,
             with_ut=self.cfg.with_ut,
             with_eval3d=self.cfg.with_eval3d,
@@ -708,7 +670,6 @@ class Runner:
                         self.novel_samplers[-1].set_epoch(step)  # 关键！
                     self.novelloaders_iter[-1] = iter(self.novelloaders[-1])
                     data = next(self.novelloaders_iter[-1])
-                is_novel_data = True
 
             camtoworlds = camtoworlds_gt = data["camtoworld"].to(device)  # [1, 4, 4]
             Ks = data["K"].to(device)  # [1, 3, 3]
@@ -783,7 +744,7 @@ class Runner:
                 colors.permute(0, 3, 1, 2), pixels.permute(0, 3, 1, 2), padding="valid"
             )
             loss = l1loss * (1.0 - cfg.ssim_lambda) + ssimloss * cfg.ssim_lambda
-            if cfg.depth_loss and ("depths" in data):
+            if cfg.depth_loss:
 
                 #### Modified: Sample depth map at all valid pixels and use L1 loss
                 depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
@@ -836,7 +797,7 @@ class Runner:
             loss.backward()
 
             desc = f"loss={loss.item():.3f}| " f"sh degree={sh_degree_to_use}| "
-            if cfg.depth_loss and ("depths" in data):
+            if cfg.depth_loss:
                 desc += f"depth loss={depthloss.item():.6f}| "
             if cfg.pose_opt and cfg.pose_noise:
                 # monitor the pose error if we inject noise
@@ -1075,10 +1036,6 @@ class Runner:
             if step in [i - 1 for i in cfg.video_render_steps]:
                 self.render_traj(step)
 
-            # run fixer
-            if step in [i - 1 for i in cfg.fix_steps]:
-                self.fix(step, fix_mode=cfg.fix_mode, distance=cfg.fix_distance, downsample_stride=cfg.fix_downsample_stride)
-
             # run compression
             if cfg.compression is not None and step in [i - 1 for i in cfg.eval_steps]:
                 self.run_compression(step=step)
@@ -1096,143 +1053,6 @@ class Runner:
                 # Update the scene.
                 self.viewer.update(step, num_train_rays_per_step)
 
-    @torch.no_grad()
-    def fix(self, step: int, fix_mode: str = "extrapolate", distance: float = 0.5, downsample_stride: int = 8):
-
-        print("Running fixer...")
-        if len(self.cfg.fix_steps) == 1:
-            novel_poses = self.parser.camtoworlds[self.valset.indices]
-        elif fix_mode == "interpolate":
-            novel_poses = self.interpolator.shift_poses(self.current_novel_poses, self.parser.camtoworlds[self.valset.indices], distance)
-        elif fix_mode == "extrapolate":
-            novel_poses = self.interpolator.horizontal_shift_poses(self.base_novel_poses, distance, downsample_stride)
-        
-        self.render_traj(step, novel_poses)
-        image_paths = [f"{self.render_dir}/novel/{step}/Pred/{i:04d}.jpg" for i in range(len(novel_poses))]
-
-        if len(self.novelloaders) == 0:
-            ref_image_indices = self.interpolator.find_nearest_assignments(self.parser.camtoworlds[self.trainset.indices], novel_poses)
-            ref_image_paths = [self.parser.image_paths[i] for i in np.array(self.trainset.indices)[ref_image_indices]]
-        else:
-            ref_image_indices = self.interpolator.find_nearest_assignments(self.parser.camtoworlds[self.trainset.indices], novel_poses)
-            ref_image_paths = [self.parser.image_paths[i] for i in np.array(self.trainset.indices)[ref_image_indices]]
-        assert len(image_paths) == len(ref_image_paths) == len(novel_poses)
-
-        # for i in tqdm.trange(0, len(novel_poses), desc="Fixing artifacts..."):
-        #     image = Image.open(image_paths[i]).convert("RGB")
-        #     ref_image = Image.open(ref_image_paths[i]).convert("RGB")
-        #     output_image = self.difix(prompt="remove degradation", image=image, ref_image=ref_image, num_inference_steps=1, timesteps=[199], guidance_scale=0.0).images[0]
-        #     output_image = output_image.resize(image.size, Image.LANCZOS)
-        #     os.makedirs(f"{self.render_dir}/novel/{step}/Fixed", exist_ok=True)
-        #     output_image.save(f"{self.render_dir}/novel/{step}/Fixed/{i:04d}.png")
-        #     if ref_image is not None:
-        #         os.makedirs(f"{self.render_dir}/novel/{step}/Ref", exist_ok=True)
-        #         ref_image.save(f"{self.render_dir}/novel/{step}/Ref/{i:04d}.png")
-    
-        # parser = deepcopy(self.parser)
-        # parser.test_every = 0
-        # parser.image_paths = [f"{self.render_dir}/novel/{step}/Fixed/{i:04d}.png" for i in range(len(novel_poses))]
-        # parser.image_names = [os.path.basename(p) for p in parser.image_paths]
-        # parser.alpha_mask_paths = [f"{self.render_dir}/novel/{step}/Alpha/{i:04d}.png" for i in range(len(novel_poses))]
-        # parser.camtoworlds = novel_poses
-        # parser.camera_ids = [parser.camera_ids[0]] * len(novel_poses)
-        
-        # print(f"Adding {len(parser.image_paths)} fixed images to novel dataset...")
-        # dataset = Dataset(parser, split="train")
-        # dataloader = torch.utils.data.DataLoader(
-        #     dataset,
-        #     batch_size=self.cfg.batch_size,
-        #     shuffle=True,
-        #     num_workers=4,
-        #     persistent_workers=True,
-        #     pin_memory=True,
-        #     load_depths=False
-        # )
-        # self.novelloaders = [dataloader]
-        # self.novelloaders_iter = [iter(dataloader)]
-
-        # self.current_novel_poses = novel_poses
-
-        # 4) 分片跑 Difix
-        N = len(novel_poses)
-        if dist.is_initialized():
-            rank = dist.get_rank()
-            world_size = dist.get_world_size()
-            my_ids = list(range(rank, N, world_size))
-        else:
-            my_ids = list(range(N))
-
-        for i in tqdm.trange(0, len(my_ids), desc=f"Fixing artifacts (rank shard)"):
-            idx = my_ids[i]
-            pred_ext = "jpg"
-            pred_p = f"{self.render_dir}/novel/{step}/Pred/{idx:04d}.{pred_ext}"
-            ref_p  = ref_image_paths[idx]
-            image = Image.open(pred_p).convert("RGB")
-            ref_image = Image.open(ref_p).convert("RGB")
-            out = self.difix(prompt="remove degradation", image=image, ref_image=ref_image,
-                            num_inference_steps=1, timesteps=[199], guidance_scale=0.0).images[0]
-            out = out.resize(image.size, Image.LANCZOS)
-
-            os.makedirs(f"{self.render_dir}/novel/{step}/Fixed", exist_ok=True)
-            out.save(f"{self.render_dir}/novel/{step}/Fixed/{idx:04d}.jpg")
-            # 可选：保存Ref方便查看
-            os.makedirs(f"{self.render_dir}/novel/{step}/Ref", exist_ok=True)
-            ref_image.save(f"{self.render_dir}/novel/{step}/Ref/{idx:04d}.jpg")
-
-        if dist.is_initialized():
-            dist.barrier() 
-
-        from copy import deepcopy
-        if dist.is_initialized():
-            world_size = dist.get_world_size()
-            rank = dist.get_rank()
-        else:
-            world_size, rank = 1, 0
-
-        # 路径 & 扩展名（和 render_traj / fix 一致）
-        pred_ext  = "jpg" if self.cfg.render_format == "jpg" else "png"
-        alpha_ext = "jpg"
-
-        N = len(novel_poses)
-        parser = deepcopy(self.parser)
-        parser.test_every = int(1e6)
-        parser.image_paths = [f"{self.render_dir}/novel/{step}/Fixed/{i:04d}.{pred_ext}" for i in range(N)]
-        parser.image_names = [os.path.basename(p) for p in parser.image_paths]
-        parser.alpha_mask_paths = [f"{self.render_dir}/novel/{step}/Alpha/{i:04d}.{alpha_ext}" for i in range(N)]
-        parser.camtoworlds = novel_poses
-        parser.camera_ids  = [parser.camera_ids[0]] * N
-
-        dataset = Dataset(parser, split="train", load_depths=False)
-
-        # 标准分片
-        sampler = None
-        if dist.is_initialized():
-            sampler = torch.utils.data.distributed.DistributedSampler(
-                dataset,
-                num_replicas=world_size,
-                rank=rank,
-                shuffle=True,
-                drop_last=False,   # 如需各 rank 批次数完全一致，可设 True
-            )
-
-        # 注意：这个“临时”loader 不建议开多进程 worker，最稳妥
-        dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.cfg.batch_size,
-            shuffle=(sampler is None),
-            sampler=sampler,
-            num_workers=0,              # 动态创建/销毁的 loader：0 最不容易卡
-            persistent_workers=False,   # 防止旧 worker 占着不退出
-            pin_memory=True,
-        )
-
-        # 保存到实例里供训练循环用
-        self.novelloaders = [dataloader]
-        self.novelloaders_iter = [iter(dataloader)]
-        self.novel_samplers = [sampler]   # 新增：保存 sampler，后面 set_epoch 用
-        self.current_novel_poses = novel_poses
-
-        torch.cuda.empty_cache()
     
     @torch.no_grad()
     def eval(self, step: int, stage: str = "val"):
@@ -1347,24 +1167,28 @@ class Runner:
                 except Exception:
                     pass
 
+
+
     @torch.no_grad()
     def render_traj(self, step: int, camtoworlds_all=None, tag="novel"):
-        """Fast trajectory rendering with sharding + batching + RGB-only."""
+        """Entry for trajectory rendering."""
+        if camtoworlds_all is None and self.cfg.disable_video:
+            return
+        print("Running trajectory rendering...")
         cfg = self.cfg
         device = self.device
 
-        if camtoworlds_all is None and cfg.disable_video:
-            return
-        print("Running trajectory rendering...")
-
-        # 1) 生成相机轨迹（与你原来一致，但不做深度相关操作）
         if camtoworlds_all is None:
             camtoworlds_all = self.parser.camtoworlds[5:-5]
             if cfg.render_traj_path == "interp":
-                camtoworlds_all = generate_interpolated_path(camtoworlds_all, 1)
+                camtoworlds_all = generate_interpolated_path(
+                    camtoworlds_all, 1
+                )  # [N, 3, 4]
             elif cfg.render_traj_path == "ellipse":
                 height = camtoworlds_all[:, 2, 3].mean()
-                camtoworlds_all = generate_ellipse_path_z(camtoworlds_all, height=height)
+                camtoworlds_all = generate_ellipse_path_z(
+                    camtoworlds_all, height=height
+                )  # [N, 3, 4]
             elif cfg.render_traj_path == "spiral":
                 camtoworlds_all = generate_spiral_path(
                     camtoworlds_all,
@@ -1374,175 +1198,72 @@ class Runner:
             elif cfg.render_traj_path == "original":
                 camtoworlds_all = self.parser.camtoworlds
             else:
-                raise ValueError(f"Render trajectory type not supported: {cfg.render_traj_path}")
-
-            # 补最后一行变成 [N,4,4]
+                raise ValueError(
+                    f"Render trajectory type not supported: {cfg.render_traj_path}"
+                )
+            
             if cfg.render_traj_path != "original":
                 camtoworlds_all = np.concatenate(
-                    [camtoworlds_all,
-                    np.repeat(np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0)],
-                    axis=1
-                )
+                    [
+                        camtoworlds_all,
+                        np.repeat(
+                            np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0
+                        ),
+                    ],
+                    axis=1,
+                )  # [N, 4, 4]
 
         camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
-
-        # 2) 相机内参与分辨率
         K = torch.from_numpy(list(self.parser.Ks_dict.values())[0]).float().to(device)
         width, height = list(self.parser.imsize_dict.values())[0]
 
-        # 4) 分片（真正避免多卡重复渲）
-        rank = dist.get_rank() if dist.is_initialized() else 0
-        world = dist.get_world_size() if dist.is_initialized() else 1
-        if world > 1:
-            my_ids = list(range(rank, len(camtoworlds_all), world))
-        else:
-            my_ids = list(range(len(camtoworlds_all)))
 
-        # 5) 输出目录（每个 rank 都写自己份，最终 barrier 保证完整）
-        pred_dir  = f"{self.render_dir}/{tag}/{step}/Pred"
-        alpha_dir = f"{self.render_dir}/{tag}/{step}/Alpha"
-        if len(my_ids) > 0:
-            os.makedirs(pred_dir, exist_ok=True)
-            os.makedirs(alpha_dir, exist_ok=True)
 
-        # 6) 批量渲染（RGB-only）
-        B = max(1, int(cfg.render_batch))
-        pbar = tqdm.trange(0, len(my_ids), B, desc=f"Rendering trajectory (rank {rank})",
-                        disable=(world > 1 and rank != 0))
+        rank = dist.get_rank() if (dist.is_initialized()) else 0
 
-        for s in pbar:
-            ids = my_ids[s:s+B]
-            c2w = camtoworlds_all[ids]                 # [B,4,4]
-            Ks  = K.expand(len(ids), -1, -1)           # [B,3,3]
+        # # save to video
+        # video_dir = f"{cfg.result_dir}/videos"
+        # os.makedirs(video_dir, exist_ok=True)
+        # writer = imageio.get_writer(f"{video_dir}/traj_{step}.mp4", fps=30)
+        for i in tqdm.trange(len(camtoworlds_all), desc="Rendering trajectory"):
+            camtoworlds = camtoworlds_all[i : i + 1]
+            Ks = K[None]
 
             renders, alphas, _ = self.rasterize_splats(
-                camtoworlds=c2w,
+                camtoworlds=camtoworlds,
                 Ks=Ks,
                 width=width,
                 height=height,
                 sh_degree=cfg.sh_degree,
                 near_plane=cfg.near_plane,
                 far_plane=cfg.far_plane,
-                render_mode="RGB",                     # 只算 RGB（关键加速）
-                distributed=False
-            )  # [B,H,W,3] and [B,H,W,1]
+                render_mode="RGB+ED",
+            )  # [1, H, W, 4]
+            colors = torch.clamp(renders[..., 0:3], 0.0, 1.0)  # [1, H, W, 3]
+            depths = renders[..., 3:4]  # [1, H, W, 1]
+            depths = (depths - depths.min()) / (depths.max() - depths.min())
+            canvas_list = [colors, depths.repeat(1, 1, 1, 3)]
 
-            # 转为 uint8（一次性批量搬运）
-            colors_u8 = (torch.clamp(renders[..., :3], 0.0, 1.0) * 255).byte().cpu().numpy()
-            alphas_u8 = (alphas[..., 0] * 255).byte().cpu().numpy()
-
-            # 7) 快速写盘：Pred 用 JPEG/PNG（PNG 设置为 0 压缩），Alpha 用无压缩 PNG
-            for j, fid in enumerate(ids):
-                pred_path = f"{pred_dir}/{fid:04d}.{ 'jpg' if cfg.render_format=='jpg' else 'png' }"
-                img = Image.fromarray(colors_u8[j])
-                if cfg.render_format == "jpg":
-                    # 高速 JPEG：关闭 optimize，质量 95
-                    img.save(pred_path, quality=95, subsampling=0, optimize=False)
-                else:
-                    # 高速 PNG：0 压缩
-                    img.save(pred_path, compress_level=0, optimize=False)
-
-                aimg = Image.fromarray(alphas_u8[j], mode='L')
-                alpha_path = f"{alpha_dir}/{fid:04d}.jpg"
-                aimg.save(alpha_path, quality=95, subsampling=0, optimize=False)
-
-
-
-    # @torch.no_grad()
-    # def render_traj(self, step: int, camtoworlds_all=None, tag="novel"):
-    #     """Entry for trajectory rendering."""
-    #     if camtoworlds_all is None and self.cfg.disable_video:
-    #         return
-    #     print("Running trajectory rendering...")
-    #     cfg = self.cfg
-    #     device = self.device
-
-    #     if camtoworlds_all is None:
-    #         camtoworlds_all = self.parser.camtoworlds[5:-5]
-    #         if cfg.render_traj_path == "interp":
-    #             camtoworlds_all = generate_interpolated_path(
-    #                 camtoworlds_all, 1
-    #             )  # [N, 3, 4]
-    #         elif cfg.render_traj_path == "ellipse":
-    #             height = camtoworlds_all[:, 2, 3].mean()
-    #             camtoworlds_all = generate_ellipse_path_z(
-    #                 camtoworlds_all, height=height
-    #             )  # [N, 3, 4]
-    #         elif cfg.render_traj_path == "spiral":
-    #             camtoworlds_all = generate_spiral_path(
-    #                 camtoworlds_all,
-    #                 bounds=self.parser.bounds * self.scene_scale,
-    #                 spiral_scale_r=self.parser.extconf["spiral_radius_scale"],
-    #             )
-    #         elif cfg.render_traj_path == "original":
-    #             camtoworlds_all = self.parser.camtoworlds
-    #         else:
-    #             raise ValueError(
-    #                 f"Render trajectory type not supported: {cfg.render_traj_path}"
-    #             )
-            
-    #         if cfg.render_traj_path != "original":
-    #             camtoworlds_all = np.concatenate(
-    #                 [
-    #                     camtoworlds_all,
-    #                     np.repeat(
-    #                         np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0
-    #                     ),
-    #                 ],
-    #                 axis=1,
-    #             )  # [N, 4, 4]
-
-    #     camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
-    #     K = torch.from_numpy(list(self.parser.Ks_dict.values())[0]).float().to(device)
-    #     width, height = list(self.parser.imsize_dict.values())[0]
-
-
-
-    #     rank = dist.get_rank() if (dist.is_initialized()) else 0
-
-    #     # # save to video
-    #     # video_dir = f"{cfg.result_dir}/videos"
-    #     # os.makedirs(video_dir, exist_ok=True)
-    #     # writer = imageio.get_writer(f"{video_dir}/traj_{step}.mp4", fps=30)
-    #     for i in tqdm.trange(len(camtoworlds_all), desc="Rendering trajectory"):
-    #         camtoworlds = camtoworlds_all[i : i + 1]
-    #         Ks = K[None]
-
-    #         renders, alphas, _ = self.rasterize_splats(
-    #             camtoworlds=camtoworlds,
-    #             Ks=Ks,
-    #             width=width,
-    #             height=height,
-    #             sh_degree=cfg.sh_degree,
-    #             near_plane=cfg.near_plane,
-    #             far_plane=cfg.far_plane,
-    #             render_mode="RGB+ED",
-    #         )  # [1, H, W, 4]
-    #         colors = torch.clamp(renders[..., 0:3], 0.0, 1.0)  # [1, H, W, 3]
-    #         depths = renders[..., 3:4]  # [1, H, W, 1]
-    #         depths = (depths - depths.min()) / (depths.max() - depths.min())
-    #         canvas_list = [colors, depths.repeat(1, 1, 1, 3)]
-
-    #         # write images
-    #         canvas = torch.cat(canvas_list, dim=2).squeeze(0).cpu().numpy()
-    #         canvas = (canvas * 255).astype(np.uint8)
-    #         # writer.append_data(canvas)
-    #         if self.world_size == 1 or (self.world_size > 1 and rank==0):
-    #             # Write for Difix3d fixer
-    #             colors_path = f"{self.render_dir}/{tag}/{step}/Pred/{i:04d}.png"
-    #             os.makedirs(os.path.dirname(colors_path), exist_ok=True)
-    #             colors_canvas = colors.cpu().numpy()
-    #             colors_canvas = (colors.squeeze(0).cpu().numpy() * 255).astype(np.uint8)
-    #             imageio.imwrite(colors_path, colors_canvas)
+            # write images
+            canvas = torch.cat(canvas_list, dim=2).squeeze(0).cpu().numpy()
+            canvas = (canvas * 255).astype(np.uint8)
+            # writer.append_data(canvas)
+            if self.world_size == 1 or (self.world_size > 1 and rank==0):
+                # Write for Difix3d fixer
+                colors_path = f"{self.render_dir}/{tag}/{step}/Pred/{i:04d}.png"
+                os.makedirs(os.path.dirname(colors_path), exist_ok=True)
+                colors_canvas = colors.cpu().numpy()
+                colors_canvas = (colors.squeeze(0).cpu().numpy() * 255).astype(np.uint8)
+                imageio.imwrite(colors_path, colors_canvas)
                 
-    #             alphas_path = f"{self.render_dir}/{tag}/{step}/Alpha/{i:04d}.png"
-    #             os.makedirs(os.path.dirname(alphas_path), exist_ok=True)
-    #             alphas_canvas = alphas.squeeze(0).float().cpu().numpy()
-    #             alphas_canvas = (alphas_canvas * 255).astype(np.uint8)
-    #             Image.fromarray(alphas_canvas.squeeze(), mode='L').save(alphas_path)
+                alphas_path = f"{self.render_dir}/{tag}/{step}/Alpha/{i:04d}.png"
+                os.makedirs(os.path.dirname(alphas_path), exist_ok=True)
+                alphas_canvas = alphas.squeeze(0).float().cpu().numpy()
+                alphas_canvas = (alphas_canvas * 255).astype(np.uint8)
+                Image.fromarray(alphas_canvas.squeeze(), mode='L').save(alphas_path)
 
-    #     # writer.close()
-    #     # print(f"Video saved to {video_dir}/traj_{step}.mp4")
+        # writer.close()
+        # print(f"Video saved to {video_dir}/traj_{step}.mp4")
 
     @torch.no_grad()
     def run_compression(self, step: int):

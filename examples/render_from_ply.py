@@ -158,10 +158,26 @@ class RenderConfig:
     antialiased: bool = False
     packed: bool = False
     near_plane: float = 0.01
-    far_plane: float = 200.0
+    far_plane: float = 1000.0
     device: str = "cuda"
     # 缺失通道的占位颜色 (RGB 0-255)
     placeholder_rgb: Tuple[int, int, int] = (0, 0, 0)
+    channels: Tuple[int, ...] = (1,)
+
+
+def get_gt_path(parser, image_names, i: int) -> Optional[str]:
+    # 若 Parser 自带完整路径，优先用它（最稳）
+    if hasattr(parser, "image_paths"):
+        arr = getattr(parser, "image_paths")
+        if isinstance(arr, (list, tuple)) and len(arr) == len(image_names):
+            return str(arr[i])
+    # 否则按常见目录名在 data_dir 下兜底
+    name = image_names[i]
+    for sub in ["images", "rgb", "imgs"]:
+        p = Path(cfg.data_dir) / sub / name
+        if p.exists():
+            return str(p)
+    return None
 
 
 # ============ 主流程：按 (loc, trav) 输出视频，帧内拼接(2|1|3) × (RGB|DEPTH) ============
@@ -223,7 +239,8 @@ def render_multichannel(cfg: RenderConfig):
 
 
     # 4) 按 (loc, trav) 输出视频
-    order = [2, 1, 3]  # 左、中、右 的 channel 顺序
+    # order = [2, 1, 3]  # 左、中、右 的 channel 顺序
+    order = list(cfg.channels)
     placeholder_rgb = np.full((H, W, 3), np.array(cfg.placeholder_rgb, dtype=np.uint8), dtype=np.uint8)
     placeholder_depth = np.zeros((H, W, 3), dtype=np.uint8)
 
@@ -236,6 +253,7 @@ def render_multichannel(cfg: RenderConfig):
 
         for fidx, frame_id in tqdm(enumerate(frames_sorted, 1), desc="Processing images", total=len(frames_sorted)):
             rgb_tiles: List[np.ndarray] = []
+            gt_tiles: List[np.ndarray] = [] 
             depth_tensors: List[Optional[torch.Tensor]] = []  # 保存 raw depth，用于统一归一化
             rgb_raw_cache: List[Optional[torch.Tensor]] = []
 
@@ -244,6 +262,7 @@ def render_multichannel(cfg: RenderConfig):
                 key = (loc, trav, frame_id, ch)
                 if key not in index:
                     rgb_tiles.append(placeholder_rgb.copy())
+                    gt_tiles.append(placeholder_rgb.copy())
                     depth_tensors.append(None)
                     rgb_raw_cache.append(None)
                     continue
@@ -295,6 +314,15 @@ def render_multichannel(cfg: RenderConfig):
                 rgb_tiles.append(rgb_np)
                 depth_tensors.append(depth)
                 rgb_raw_cache.append(rgb)
+                gt_path = get_gt_path(parser, image_names, i)
+                if gt_path is not None:
+                    gt_img = imageio.imread(gt_path)
+                    # 统一到 H×W×3
+                    if gt_img.shape[2] == 4:
+                        gt_img = gt_img[..., :3]
+                    gt_tiles.append(gt_img.astype(np.uint8))
+                else:
+                    gt_tiles.append(placeholder_rgb.copy())
 
             # 4.2 统一归一化深度（基于“原始 depth”的视差 1/depth；同一帧三列共享分位阈值）
             # 聚合全帧（3列）的有效原始 depth，得到稳健的分位阈值
@@ -334,9 +362,10 @@ def render_multichannel(cfg: RenderConfig):
                 depth_tiles.append(depth_rgb)
 
             # 4.3 组装 2×3 拼图：上排 RGB, 下排 Depth；列顺序 2|1|3
-            top = np.concatenate(rgb_tiles, axis=1)
+            top = np.concatenate(gt_tiles, axis=1)
+            mid = np.concatenate(rgb_tiles, axis=1)
             bottom = np.concatenate(depth_tiles, axis=1)
-            canvas = np.concatenate([top, bottom], axis=0)
+            canvas = np.concatenate([top, mid, bottom], axis=0)
 
             # 写帧
             writer.append_data(canvas)
