@@ -97,7 +97,7 @@ class Config:
     # Steps to evaluate the model
     eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 50_000, 75_000, 100_000, 125_000, 150_000, 175_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [100, 100_000, 200_000, 300_000, 400_000])
+    save_steps: List[int] = field(default_factory=lambda: [100_000, 120_000, 200_000, 300_000, 400_000])
     # # Steps to fix the artifacts
     # fix_steps: List[int] = field(default_factory=lambda: [300_000])
     # fix_mode: str = "extrapolate"
