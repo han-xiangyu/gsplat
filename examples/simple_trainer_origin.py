@@ -97,7 +97,7 @@ class Config:
     # Steps to evaluate the model
     eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 50_000, 75_000, 100_000, 125_000, 150_000, 175_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
+    save_steps: List[int] = field(default_factory=lambda: [100, 100_000, 200_000, 300_000, 400_000])
     # # Steps to fix the artifacts
     # fix_steps: List[int] = field(default_factory=lambda: [300_000])
     # fix_mode: str = "extrapolate"
@@ -643,6 +643,53 @@ class Runner:
         max_steps = cfg.max_steps
         init_step = 0
 
+        if cfg.resume: 
+            resume_path = None 
+            if cfg.resume_ckpt: 
+                resume_path = cfg.resume_ckpt.format(rank=self.world_rank) 
+            elif cfg.resume_dir: # 自动在目录中查找最新的 checkpoint 
+                ckpt_dir = Path(cfg.resume_dir) / "ckpts" 
+                if ckpt_dir.exists(): # 查找格式为 ckpt_{step}_rank{rank}.pt 的文件 
+                    pattern = f"ckpt_*_rank{self.world_rank}.pt" 
+                    ckpts = sorted(ckpt_dir.glob(pattern), 
+                                   key=lambda f: int(f.stem.split('_')[1]) # 按 step 排序 
+                                   ) 
+                    if ckpts: 
+                        resume_path = ckpts[-1] # 取最新的一个
+
+            if resume_path and os.path.exists(resume_path): 
+                print(f"***** Resuming training from checkpoint: {resume_path} *****") 
+                checkpoint = torch.load(resume_path, map_location=self.device) 
+                # 恢复模型 (splats) 
+                self.splats.load_state_dict(checkpoint['splats']) # 恢复优化器状态 (非常重要！) 
+                # 注意：这里假设 checkpoint 保存了所有优化器的状态 
+                # # 你的代码已经保存了 splats, 但没有保存 optimizers, 需要在保存时也加上 
+                # # 为了向下兼容，我们先假设没有保存优化器，但强烈建议加上 
+                if 'optimizers' in checkpoint: 
+                    for name, opt in self.optimizers.items(): 
+                        if name in checkpoint['optimizers']: 
+                            opt.load_state_dict(checkpoint['optimizers'][name]) 
+                # # 恢复相机姿态优化器 
+                if cfg.pose_opt and 'pose_adjust' in checkpoint: 
+                    pose_adjust_state = checkpoint['pose_adjust'] 
+                    if world_size > 1: 
+                        self.pose_adjust.module.load_state_dict(pose_adjust_state) 
+                    else: 
+                        self.pose_adjust.load_state_dict(pose_adjust_state) 
+                # 恢复 appearance 优化器 
+                if cfg.app_opt and 'app_module' in checkpoint: 
+                    app_module_state = checkpoint['app_module'] 
+                    if world_size > 1: 
+                        self.app_module.module.load_state_dict(app_module_state) 
+                    else: self.app_module.load_state_dict(app_module_state) 
+                    
+                # 更新起始步数 
+                init_step = checkpoint['step'] + 1 
+                print(f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****") 
+            else: 
+                print("***** Resume enabled, but no checkpoint found. Starting from scratch. *****")
+
+
         schedulers = [
             # means has a learning rate schedule, that end at 0.01 of the initial value
             torch.optim.lr_scheduler.ExponentialLR(
@@ -672,6 +719,12 @@ class Runner:
                     ]
                 )
             )
+        if init_step > 0: 
+            print(f"Fast-forwarding schedulers to step {init_step}...") 
+            # 手动将 scheduler 快进到正确的 step 
+            for _ in range(init_step): 
+                for scheduler in schedulers: 
+                    scheduler.step()
 
         trainloader = torch.utils.data.DataLoader(
             self.trainset,
@@ -910,7 +963,10 @@ class Runner:
                     "w",
                 ) as f:
                     json.dump(stats, f)
-                data = {"step": step, "splats": self.splats.state_dict()}
+                data = {"step": step, 
+                        "splats": self.splats.state_dict(),
+                        #"optimizers": {name: opt.state_dict() for name, opt in self.optimizers.items()}
+                }
                 if cfg.pose_opt:
                     if world_size > 1:
                         data["pose_adjust"] = self.pose_adjust.module.state_dict()
