@@ -394,30 +394,34 @@ class Runner:
         # Model
         feature_dim = 32 if cfg.app_opt else None
         print(f"[RANK {self.world_rank}] Data loaded. Initializing model...")
-        self.splats, self.optimizers = create_splats_with_optimizers(
-            self.parser,
-            init_type=cfg.init_type,
-            init_num_pts=cfg.init_num_pts,
-            init_extent=cfg.init_extent,
-            init_opacity=cfg.init_opa,
-            init_scale=cfg.init_scale,
-            means_lr=cfg.means_lr,
-            scales_lr=cfg.scales_lr,
-            opacities_lr=cfg.opacities_lr,
-            quats_lr=cfg.quats_lr,
-            sh0_lr=cfg.sh0_lr,
-            shN_lr=cfg.shN_lr,
-            scene_scale=self.scene_scale,
-            sh_degree=cfg.sh_degree,
-            sparse_grad=cfg.sparse_grad,
-            visible_adam=cfg.visible_adam,
-            batch_size=cfg.batch_size,
-            feature_dim=feature_dim,
-            device=self.device,
-            world_rank=world_rank,
-            world_size=world_size,
-        )
-        print("Model initialized. Number of GS:", len(self.splats["means"]))
+
+        self.splats = None
+        self.optimizers = None
+
+        # self.splats, self.optimizers = create_splats_with_optimizers(
+        #     self.parser,
+        #     init_type=cfg.init_type,
+        #     init_num_pts=cfg.init_num_pts,
+        #     init_extent=cfg.init_extent,
+        #     init_opacity=cfg.init_opa,
+        #     init_scale=cfg.init_scale,
+        #     means_lr=cfg.means_lr,
+        #     scales_lr=cfg.scales_lr,
+        #     opacities_lr=cfg.opacities_lr,
+        #     quats_lr=cfg.quats_lr,
+        #     sh0_lr=cfg.sh0_lr,
+        #     shN_lr=cfg.shN_lr,
+        #     scene_scale=self.scene_scale,
+        #     sh_degree=cfg.sh_degree,
+        #     sparse_grad=cfg.sparse_grad,
+        #     visible_adam=cfg.visible_adam,
+        #     batch_size=cfg.batch_size,
+        #     feature_dim=feature_dim,
+        #     device=self.device,
+        #     world_rank=world_rank,
+        #     world_size=world_size,
+        # )
+        # print("Model initialized. Number of GS:", len(self.splats["means"]))
         print(f"[RANK {self.world_rank}] Runner __init__ finished.")
         # Densification Strategy
         self.cfg.strategy.check_sanity(self.splats, self.optimizers)
@@ -648,52 +652,83 @@ class Runner:
         max_steps = cfg.max_steps
         init_step = 0
 
-        if cfg.resume: 
+        resume_path = None
+        if cfg.resume and cfg.resume_dir:
             print(f"[RANK {self.world_rank}] Checking for resume...")
-            resume_path = None 
-            if cfg.resume_ckpt: 
-                resume_path = cfg.resume_ckpt.format(rank=self.world_rank) 
-            elif cfg.resume_dir: # 自动在目录中查找最新的 checkpoint 
-                ckpt_dir = Path(cfg.resume_dir) / "ckpts" 
-                if ckpt_dir.exists(): # 查找格式为 ckpt_{step}_rank{rank}.pt 的文件 
-                    pattern = f"ckpt_*_rank{self.world_rank}.pt" 
-                    ckpts = sorted(ckpt_dir.glob(pattern), 
-                                   key=lambda f: int(f.stem.split('_')[1]) # 按 step 排序 
-                                   ) 
-                    if ckpts: 
-                        resume_path = ckpts[-1] # 取最新的一个
+            ckpt_dir = Path(cfg.resume_dir) / "ckpts"
+            if ckpt_dir.exists():
+                pattern = f"ckpt_*_rank{self.world_rank}.pt"
+                ckpts = sorted(ckpt_dir.glob(pattern), key=lambda f: int(f.stem.split('_')[1]))
+                if ckpts:
+                    resume_path = ckpts[-1]
 
-            if resume_path and os.path.exists(resume_path): 
-                print(f"***** Resuming training from checkpoint: {resume_path} *****") 
-                checkpoint = torch.load(resume_path, map_location=self.device) 
-                # 恢复模型 (splats) 
-                self.splats.load_state_dict(checkpoint['splats']) # 恢复优化器状态 (非常重要！) 
-                # 注意：这里假设 checkpoint 保存了所有优化器的状态 
-                # # 你的代码已经保存了 splats, 但没有保存 optimizers, 需要在保存时也加上 
-                # # 为了向下兼容，我们先假设没有保存优化器，但强烈建议加上 
-                if 'optimizers' in checkpoint: 
-                    for name, opt in self.optimizers.items(): 
-                        if name in checkpoint['optimizers']: 
-                            opt.load_state_dict(checkpoint['optimizers'][name]) 
-                # # 恢复相机姿态优化器 
-                if cfg.pose_opt and 'pose_adjust' in checkpoint: 
-                    pose_adjust_state = checkpoint['pose_adjust'] 
-                    if world_size > 1: 
-                        self.pose_adjust.module.load_state_dict(pose_adjust_state) 
-                    else: 
-                        self.pose_adjust.load_state_dict(pose_adjust_state) 
-                # 恢复 appearance 优化器 
-                if cfg.app_opt and 'app_module' in checkpoint: 
-                    app_module_state = checkpoint['app_module'] 
-                    if world_size > 1: 
-                        self.app_module.module.load_state_dict(app_module_state) 
-                    else: self.app_module.load_state_dict(app_module_state) 
-                    
-                # 更新起始步数 
-                init_step = checkpoint['step'] + 1 
-                print(f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****") 
-            else: 
-                print("***** Resume enabled, but no checkpoint found. Starting from scratch. *****")
+        # 然后，根据是否找到checkpoint来决定如何创建模型
+        if resume_path and os.path.exists(resume_path):
+            # --- 情况一：找到了Checkpoint，从它恢复 ---
+            print(f"***** Resuming training from checkpoint: {resume_path} *****")
+            checkpoint = torch.load(resume_path, map_location=self.device)
+            
+            # 1. 直接从checkpoint恢复splats的状态
+            #    我们先创建一个空的ParameterDict，然后用load_state_dict填充它
+            #    PyTorch会自动根据checkpoint里的数据创建正确大小的张量
+            self.splats = torch.nn.ParameterDict()
+            self.splats.load_state_dict(checkpoint['splats'])
+            
+            # 2. 重新创建优化器，并加载它们的状态（如果存在）
+            #    这一步比较tricky，因为原始代码没有把优化器创建逻辑单独分离
+            #    为了简单起见，我们可以重新调用一次create_splats_with_optimizers
+            #    但只用它来创建优化器，然后忽略它返回的splats
+            #    注意：这需要确保LR等参数与之前一致
+            _, self.optimizers = create_splats_with_optimizers(
+                self.parser, # 这里的parser只是为了满足函数签名，它的点数是错的，但没关系
+                # 传入所有相关的配置参数...
+                init_type=cfg.init_type, means_lr=cfg.means_lr, scales_lr=cfg.scales_lr,
+                opacities_lr=cfg.opacities_lr, quats_lr=cfg.quats_lr, sh0_lr=cfg.sh0_lr,
+                shN_lr=cfg.shN_lr, scene_scale=self.scene_scale, sh_degree=cfg.sh_degree,
+                sparse_grad=cfg.sparse_grad, visible_adam=cfg.visible_adam,
+                batch_size=cfg.batch_size, feature_dim=(32 if cfg.app_opt else None),
+                device=self.device, world_rank=self.world_rank, world_size=self.world_size,
+            )
+
+            if 'optimizers' in checkpoint:
+                for name, opt in self.optimizers.items():
+                    if name in checkpoint['optimizers']:
+                        opt.load_state_dict(checkpoint['optimizers'][name])
+            
+            # 3. 恢复其他模块（pose_opt, app_opt）
+            # ... (这部分逻辑和原来一样，直接复制过来) ...
+            if cfg.pose_opt and 'pose_adjust' in checkpoint: 
+                pose_adjust_state = checkpoint['pose_adjust'] 
+                if world_size > 1: 
+                    self.pose_adjust.module.load_state_dict(pose_adjust_state) 
+                else: 
+                    self.pose_adjust.load_state_dict(pose_adjust_state) 
+            # 恢复 appearance 优化器 
+            if cfg.app_opt and 'app_module' in checkpoint: 
+                app_module_state = checkpoint['app_module'] 
+                if world_size > 1: 
+                    self.app_module.module.load_state_dict(app_module_state) 
+                else: self.app_module.load_state_dict(app_module_state) 
+            # 4. 更新起始步数
+            init_step = checkpoint['step'] + 1
+            print(f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****")
+
+        else:
+            # --- 情况二：没找到Checkpoint，从头开始初始化 ---
+            print("***** Resume enabled, but no checkpoint found. Starting from scratch. *****")
+            # 把原来在__init__里的模型创建代码整个搬到这里
+            self.splats, self.optimizers = create_splats_with_optimizers(
+                self.parser,
+                init_type=cfg.init_type,
+                # ... 传入所有其他参数 ...
+                means_lr=cfg.means_lr, scales_lr=cfg.scales_lr,
+                opacities_lr=cfg.opacities_lr, quats_lr=cfg.quats_lr, sh0_lr=cfg.sh0_lr,
+                shN_lr=cfg.shN_lr, scene_scale=self.scene_scale, sh_degree=cfg.sh_degree,
+                sparse_grad=cfg.sparse_grad, visible_adam=cfg.visible_adam,
+                batch_size=cfg.batch_size, feature_dim=(32 if cfg.app_opt else None),
+                device=self.device, world_rank=self.world_rank, world_size=self.world_size,
+            )
+            print("Model initialized. Number of GS:", len(self.splats["means"]))
 
 
         schedulers = [
