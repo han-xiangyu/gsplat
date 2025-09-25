@@ -664,11 +664,13 @@ class Runner:
             # --- 情况一：找到了Checkpoint，从它恢复 ---
             print(f"***** Resuming training from checkpoint: {resume_path} *****")
             checkpoint = torch.load(resume_path, map_location=self.device)
-            
+            splat_state_dict = checkpoint['splats']
             # 1. 直接从checkpoint恢复splats的状态
-            #    我们先创建一个空的ParameterDict，然后用load_state_dict填充它
-            #    PyTorch会自动根据checkpoint里的数据创建正确大小的张量
-            self.splats = torch.nn.ParameterDict()
+            self.splats = torch.nn.ParameterDict(
+                {
+                    name: torch.nn.Parameter(tensor) for name, tensor in splat_state_dict.items()
+                }
+            ).to(self.device)
             self.splats.load_state_dict(checkpoint['splats'])
             
             # 2. 重新创建优化器，并加载它们的状态（如果存在）
