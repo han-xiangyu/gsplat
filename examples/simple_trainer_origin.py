@@ -54,9 +54,9 @@ class Config:
     disable_viewer: bool = True
     # Path to the .pt files. If provide, it will skip training and run evaluation only.
     ckpt: Optional[List[str]] = None
-    resume: bool = False                         # 是否继续训练
-    resume_ckpt: Optional[str] = None            # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
-    resume_dir: Optional[str] = None             # 或者给目录，自动找当前 rank 最新的 ckpt
+    resume: bool = True                         # 是否继续训练
+    resume_ckpt: Optional[str] = True            # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
+    resume_dir: Optional[str] = True             # 或者给目录，自动找当前 rank 最新的 ckpt
     # Name of compression strategy to use
     compression: Optional[Literal["png"]] = None
     # Render trajectory path
@@ -97,7 +97,7 @@ class Config:
     # Steps to evaluate the model
     eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 50_000, 75_000, 100_000, 125_000, 150_000, 175_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [100_000, 120_000, 200_000, 300_000, 400_000])
+    save_steps: List[int] = field(default_factory=lambda: [100, 46_000, 92_000, 138_000, 184_000, 200_000, 300_000, 400_000])
     # # Steps to fix the artifacts
     # fix_steps: List[int] = field(default_factory=lambda: [300_000])
     # fix_mode: str = "extrapolate"
@@ -112,7 +112,8 @@ class Config:
     # Whether to save ply file (storage size can be large)
     save_ply: bool = True
     # Steps to save the model as ply
-    ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
+    # ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
+    ply_steps: List[int] = field(default_factory=lambda: [46_000, 92_000, 138_000, 184_000, 200_000])
     # Steps to save the model as ply
     video_render_steps: List[int] = field(default_factory=lambda: [])
     # Whether to disable video generation during training and evaluation
