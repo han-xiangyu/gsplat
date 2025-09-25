@@ -423,7 +423,7 @@ class Runner:
         # print("Model initialized. Number of GS:", len(self.splats["means"]))
         #print(f"[RANK {self.world_rank}] Runner __init__ finished.")
         # Densification Strategy
-        self.cfg.strategy.check_sanity(self.splats, self.optimizers)
+        # self.cfg.strategy.check_sanity(self.splats, self.optimizers)
 
         if isinstance(self.cfg.strategy, DefaultStrategy):
             self.strategy_state = self.cfg.strategy.initialize_state(
@@ -727,6 +727,7 @@ class Runner:
             )
             print("Model initialized. Number of GS:", len(self.splats["means"]))
 
+        self.cfg.strategy.check_sanity(self.splats, self.optimizers)
 
         schedulers = [
             # means has a learning rate schedule, that end at 0.01 of the initial value
