@@ -55,8 +55,8 @@ class Config:
     # Path to the .pt files. If provide, it will skip training and run evaluation only.
     ckpt: Optional[List[str]] = None
     resume: bool = True                         # 是否继续训练
-    resume_ckpt: Optional[str] = True            # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
-    resume_dir: Optional[str] = True             # 或者给目录，自动找当前 rank 最新的 ckpt
+    resume_ckpt: Optional[str] = None         # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
+    resume_dir: Optional[str] = None          # 或者给目录，自动找当前 rank 最新的 ckpt
     # Name of compression strategy to use
     compression: Optional[Literal["png"]] = None
     # Render trajectory path
