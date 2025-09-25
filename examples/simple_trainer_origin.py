@@ -347,7 +347,7 @@ class Runner:
     def __init__(
         self, local_rank: int, world_rank, world_size: int, cfg: Config
     ) -> None:
-        print(f"[RANK {self.world_rank}] Runner __init__ started.")
+        print(f"Runner __init__ started.")
         set_random_seed(42 + local_rank)
 
         self.cfg = cfg
@@ -373,7 +373,7 @@ class Runner:
         self.writer = SummaryWriter(log_dir=f"{cfg.result_dir}/tb")
 
         # Load data: Training data should contain initial points and colors.
-        print(f"[RANK {self.world_rank}] Loading data...")
+        print(f"Loading data...")
         self.parser = Parser(
             data_dir=cfg.data_dir,
             factor=cfg.data_factor,
@@ -393,7 +393,6 @@ class Runner:
 
         # Model
         feature_dim = 32 if cfg.app_opt else None
-        print(f"[RANK {self.world_rank}] Data loaded. Initializing model...")
 
         self.splats = None
         self.optimizers = None
@@ -638,7 +637,6 @@ class Runner:
         return render_colors, render_alphas, info
 
     def train(self):
-        print(f"[RANK {self.world_rank}] Train method started.")
         cfg = self.cfg
         device = self.device
         world_rank = self.world_rank
@@ -654,7 +652,6 @@ class Runner:
 
         resume_path = None
         if cfg.resume and cfg.resume_dir:
-            print(f"[RANK {self.world_rank}] Checking for resume...")
             ckpt_dir = Path(cfg.resume_dir) / "ckpts"
             if ckpt_dir.exists():
                 pattern = f"ckpt_*_rank{self.world_rank}.pt"
