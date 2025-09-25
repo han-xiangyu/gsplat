@@ -421,7 +421,7 @@ class Runner:
         #     world_size=world_size,
         # )
         # print("Model initialized. Number of GS:", len(self.splats["means"]))
-        print(f"[RANK {self.world_rank}] Runner __init__ finished.")
+        #print(f"[RANK {self.world_rank}] Runner __init__ finished.")
         # Densification Strategy
         self.cfg.strategy.check_sanity(self.splats, self.optimizers)
 
@@ -764,7 +764,7 @@ class Runner:
                 for scheduler in schedulers: 
                     scheduler.step()
 
-        print(f"[RANK {self.world_rank}] Creating DataLoader...")
+        #print(f"[RANK {self.world_rank}] Creating DataLoader...")
         trainloader = torch.utils.data.DataLoader(
             self.trainset,
             batch_size=cfg.batch_size,
@@ -777,7 +777,7 @@ class Runner:
 
         # Training loop.
         global_tic = time.time()
-        print(f"[RANK {self.world_rank}] Starting training loop...")
+        #print(f"[RANK {self.world_rank}] Starting training loop...")
         pbar = tqdm.tqdm(range(init_step, max_steps))
         for step in pbar:
             if not cfg.disable_viewer:
