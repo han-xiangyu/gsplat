@@ -194,7 +194,7 @@ def render_multichannel(cfg: RenderConfig):
     device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
 
     # 1) 读相机与文件名（文件名用于解析 loc/trav/ch/frame）
-    parser = Parser(data_dir=cfg.data_dir, factor=1, normalize=False, test_every=60)
+    parser = Parser(data_dir=cfg.data_dir, factor=1, normalize=False, test_every=1000000)
     image_names = None
     for cand in ["image_paths", "image_names", "filenames", "images"]:
         if hasattr(parser, cand):
