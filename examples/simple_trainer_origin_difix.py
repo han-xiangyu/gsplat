@@ -40,7 +40,7 @@ from gsplat_viewer import GsplatViewer, GsplatRenderTabState
 from nerfview import CameraState, RenderTabState, apply_float_colormap
 import wandb
 import torch.distributed as dist
-
+from utils.system_utils import generate_wandb_id
 
 from difix3d.pipeline_difix import DifixPipeline
 from examples.utils import CameraPoseInterpolator
@@ -540,9 +540,10 @@ class Runner:
                 group=self.cfg.wandb_group,
                 name=run_name,
                 dir=wandb_dir,
+                id=generate_wandb_id(self.cfg.wandb_name),
                 mode=self.cfg.wandb_mode,
                 config=vars(self.cfg),
-                resume="allow",
+                resume="auto",
             )
 
                     
@@ -788,7 +789,7 @@ class Runner:
                 self.viewer.lock.acquire()
                 tic = time.time()
 
-            if len(self.novelloaders) == 0 or random.random() < 0.9:
+            if len(self.novelloaders) == 0 or random.random() < 0.1:
                 try:
                     data = next(trainloader_iter)
                 except StopIteration:
