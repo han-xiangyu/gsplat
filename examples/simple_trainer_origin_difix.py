@@ -40,7 +40,7 @@ from gsplat_viewer import GsplatViewer, GsplatRenderTabState
 from nerfview import CameraState, RenderTabState, apply_float_colormap
 import wandb
 import torch.distributed as dist
-from utils.system_utils import generate_wandb_id
+from system_utils import generate_wandb_id
 
 from difix3d.pipeline_difix import DifixPipeline
 from examples.utils import CameraPoseInterpolator
