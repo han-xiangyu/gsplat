@@ -40,7 +40,7 @@ from gsplat_viewer import GsplatViewer, GsplatRenderTabState
 from nerfview import CameraState, RenderTabState, apply_float_colormap
 import wandb
 import torch.distributed as dist
-
+from utils.system_utils import generate_wandb_id
 
 from difix3d.pipeline_difix import DifixPipeline
 from examples.utils import CameraPoseInterpolator
@@ -93,7 +93,7 @@ class Config:
     steps_scaler: float = 1.0
 
     # Number of training steps
-    max_steps: int = 200_000
+    max_steps: int = 150_000
     # Steps to evaluate the model
     eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 110_000, 120_000, 130_000, 140_000, 150_000, 170_000, 180_000, 190_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
@@ -540,9 +540,10 @@ class Runner:
                 group=self.cfg.wandb_group,
                 name=run_name,
                 dir=wandb_dir,
+                id=generate_wandb_id(cfg.experiment_name),
                 mode=self.cfg.wandb_mode,
                 config=vars(self.cfg),
-                resume="allow",
+                resume="auto",
             )
 
                     
