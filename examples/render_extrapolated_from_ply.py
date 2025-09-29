@@ -7,7 +7,7 @@ from typing import Optional, Tuple, Literal, Dict, List
 
 import torch
 from gsplat.rendering import rasterization
-from datasets.colmap import Parser
+from datasets_utils.colmap import Parser
 from tqdm import tqdm
 import cv2
 

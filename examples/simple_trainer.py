@@ -15,8 +15,8 @@ import tqdm
 import tyro
 import viser
 import yaml
-from datasets.colmap import Dataset, Parser
-from datasets.traj import (
+from datasets_utils.colmap import Dataset, Parser
+from datasets_utils.traj import (
     generate_ellipse_path_z,
     generate_interpolated_path,
     generate_spiral_path,
