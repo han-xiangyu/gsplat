@@ -540,7 +540,7 @@ class Runner:
                 group=self.cfg.wandb_group,
                 name=run_name,
                 dir=wandb_dir,
-                id=generate_wandb_id(cfg.experiment_name),
+                id=generate_wandb_id(cfg.wandb_name),
                 mode=self.cfg.wandb_mode,
                 config=vars(self.cfg),
                 resume="auto",
