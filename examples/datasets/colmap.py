@@ -443,7 +443,7 @@ class Dataset:
                 if self.patch_size is not None:
                     depth = depth[y : y + self.patch_size, x : x + self.patch_size]
 
-            data["depths"] = torch.from_numpy(depth).float()
+                data["depths"] = torch.from_numpy(depth).float()
 
         return data
 
