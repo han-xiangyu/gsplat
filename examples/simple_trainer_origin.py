@@ -967,7 +967,7 @@ class Runner:
                         "train/sh_degree": int(sh_degree_to_use),
                     }
                     # depth loss
-                    if cfg.depth_loss:
+                    if cfg.depth_loss and ("depths" in data):
                         logs["train/depthloss"] = float(depthloss.item())
                     # means lr
                     if len(schedulers) > 0:
