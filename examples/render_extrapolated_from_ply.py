@@ -197,6 +197,7 @@ class RenderConfig:
     # 缺失通道的占位颜色 (RGB 0-255)
     placeholder_rgb: Tuple[int, int, int] = (0, 0, 0)
     channels: Tuple[int, ...] = (1,)
+    out_img_dir: str = "extrapolated_render"
 
 
 def get_gt_path(parser, image_names, i: int) -> Optional[str]:
