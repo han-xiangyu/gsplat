@@ -438,7 +438,7 @@ class Dataset:
             depth_rel = os.path.splitext(self.parser.rel_image_files[index])[0] + ".npy"
             depth_path = os.path.join(self.parser.depth_dir, depth_rel)
 
-            if self.path.exits(depth_path):
+            if os.path.exists(depth_path):
                 depth = np.load(depth_path).astype(np.float32)
                 if self.patch_size is not None:
                     depth = depth[y : y + self.patch_size, x : x + self.patch_size]
