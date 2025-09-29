@@ -269,8 +269,11 @@ def render_multichannel(cfg: RenderConfig):
 
                 i = index[key]
                 c2w = camtoworlds[i : i + 1]  # [1,4,4]
-                # 如需逐帧K，这里可改为 Ks = Ks_all[i:i+1]
-                Ks = K_tensor
+                
+                # 逐帧K
+                camera_id = parser.camera_ids[i]
+                K_np = np.asarray(parser.Ks_dict[camera_id], dtype=np.float32)
+                Ks = torch.from_numpy(K_np).float().to(device)[None]
 
                 # 拿参数（与训练一致：exp/scales, sigmoid/opacity）
                 means = splats["means"]

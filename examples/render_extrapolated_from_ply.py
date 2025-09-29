@@ -11,6 +11,40 @@ from datasets.colmap import Parser
 from tqdm import tqdm
 import cv2
 
+def horizontal_shift_poses(training_poses, distance):
+    """
+    Shift training poses horizontally.
+    
+    Args:
+        training_poses: [N, 4, 4] array of training camera poses
+        distance: float, the step size to move training pose toward testing pose
+        
+    Returns:
+        novel_poses: [M, 4, 4] array of shifted poses
+    """
+    novel_poses = []
+
+    for train_pose in training_poses:
+        # Calculate horizontal shift
+        right_vector = train_pose[:3, 0]
+        center = train_pose[:3, 3]
+        right_center = center + distance * right_vector
+        left_center  = center - distance * right_vector
+
+        # Construct shifted pose
+        right_shifted_pose = np.eye(4)
+        right_shifted_pose[:3, :3] = train_pose[:3, :3]
+        right_shifted_pose[:3, 3] = right_center
+
+        left_shifted_pose = np.eye(4)
+        left_shifted_pose[:3, :3] = train_pose[:3, :3]
+        left_shifted_pose[:3, 3] = left_center
+
+        novel_poses.append(right_shifted_pose)
+        novel_poses.append(left_shifted_pose)
+
+    return np.array(novel_poses)
+
 
 def apply_jet_cmap01(x01: np.ndarray, reverse: bool = True) -> np.ndarray:
     """
@@ -269,8 +303,11 @@ def render_multichannel(cfg: RenderConfig):
 
                 i = index[key]
                 c2w = camtoworlds[i : i + 1]  # [1,4,4]
-                # 如需逐帧K，这里可改为 Ks = Ks_all[i:i+1]
-                Ks = K_tensor
+                
+                # 逐帧K
+                camera_id = parser.camera_ids[i]
+                K_np = np.asarray(parser.Ks_dict[camera_id], dtype=np.float32)
+                Ks = torch.from_numpy(K_np).float().to(device)[None]
 
                 # 拿参数（与训练一致：exp/scales, sigmoid/opacity）
                 means = splats["means"]
@@ -382,13 +419,96 @@ def render_multichannel(cfg: RenderConfig):
         print(f"[Done] 保存视频：{video_path}")
 
 
-# ============ CLI ============
+# ===== 2) 按 *_left / *_right 渲染落盘 =====
+@torch.no_grad()
+def render_shifted_pairs(cfg: RenderConfig, distance: float = 1.5):
+    """
+    对每个原始帧生成左右两个位姿并渲染到 png：
+      <orig_name>_left.png / <orig_name>_right.png
+    """
+    os.makedirs(cfg.out_img_dir, exist_ok=True)
+    device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
 
+    # 读取数据与名字
+    parser = Parser(data_dir=cfg.data_dir, factor=1, normalize=False, test_every=60)
+    image_names = None
+    for cand in ["image_paths", "image_names", "filenames", "images"]:
+        if hasattr(parser, cand):
+            arr = getattr(parser, cand)
+            if isinstance(arr, (list, tuple)) and len(arr) > 0:
+                image_names = [os.path.basename(str(x)) for x in arr]
+                break
+    if image_names is None:
+        img_dir = Path(cfg.data_dir) / "images"
+        image_names = sorted([p.name for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]])
+
+    camtoworlds_np = ensure_4x4(parser.camtoworlds)   # [N,4,4]
+    N = camtoworlds_np.shape[0]
+    assert len(image_names) == N, "image_names 与 cam 数量不一致"
+
+    K_global, (W, H) = pick_K_and_size(parser)
+
+    # 加载 splats（与你现有逻辑保持一致）
+    splats, meta = load_splats_from_ply(cfg.ply_path, device=device)
+    K_total = 1 + splats["shN"].shape[1]
+    sh_degree = int(math.isqrt(K_total)) - 1
+    assert (sh_degree + 1) ** 2 == K_total
+
+    means = splats["means"]
+    quats = splats["quats"]
+    scales = torch.exp(splats["scales"]) if meta["scale_is_log"] else splats["scales"]
+    opacities = torch.sigmoid(splats["opacities"]) if meta["opacity_is_logit"] else splats["opacities"]
+    colors = torch.cat([splats["sh0"], splats["shN"]], 1)
+
+    # 生成左右位姿（世界系：沿 c2w 的 x 轴）
+    shifted = horizontal_shift_poses(camtoworlds_np, distance=distance)
+    # shifted 的顺序是 [右, 左, 右, 左, ...] 与采样后的帧一一对应
+    # 我们同时需要原帧索引来命名文件
+    kept_indices = np.arange(0, N, 1, dtype=int)
+
+    pbar = tqdm(range(len(kept_indices)), desc="Shifted render")
+    for k in pbar:
+        i = kept_indices[k]
+        base = image_names[i]
+        stem, ext = os.path.splitext(base)
+        if ext == "":
+            ext = ".png"
+
+        # 逐帧相机内参
+        camera_id = parser.camera_ids[i]
+        K_np = np.asarray(parser.Ks_dict[camera_id], dtype=np.float32)
+        Ks = torch.from_numpy(K_np).float().to(device)[None]
+
+        # 取这帧的 right/left 两个外插位姿
+        right_pose = shifted[2*k + 0: 2*k + 1]  # [1,4,4]
+        left_pose  = shifted[2*k + 1: 2*k + 2]  # [1,4,4]
+
+        for tag, c2w_np in [("right", right_pose), ("left", left_pose)]:
+            c2w = torch.from_numpy(c2w_np).float().to(device)
+            viewmats = torch.linalg.inv(c2w)
+
+            renders, alphas, info = rasterization(
+                means=means, quats=quats, scales=scales, opacities=opacities, colors=colors,
+                viewmats=viewmats, Ks=Ks, width=W, height=H,
+                packed=cfg.packed, absgrad=False, sparse_grad=False,
+                rasterize_mode="antialiased" if cfg.antialiased else "classic",
+                distributed=False, camera_model=cfg.camera_model,
+                with_ut=False, with_eval3d=False,
+                render_mode=cfg.render_mode_rgb,  # "RGB" 或 "RGB+ED"
+                near_plane=cfg.near_plane, far_plane=cfg.far_plane, sh_degree=sh_degree,
+            )
+
+            rgb = torch.clamp(renders[..., :3], 0.0, 1.0)
+            rgb_u8 = (rgb[0].cpu().numpy() * 255).astype(np.uint8)
+            out_path = os.path.join(cfg.out_img_dir, f"{stem}_{tag}{ext}")
+            imageio.imwrite(out_path, rgb_u8)
+
+    print(f"[Done] 共渲染 {len(kept_indices)*2} 张 *_left/*_right 到 {cfg.out_img_dir}")
+
+
+# ============ CLI ============
 if __name__ == "__main__":
-    try:
-        import tyro
-    except:
-        raise ImportError("请 `pip install tyro` 以使用命令行参数")
+    import tyro
     cfg = tyro.cli(RenderConfig)
-    render_multichannel(cfg)
-    print(f"渲染完成，结果保存在 {cfg.result_dir}")
+
+    render_shifted_pairs(cfg, distance=1.5)
