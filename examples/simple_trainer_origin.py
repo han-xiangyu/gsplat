@@ -93,11 +93,11 @@ class Config:
     steps_scaler: float = 1.0
 
     # Number of training steps
-    max_steps: int = 150_000
+    max_steps: int = 300_000
     # Steps to evaluate the model
     eval_steps: List[int] = field(default_factory=lambda: [10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 110_000, 120_000, 130_000, 140_000, 150_000, 170_000, 180_000, 190_000, 200_000, 250_000, 300_000, 350_000, 400_000])
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [40_000, 80_000, 120_000, 160_000, 200_000, 300_000, 400_000])
+    save_steps: List[int] = field(default_factory=lambda: [47_000, 80_000, 120_000, 160_000, 200_000, 300_000, 400_000])
     # # Steps to fix the artifacts
     # fix_steps: List[int] = field(default_factory=lambda: [300_000])
     # fix_mode: str = "extrapolate"
@@ -113,7 +113,7 @@ class Config:
     save_ply: bool = True
     # Steps to save the model as ply
     # ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
-    ply_steps: List[int] = field(default_factory=lambda: [47_000, 80_000, 120_000, 160_000, 200_000])
+    ply_steps: List[int] = field(default_factory=lambda: [40_000, 80_000, 120_000, 160_000, 200_000])
     # Steps to save the model as ply
     video_render_steps: List[int] = field(default_factory=lambda: [])
     # Whether to disable video generation during training and evaluation
