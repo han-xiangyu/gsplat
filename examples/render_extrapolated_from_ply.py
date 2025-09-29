@@ -495,7 +495,7 @@ def render_shifted_pairs(cfg: RenderConfig, distance: float = 1.5):
                 rasterize_mode="antialiased" if cfg.antialiased else "classic",
                 distributed=False, camera_model=cfg.camera_model,
                 with_ut=False, with_eval3d=False,
-                render_mode=cfg.render_mode_rgb,  # "RGB" 或 "RGB+ED"
+                render_mode="RGB+ED",
                 near_plane=cfg.near_plane, far_plane=cfg.far_plane, sh_degree=sh_degree,
             )
 
