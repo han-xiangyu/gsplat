@@ -30,10 +30,9 @@ def apply_jet_cmap01(x01: np.ndarray, reverse: bool = True) -> np.ndarray:
 
 
 # 1) 正则表达式：匹配 loc, trav, ch, frame
-PAT = re.compile(
-    r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)_difix3d\.(?:png|jpg|jpeg)$",
-    re.IGNORECASE,
-)
+PAT = re.compile( r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)(?:_.*)?\.(?:png|jpg|jpeg)$", re.IGNORECASE, )
+
+
 
 # 2) 解析函数：缺失 loc 时给默认值 0
 def parse_meta(name: str):
