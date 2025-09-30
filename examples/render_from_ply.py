@@ -30,8 +30,7 @@ def apply_jet_cmap01(x01: np.ndarray, reverse: bool = True) -> np.ndarray:
 
 
 # 1) 正则表达式：匹配 loc, trav, ch, frame
-PAT = re.compile( r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)(?:_.*)?\.(?:png|jpg|jpeg)$", re.IGNORECASE, )
-
+PAT = re.compile( r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)\.(?:png|jpg|jpeg)$", re.IGNORECASE, )
 
 
 # 2) 解析函数：缺失 loc 时给默认值 0
@@ -222,7 +221,8 @@ def render_multichannel(cfg: RenderConfig):
     for i, name in enumerate(image_names):
         meta = parse_meta(name)
         if meta is None:
-            raise ValueError(f"文件名不符合规范: {name}")
+            #raise ValueError(f"文件名不符合规范: {name}")
+            continue
         key = (meta["loc"], meta["trav"], meta["frame"], meta["ch"])
         index[key] = i
         lg = (meta["loc"], meta["trav"])
