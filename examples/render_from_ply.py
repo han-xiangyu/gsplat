@@ -31,7 +31,7 @@ def apply_jet_cmap01(x01: np.ndarray, reverse: bool = True) -> np.ndarray:
 
 # 1) 正则表达式：匹配 loc, trav, ch, frame
 PAT = re.compile(
-    r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)\.(?:png|jpg|jpeg)$",
+    r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)_difix3d\.(?:png|jpg|jpeg)$",
     re.IGNORECASE,
 )
 
