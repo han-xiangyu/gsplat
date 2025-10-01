@@ -214,7 +214,7 @@ class RenderConfig:
     data_dir: str
     ply_path: str
     result_dir: str = "results/render_from_ply_multich"
-    fps: int = 30
+    fps: int = 15
     save_frames: bool = False
     camera_model: Literal["pinhole", "ortho", "fisheye"] = "pinhole"
     antialiased: bool = False
@@ -229,7 +229,7 @@ class RenderConfig:
 
 
     # === 正弦摆动配置 ===
-    traj: Literal["shifted_pairs", "horizontal_sine"] = "shifted_pairs"
+    traj: Literal["shifted_pairs", "horizontal_sine"] = "horizontal_sine"
     amplitude: float = 1.5     # 摆动幅度（世界坐标系，单位与场景一致）
     period: int = 60           # 每个正弦周期对应的“帧索引”步长
     sine_suffix: str = "sine"  # 输出文件名后缀
@@ -273,9 +273,21 @@ def render_shifted_pairs(cfg: RenderConfig, distance: float = 1.5):
         img_dir = Path(cfg.data_dir) / "images"
         image_names = sorted([p.name for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]])
 
-    camtoworlds_np = ensure_4x4(parser.camtoworlds)   # [N,4,4]
-    N = camtoworlds_np.shape[0]
-    assert len(image_names) == N, "image_names 与 cam 数量不一致"
+    # camtoworlds_np = ensure_4x4(parser.camtoworlds)   # [N,4,4]
+    # N = camtoworlds_np.shape[0]
+    # assert len(image_names) == N, "image_names 与 cam 数量不一致"
+
+
+    keep_idx = [i for i, n in enumerate(image_names) if not _is_aug(n)]
+    image_names = [image_names[i] for i in keep_idx]
+
+    # 位姿与 camera_ids 同步子集化
+    camtoworlds_all = ensure_4x4(parser.camtoworlds)
+    camtoworlds_np = camtoworlds_all[keep_idx, :, :]
+    camera_ids = [parser.camera_ids[i] for i in keep_idx]
+
+    N = len(image_names)
+    assert camtoworlds_np.shape[0] == N == len(camera_ids)
 
     K_global, (W, H) = pick_K_and_size(parser)
 
@@ -292,57 +304,13 @@ def render_shifted_pairs(cfg: RenderConfig, distance: float = 1.5):
     colors = torch.cat([splats["sh0"], splats["shN"]], 1)
 
 
-    # --------------------------------- Horizontal Shift -------------------------------------
-    if cfg.traj == 'shifted_pairs':
-        # 生成左右位姿（世界系：沿 c2w 的 x 轴）
-        shifted = horizontal_shift_poses(camtoworlds_np, distance=distance)
-        # shifted 的顺序是 [右, 左, 右, 左, ...] 与采样后的帧一一对应
-        # 我们同时需要原帧索引来命名文件
-        kept_indices = np.arange(0, N, 1, dtype=int)
-
-        pbar = tqdm(range(len(kept_indices)), desc="Shifted render")
-        for k in pbar:
-            i = kept_indices[k]
-            base = image_names[i]
-            stem, ext = os.path.splitext(base)
-            if ext == "":
-                ext = ".png"
-
-            # 逐帧相机内参
-            camera_id = parser.camera_ids[i]
-            K_np = np.asarray(parser.Ks_dict[camera_id], dtype=np.float32)
-            Ks = torch.from_numpy(K_np).float().to(device)[None]
-
-            # 取这帧的 right/left 两个外插位姿
-            right_pose = shifted[2*k + 0: 2*k + 1]  # [1,4,4]
-            left_pose  = shifted[2*k + 1: 2*k + 2]  # [1,4,4]
-
-            for tag, c2w_np in [("right", right_pose), ("left", left_pose)]:
-                c2w = torch.from_numpy(c2w_np).float().to(device)
-                viewmats = torch.linalg.inv(c2w)
-
-                renders, alphas, info = rasterization(
-                    means=means, quats=quats, scales=scales, opacities=opacities, colors=colors,
-                    viewmats=viewmats, Ks=Ks, width=W, height=H,
-                    packed=cfg.packed, absgrad=False, sparse_grad=False,
-                    rasterize_mode="antialiased" if cfg.antialiased else "classic",
-                    distributed=False, camera_model=cfg.camera_model,
-                    with_ut=False, with_eval3d=False,
-                    render_mode="RGB+ED",
-                    near_plane=cfg.near_plane, far_plane=cfg.far_plane, sh_degree=sh_degree,
-                )
-
-                rgb = torch.clamp(renders[..., :3], 0.0, 1.0)
-                rgb_u8 = (rgb[0].cpu().numpy() * 255).astype(np.uint8)
-                out_path = os.path.join(cfg.out_img_dir, f"{stem}_{tag}{ext}")
-                imageio.imwrite(out_path, rgb_u8)
-
-        print(f"[Done] 共渲染 {len(kept_indices)*2} 张 *_left/*_right 到 {cfg.out_img_dir}")
-
-
+    videos_dir = os.path.join(cfg.result_dir, "extrapolated_videos")
+    os.makedirs(videos_dir, exist_ok=True)
+    video_path = os.path.join(videos_dir, f"extrapolated_{cfg.sine_suffix}.mp4")
+    writer = imageio.get_writer(video_path, fps=cfg.fps)
 
     # --------------------------------- Sine Wave -------------------------------------
-    elif cfg.traj == 'horizontal_sine':
+    if cfg.traj == 'horizontal_sine':
         mod_c2w_np = horizontal_sine_poses(camtoworlds_np, amplitude=cfg.amplitude, period=cfg.period)
 
         pbar = tqdm(range(N), desc="Horizontal-sine render")
@@ -353,7 +321,7 @@ def render_shifted_pairs(cfg: RenderConfig, distance: float = 1.5):
                 ext = ".png"
 
             # 逐帧相机内参
-            camera_id = parser.camera_ids[i]
+            camera_id = camera_ids[i]
             K_np = np.asarray(parser.Ks_dict[camera_id], dtype=np.float32)
             Ks = torch.from_numpy(K_np).float().to(device)[None]
 
@@ -375,9 +343,11 @@ def render_shifted_pairs(cfg: RenderConfig, distance: float = 1.5):
             rgb = torch.clamp(renders[..., :3], 0.0, 1.0)
             rgb_u8 = (rgb[0].cpu().numpy() * 255).astype(np.uint8)
             out_path = os.path.join(cfg.out_img_dir, f"{stem}_{cfg.sine_suffix}{ext}")
-            imageio.imwrite(out_path, rgb_u8)
+            # imageio.imwrite(out_path, rgb_u8)
+            writer.append_data(rgb_u8)
 
-        print(f"[Done] 共渲染 {N} 张 *_{cfg.sine_suffix} 到 {cfg.out_img_dir}")
+        writer.close()
+        print(f"[Done] 已保存视频：{video_path}")
     else:
         raise ValueError(f"Unknown trajectory type {cfg.traj}")
 
