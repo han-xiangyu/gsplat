@@ -221,6 +221,9 @@ class Config:
     # Whether use fused-bilateral grid
     use_fused_bilagrid: bool = False
 
+    # 添加梯度累积步数。设为 4 意味着每4步更新一次模型，显存压力显著降低。
+    grad_accum_steps: int = 4
+
     wandb_project: Optional[str] = None
     wandb_group: Optional[str] = None 
     wandb_name: Optional[str] = None 
@@ -821,11 +824,12 @@ class Runner:
         )
         trainloader_iter = iter(trainloader)
 
+        print(f"[RANK {world_rank}] Initialized successfully. Entering training loop at step {init_step}...")
         # Training loop.
         global_tic = time.time()
-        #print(f"[RANK {self.world_rank}] Starting training loop...")
         pbar = tqdm.tqdm(range(init_step, max_steps))
         for step in pbar:
+            print(f"[RANK {world_rank}] Step {step}: Loop start.")
             if not cfg.disable_viewer:
                 while self.viewer.state == "paused":
                     time.sleep(0.01)
@@ -833,11 +837,13 @@ class Runner:
                 tic = time.time()
 
             try:
+                print(f"[RANK {world_rank}] Step {step}: Waiting for data...")
                 data = next(trainloader_iter)
             except StopIteration:
                 trainloader_iter = iter(trainloader)
                 data = next(trainloader_iter)
 
+            print(f"[RANK {world_rank}] Step {step}: Data loaded.")
             camtoworlds = camtoworlds_gt = data["camtoworld"].to(device)  # [1, 4, 4]
             Ks = data["K"].to(device)  # [1, 3, 3]
             pixels = data["image"].to(device) / 255.0  # [1, H, W, 3]
@@ -861,6 +867,9 @@ class Runner:
             # sh schedule
             sh_degree_to_use = min(step // cfg.sh_degree_interval, cfg.sh_degree)
 
+            if world_rank == 0 and step % 10 == 0: # 每10步打印一次，避免刷屏
+                print(f"\nStep {step}: Starting forward pass. "
+                      f"Max memory allocated: {torch.cuda.max_memory_allocated() / 1024**3:.2f} GB")
             # forward
             with torch.cuda.amp.autocast(enabled=True):
                 renders, alphas, info = self.rasterize_splats(
@@ -931,6 +940,9 @@ class Runner:
                         + cfg.scale_reg * torch.abs(torch.exp(self.splats["scales"])).mean()
                     )
 
+            loss = loss / cfg.grad_accum_steps
+            print(f"[RANK {world_rank}] Step {step}: Forward pass done. Starting backward pass...")
+
             self.cfg.strategy.step_pre_backward(
                 params=self.splats,
                 optimizers=self.optimizers,
@@ -941,7 +953,6 @@ class Runner:
 
             #loss.backward()
             scaler.scale(loss).backward()
-
             desc = f"loss={loss.item():.3f}| " f"sh degree={sh_degree_to_use}| "
             if cfg.depth_loss and ("depths" in data):
                 desc += f"depth loss={depthloss.item():.6f}| "
@@ -950,15 +961,7 @@ class Runner:
                 pose_err = F.l1_loss(camtoworlds_gt, camtoworlds)
                 desc += f"pose err={pose_err.item():.6f}| "
             pbar.set_description(desc)
-
-            # write images (gt and render)
-            # if world_rank == 0 and step % 800 == 0:
-            #     canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
-            #     canvas = canvas.reshape(-1, *canvas.shape[2:])
-            #     imageio.imwrite(
-            #         f"{self.render_dir}/train_rank{self.world_rank}.png",
-            #         (canvas * 255).astype(np.uint8),
-            #     )
+            print(f"[RANK {world_rank}] Step {step}: Backward pass done.")
 
             if world_rank == 0 and cfg.tb_every > 0 and step % cfg.tb_every == 0:
                 mem = torch.cuda.max_memory_allocated() / 1024**3
@@ -1012,8 +1015,7 @@ class Runner:
                         logs["train/render"] = wandb.Image(canvas, caption=f"step {step}")
 
                     self.wb.log(logs, step=step)
-
-
+            
             # save checkpoint before updating the model
             if step in [i - 1 for i in cfg.save_steps] or step == max_steps - 1:
                 mem = torch.cuda.max_memory_allocated() / 1024**3
@@ -1128,45 +1130,49 @@ class Runner:
                         is_coalesced=len(Ks) == 1,
                     )
 
-            if cfg.visible_adam:
-                gaussian_cnt = self.splats.means.shape[0]
-                if cfg.packed:
-                    visibility_mask = torch.zeros_like(
-                        self.splats["opacities"], dtype=bool
-                    )
-                    visibility_mask.scatter_(0, info["gaussian_ids"], 1)
-                else:
-                    visibility_mask = (info["radii"] > 0).all(-1).any(0)
+            if (step + 1) % cfg.grad_accum_steps == 0:
+                # --- 【诊断PRINT 8】 ---
+                if world_rank == 0: print(f"Step {step}: Performing gradient update.") # 诊断PRINT
 
-            # optimize
-            # --- 【代码改进】将优化器更新流程重新组织 ---
-            # 2. 对所有优化器执行 scaler.step()
-            for optimizer in self.optimizers.values():
                 if cfg.visible_adam:
-                    scaler.step(optimizer, mask=visibility_mask)
-                else:
-                    scaler.step(optimizer)
-            
-            for optimizer in self.pose_optimizers:
-                scaler.step(optimizer)
-            for optimizer in self.app_optimizers:
-                scaler.step(optimizer)
-            for optimizer in self.bil_grid_optimizers:
-                scaler.step(optimizer)
-            
-            # 3. 在所有 optimizer.step() 调用之后，执行一次 scaler.update()
-            scaler.update()
+                    gaussian_cnt = self.splats.means.shape[0]
+                    if cfg.packed:
+                        visibility_mask = torch.zeros_like(
+                            self.splats["opacities"], dtype=bool
+                        )
+                        visibility_mask.scatter_(0, info["gaussian_ids"], 1)
+                    else:
+                        visibility_mask = (info["radii"] > 0).all(-1).any(0)
 
-            # 4. 最后，清空所有优化器的梯度
-            for optimizer in self.optimizers.values():
-                optimizer.zero_grad(set_to_none=True)
-            for optimizer in self.pose_optimizers:
-                optimizer.zero_grad(set_to_none=True)
-            for optimizer in self.app_optimizers:
-                optimizer.zero_grad(set_to_none=True)
-            for optimizer in self.bil_grid_optimizers:
-                optimizer.zero_grad(set_to_none=True)
-            # --- 【代码改进结束】 ---
+                # optimize
+                # --- 【代码改进】将优化器更新流程重新组织 ---
+                # 2. 对所有优化器执行 scaler.step()
+                for optimizer in self.optimizers.values():
+                    if cfg.visible_adam:
+                        scaler.step(optimizer, mask=visibility_mask)
+                    else:
+                        scaler.step(optimizer)
+                
+                for optimizer in self.pose_optimizers:
+                    scaler.step(optimizer)
+                for optimizer in self.app_optimizers:
+                    scaler.step(optimizer)
+                for optimizer in self.bil_grid_optimizers:
+                    scaler.step(optimizer)
+                
+                # 3. 在所有 optimizer.step() 调用之后，执行一次 scaler.update()
+                scaler.update()
+
+                # 4. 最后，清空所有优化器的梯度
+                for optimizer in self.optimizers.values():
+                    optimizer.zero_grad(set_to_none=True)
+                for optimizer in self.pose_optimizers:
+                    optimizer.zero_grad(set_to_none=True)
+                for optimizer in self.app_optimizers:
+                    optimizer.zero_grad(set_to_none=True)
+                for optimizer in self.bil_grid_optimizers:
+                    optimizer.zero_grad(set_to_none=True)
+                # --- 【代码改进结束】 ---
             
             for scheduler in schedulers:
                 scheduler.step()
