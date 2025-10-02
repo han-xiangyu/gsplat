@@ -581,6 +581,7 @@ class Runner:
                 mode=self.cfg.wandb_mode,
                 config=vars(self.cfg),
                 resume="auto",
+                settings=wandb.Settings(init_timeout=120)
             )
 
                     
