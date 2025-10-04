@@ -867,9 +867,12 @@ class Runner:
             # sh schedule
             sh_degree_to_use = min(step // cfg.sh_degree_interval, cfg.sh_degree)
 
-            if world_rank == 0 and step % 10 == 0: # 每10步打印一次，避免刷屏
-                print(f"\nStep {step}: Starting forward pass. "
-                      f"Max memory allocated: {torch.cuda.max_memory_allocated() / 1024**3:.2f} GB")
+            if world_rank == 0 and step % 10 == 0: # 只在主进程上每10步打印一次
+                mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
+                mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
+                print(f"\n--- Step {step} [Rank {world_rank}] ---")
+                print(f"Before forward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+                
             # forward
             with torch.cuda.amp.autocast(enabled=True):
                 renders, alphas, info = self.rasterize_splats(
@@ -951,8 +954,21 @@ class Runner:
                 info=info,
             )
 
+            if world_rank == 0 and step % 10 == 0:
+                # 前向传播后的显存
+                mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
+                mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
+                print(f"After forward:  Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+
             #loss.backward()
             scaler.scale(loss).backward()
+
+            if world_rank == 0 and step % 10 == 0:
+                # 反向传播后的显存
+                mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
+                mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
+                print(f"After backward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+                
             desc = f"loss={loss.item():.3f}| " f"sh degree={sh_degree_to_use}| "
             if cfg.depth_loss and ("depths" in data):
                 desc += f"depth loss={depthloss.item():.6f}| "
