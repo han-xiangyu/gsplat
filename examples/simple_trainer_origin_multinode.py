@@ -1155,9 +1155,7 @@ class Runner:
                     )
 
             if (step + 1) % cfg.grad_accum_steps == 0:
-                # --- 【诊断PRINT 8】 ---
-                if world_rank == 0: print(f"Step {step}: Performing gradient update.") # 诊断PRINT
-
+                if world_rank == 0: print(f"Step {step}: Performing gradient update.")
                 if cfg.visible_adam:
                     gaussian_cnt = self.splats.means.shape[0]
                     if cfg.packed:
@@ -1173,7 +1171,7 @@ class Runner:
                 # 2. 对所有优化器执行 scaler.step()
                 for optimizer in self.optimizers.values():
                     if cfg.visible_adam:
-                        scaler.step(optimizer, mask=visibility_mask)
+                        scaler.step(optimizer, visibility_mask)
                     else:
                         scaler.step(optimizer)
                 
