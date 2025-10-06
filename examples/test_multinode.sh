@@ -1,11 +1,12 @@
 #!/bin/bash
 set -e
 
-# 激活你的 Conda 环境
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 
-# 使用 torchrun 启动你的测试脚本
+export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
+
+echo "Starting distributed training..."
 torchrun --nproc_per_node=8 \
          --nnodes=$SLURM_NNODES \
          --rdzv_id=$SLURM_JOB_ID \
