@@ -815,7 +815,7 @@ class Runner:
                 )
             )
         if init_step > 0: 
-            print(f"Fast-forwarding schedulers to step {init_step}...") 
+            #print(f"Fast-forwarding schedulers to step {init_step}...") 
             # 手动将 scheduler 快进到正确的 step 
             for _ in range(init_step): 
                 for scheduler in schedulers: 
@@ -832,12 +832,12 @@ class Runner:
         )
         trainloader_iter = iter(trainloader)
 
-        print(f"[RANK {world_rank}] Initialized successfully. Entering training loop at step {init_step}...")
+        #print(f"[RANK {world_rank}] Initialized successfully. Entering training loop at step {init_step}...")
         # Training loop.
         global_tic = time.time()
         pbar = tqdm.tqdm(range(init_step, max_steps))
         for step in pbar:
-            print(f"[RANK {world_rank}] Step {step}: Loop start.")
+            #print(f"[RANK {world_rank}] Step {step}: Loop start.")
             if not cfg.disable_viewer:
                 while self.viewer.state == "paused":
                     time.sleep(0.01)
@@ -845,13 +845,13 @@ class Runner:
                 tic = time.time()
 
             try:
-                print(f"[RANK {world_rank}] Step {step}: Waiting for data...")
+                #print(f"[RANK {world_rank}] Step {step}: Waiting for data...")
                 data = next(trainloader_iter)
             except StopIteration:
                 trainloader_iter = iter(trainloader)
                 data = next(trainloader_iter)
 
-            print(f"[RANK {world_rank}] Step {step}: Data loaded.")
+            #print(f"[RANK {world_rank}] Step {step}: Data loaded.")
             camtoworlds = camtoworlds_gt = data["camtoworld"].to(device)  # [1, 4, 4]
             Ks = data["K"].to(device)  # [1, 3, 3]
             pixels = data["image"].to(device) / 255.0  # [1, H, W, 3]
@@ -878,8 +878,8 @@ class Runner:
             if world_rank == 0 and step % 10 == 0: # 只在主进程上每10步打印一次
                 mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
                 mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
-                print(f"\n--- Step {step} [Rank {world_rank}] ---")
-                print(f"Before forward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+                #print(f"\n--- Step {step} [Rank {world_rank}] ---")
+                #print(f"Before forward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
                 
             # forward
             with torch.cuda.amp.autocast(enabled=True):
@@ -952,7 +952,7 @@ class Runner:
                     )
 
             loss = loss / cfg.grad_accum_steps
-            print(f"[RANK {world_rank}] Step {step}: Forward pass done. Starting backward pass...")
+            #print(f"[RANK {world_rank}] Step {step}: Forward pass done. Starting backward pass...")
 
             self.cfg.strategy.step_pre_backward(
                 params=self.splats,
@@ -963,19 +963,17 @@ class Runner:
             )
 
             if world_rank == 0 and step % 10 == 0:
-                # 前向传播后的显存
                 mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
                 mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
-                print(f"After forward:  Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+                #print(f"After forward:  Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
 
             #loss.backward()
             scaler.scale(loss).backward()
 
             if world_rank == 0 and step % 10 == 0:
-                # 反向传播后的显存
                 mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
                 mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
-                print(f"After backward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+                #print(f"After backward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
                 
             desc = f"loss={loss.item():.3f}| " f"sh degree={sh_degree_to_use}| "
             if cfg.depth_loss and ("depths" in data):
@@ -985,7 +983,6 @@ class Runner:
                 pose_err = F.l1_loss(camtoworlds_gt, camtoworlds)
                 desc += f"pose err={pose_err.item():.6f}| "
             pbar.set_description(desc)
-            print(f"[RANK {world_rank}] Step {step}: Backward pass done.")
 
             if world_rank == 0 and cfg.tb_every > 0 and step % cfg.tb_every == 0:
                 mem = torch.cuda.max_memory_allocated() / 1024**3
@@ -1155,7 +1152,6 @@ class Runner:
                     )
 
             if (step + 1) % cfg.grad_accum_steps == 0:
-                if world_rank == 0: print(f"Step {step}: Performing gradient update.")
                 if cfg.visible_adam:
                     gaussian_cnt = self.splats.means.shape[0]
                     if cfg.packed:
@@ -1167,7 +1163,6 @@ class Runner:
                         visibility_mask = (info["radii"] > 0).all(-1).any(0)
 
                 # optimize
-                # --- 【代码改进】将优化器更新流程重新组织 ---
                 # 2. 对所有优化器执行 scaler.step()
                 for optimizer in self.optimizers.values():
                     if cfg.visible_adam:
