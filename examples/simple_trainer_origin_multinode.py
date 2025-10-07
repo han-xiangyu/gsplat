@@ -221,9 +221,6 @@ class Config:
     # Whether use fused-bilateral grid
     use_fused_bilagrid: bool = False
 
-    # 添加梯度累积步数。设为 4 意味着每4步更新一次模型，显存压力显著降低。
-    grad_accum_steps: int = 4
-
     wandb_project: Optional[str] = None
     wandb_group: Optional[str] = None 
     wandb_name: Optional[str] = None 
@@ -332,19 +329,11 @@ def create_splats_with_optimizers(
         optimizer_class = SelectiveAdam
     else:
         optimizer_class = torch.optim.Adam
-    # optimizers = {
-    #     name: optimizer_class(
-    #         [{"params": splats[name], "lr": lr * math.sqrt(BS), "name": name}],
-    #         eps=1e-15 / math.sqrt(BS),
-    #         # TODO: check betas logic when BS is larger than 10 betas[0] will be zero.
-    #         betas=(1 - BS * (1 - 0.9), 1 - BS * (1 - 0.999)),
-    #     )
-    #     for name, _, lr in params
-    # }
     optimizers = {
         name: optimizer_class(
             [{"params": splats[name], "lr": lr * math.sqrt(BS), "name": name}],
             eps=1e-15 / math.sqrt(BS),
+            # check betas logic when BS is larger than 10, betas[0] will be zero
             betas=(0.9, 0.999)
         )
         for name, _, lr in params
@@ -615,6 +604,7 @@ class Runner:
         
 
 
+
     def rasterize_splats(
         self,
         camtoworlds: Tensor,
@@ -691,8 +681,6 @@ class Runner:
         world_rank = self.world_rank
         world_size = self.world_size
 
-        scaler = torch.cuda.amp.GradScaler(enabled=True)
-
         # Dump cfg.
         if world_rank == 0:
             with open(f"{cfg.result_dir}/cfg.yml", "w") as f:
@@ -726,9 +714,6 @@ class Runner:
                 for name, opt in self.optimizers.items():
                     if name in checkpoint['optimizers']:
                         opt.load_state_dict(checkpoint['optimizers'][name])
-
-            if 'scaler' in checkpoint:
-                scaler.load_state_dict(checkpoint['scaler'])
 
             if cfg.pose_opt and 'pose_adjust' in checkpoint: 
                 pose_adjust_state = checkpoint['pose_adjust'] 
@@ -815,7 +800,6 @@ class Runner:
                 )
             )
         if init_step > 0: 
-            #print(f"Fast-forwarding schedulers to step {init_step}...") 
             # 手动将 scheduler 快进到正确的 step 
             for _ in range(init_step): 
                 for scheduler in schedulers: 
@@ -837,7 +821,6 @@ class Runner:
         global_tic = time.time()
         pbar = tqdm.tqdm(range(init_step, max_steps))
         for step in pbar:
-            #print(f"[RANK {world_rank}] Step {step}: Loop start.")
             if not cfg.disable_viewer:
                 while self.viewer.state == "paused":
                     time.sleep(0.01)
@@ -845,13 +828,11 @@ class Runner:
                 tic = time.time()
 
             try:
-                #print(f"[RANK {world_rank}] Step {step}: Waiting for data...")
                 data = next(trainloader_iter)
             except StopIteration:
                 trainloader_iter = iter(trainloader)
                 data = next(trainloader_iter)
 
-            #print(f"[RANK {world_rank}] Step {step}: Data loaded.")
             camtoworlds = camtoworlds_gt = data["camtoworld"].to(device)  # [1, 4, 4]
             Ks = data["K"].to(device)  # [1, 3, 3]
             pixels = data["image"].to(device) / 255.0  # [1, H, W, 3]
@@ -874,85 +855,42 @@ class Runner:
 
             # sh schedule
             sh_degree_to_use = min(step // cfg.sh_degree_interval, cfg.sh_degree)
-
-            if world_rank == 0 and step % 10 == 0: # 只在主进程上每10步打印一次
-                mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
-                mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
-                #print(f"\n--- Step {step} [Rank {world_rank}] ---")
-                #print(f"Before forward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
                 
             # forward
-            with torch.cuda.amp.autocast(enabled=True):
-                renders, alphas, info = self.rasterize_splats(
-                    camtoworlds=camtoworlds,
-                    Ks=Ks,
-                    width=width,
-                    height=height,
-                    sh_degree=sh_degree_to_use,
-                    near_plane=cfg.near_plane,
-                    far_plane=cfg.far_plane,
-                    image_ids=image_ids,
-                    render_mode="RGB+ED" if cfg.depth_loss else "RGB",
-                    masks=masks,
+            renders, alphas, info = self.rasterize_splats(
+                camtoworlds=camtoworlds,
+                Ks=Ks,
+                width=width,
+                height=height,
+                sh_degree=sh_degree_to_use,
+                near_plane=cfg.near_plane,
+                far_plane=cfg.far_plane,
+                image_ids=image_ids,
+                render_mode="RGB+ED" if cfg.depth_loss else "RGB",
+                masks=masks,
+            )
+            if renders.shape[-1] == 4:
+                colors, depths = renders[..., 0:3], renders[..., 3:4]
+            else:
+                colors, depths = renders, None
+
+            if cfg.use_bilateral_grid:
+                grid_y, grid_x = torch.meshgrid(
+                    (torch.arange(height, device=self.device) + 0.5) / height,
+                    (torch.arange(width, device=self.device) + 0.5) / width,
+                    indexing="ij",
                 )
-                if renders.shape[-1] == 4:
-                    colors, depths = renders[..., 0:3], renders[..., 3:4]
-                else:
-                    colors, depths = renders, None
+                grid_xy = torch.stack([grid_x, grid_y], dim=-1).unsqueeze(0)
+                colors = slice(
+                    self.bil_grids,
+                    grid_xy.expand(colors.shape[0], -1, -1, -1),
+                    colors,
+                    image_ids.unsqueeze(-1),
+                )["rgb"]
 
-                if cfg.use_bilateral_grid:
-                    grid_y, grid_x = torch.meshgrid(
-                        (torch.arange(height, device=self.device) + 0.5) / height,
-                        (torch.arange(width, device=self.device) + 0.5) / width,
-                        indexing="ij",
-                    )
-                    grid_xy = torch.stack([grid_x, grid_y], dim=-1).unsqueeze(0)
-                    colors = slice(
-                        self.bil_grids,
-                        grid_xy.expand(colors.shape[0], -1, -1, -1),
-                        colors,
-                        image_ids.unsqueeze(-1),
-                    )["rgb"]
-
-                if cfg.random_bkgd:
-                    bkgd = torch.rand(1, 3, device=device)
-                    colors = colors + bkgd * (1.0 - alphas)
-
-                # loss
-                l1loss = F.l1_loss(colors, pixels)
-                ssimloss = 1.0 - fused_ssim(
-                    colors.permute(0, 3, 1, 2), pixels.permute(0, 3, 1, 2), padding="valid"
-                )
-                loss = l1loss * (1.0 - cfg.ssim_lambda) + ssimloss * cfg.ssim_lambda
-                if cfg.depth_loss and ("depths" in data):
-
-                    #### Modified: Sample depth map at all valid pixels and use L1 loss
-                    depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
-                    valid = torch.isfinite(depth_gt) & (depth_gt > 0)
-                    valid = valid & (depths > 0) 
-                    # masked L1
-                    depthloss = torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
-                    loss += depthloss * cfg.depth_lambda
-
-                if cfg.use_bilateral_grid:
-                    tvloss = 10 * total_variation_loss(self.bil_grids.grids)
-                    loss += tvloss
-
-                # regularizations
-                if cfg.opacity_reg > 0.0:
-                    loss = (
-                        loss
-                        + cfg.opacity_reg
-                        * torch.abs(torch.sigmoid(self.splats["opacities"])).mean()
-                    )
-                if cfg.scale_reg > 0.0:
-                    loss = (
-                        loss
-                        + cfg.scale_reg * torch.abs(torch.exp(self.splats["scales"])).mean()
-                    )
-
-            loss = loss / cfg.grad_accum_steps
-            #print(f"[RANK {world_rank}] Step {step}: Forward pass done. Starting backward pass...")
+            if cfg.random_bkgd:
+                bkgd = torch.rand(1, 3, device=device)
+                colors = colors + bkgd * (1.0 - alphas)
 
             self.cfg.strategy.step_pre_backward(
                 params=self.splats,
@@ -962,18 +900,40 @@ class Runner:
                 info=info,
             )
 
-            if world_rank == 0 and step % 10 == 0:
-                mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
-                mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
-                #print(f"After forward:  Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+            # loss
+            l1loss = F.l1_loss(colors, pixels)
+            ssimloss = 1.0 - fused_ssim(
+                colors.permute(0, 3, 1, 2), pixels.permute(0, 3, 1, 2), padding="valid"
+            )
+            loss = l1loss * (1.0 - cfg.ssim_lambda) + ssimloss * cfg.ssim_lambda
+            if cfg.depth_loss and ("depths" in data):
 
-            #loss.backward()
-            scaler.scale(loss).backward()
+                #### Modified: Sample depth map at all valid pixels and use L1 loss
+                depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
+                valid = torch.isfinite(depth_gt) & (depth_gt > 0)
+                valid = valid & (depths > 0) 
+                # masked L1
+                depthloss = torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                loss += depthloss * cfg.depth_lambda
 
-            if world_rank == 0 and step % 10 == 0:
-                mem_allocated = torch.cuda.memory_allocated(device) / 1024**3
-                mem_reserved = torch.cuda.memory_reserved(device) / 1024**3
-                #print(f"After backward: Allocated={mem_allocated:.2f}GB, Reserved={mem_reserved:.2f}GB")
+            if cfg.use_bilateral_grid:
+                tvloss = 10 * total_variation_loss(self.bil_grids.grids)
+                loss += tvloss
+
+            # regularizations
+            if cfg.opacity_reg > 0.0:
+                loss = (
+                    loss
+                    + cfg.opacity_reg
+                    * torch.abs(torch.sigmoid(self.splats["opacities"])).mean()
+                )
+            if cfg.scale_reg > 0.0:
+                loss = (
+                    loss
+                    + cfg.scale_reg * torch.abs(torch.exp(self.splats["scales"])).mean()
+                )
+
+            loss.backward()
                 
             desc = f"loss={loss.item():.3f}| " f"sh degree={sh_degree_to_use}| "
             if cfg.depth_loss and ("depths" in data):
@@ -1056,7 +1016,6 @@ class Runner:
                         "optimizers": {name: opt.state_dict() for name, opt in self.optimizers.items()},
                         "strategy_state": self.strategy_state
                 }
-                data["scaler"] = scaler.state_dict()
                 if cfg.pose_opt:
                     if world_size > 1:
                         data["pose_adjust"] = self.pose_adjust.module.state_dict()
@@ -1151,46 +1110,32 @@ class Runner:
                         is_coalesced=len(Ks) == 1,
                     )
 
-            if (step + 1) % cfg.grad_accum_steps == 0:
+            if cfg.visible_adam:
+                gaussian_cnt = self.splats.means.shape[0]
+                if cfg.packed:
+                    visibility_mask = torch.zeros_like(
+                        self.splats["opacities"], dtype=bool
+                    )
+                    visibility_mask.scatter_(0, info["gaussian_ids"], 1)
+                else:
+                    visibility_mask = (info["radii"] > 0).all(-1).any(0)
+
+            # optimize
+            for optimizer in self.optimizers.values():
                 if cfg.visible_adam:
-                    gaussian_cnt = self.splats.means.shape[0]
-                    if cfg.packed:
-                        visibility_mask = torch.zeros_like(
-                            self.splats["opacities"], dtype=bool
-                        )
-                        visibility_mask.scatter_(0, info["gaussian_ids"], 1)
-                    else:
-                        visibility_mask = (info["radii"] > 0).all(-1).any(0)
-
-                # optimize
-                # 2. 对所有优化器执行 scaler.step()
-                for optimizer in self.optimizers.values():
-                    if cfg.visible_adam:
-                        scaler.step(optimizer, visibility_mask)
-                    else:
-                        scaler.step(optimizer)
-                
-                for optimizer in self.pose_optimizers:
-                    scaler.step(optimizer)
-                for optimizer in self.app_optimizers:
-                    scaler.step(optimizer)
-                for optimizer in self.bil_grid_optimizers:
-                    scaler.step(optimizer)
-                
-                # 3. 在所有 optimizer.step() 调用之后，执行一次 scaler.update()
-                scaler.update()
-
-                # 4. 最后，清空所有优化器的梯度
-                for optimizer in self.optimizers.values():
-                    optimizer.zero_grad(set_to_none=True)
-                for optimizer in self.pose_optimizers:
-                    optimizer.zero_grad(set_to_none=True)
-                for optimizer in self.app_optimizers:
-                    optimizer.zero_grad(set_to_none=True)
-                for optimizer in self.bil_grid_optimizers:
-                    optimizer.zero_grad(set_to_none=True)
-                # --- 【代码改进结束】 ---
-            
+                    optimizer.step(visibility_mask)
+                else:
+                    optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+            for optimizer in self.pose_optimizers:
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+            for optimizer in self.app_optimizers:
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+            for optimizer in self.bil_grid_optimizers:
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
             for scheduler in schedulers:
                 scheduler.step()
 
