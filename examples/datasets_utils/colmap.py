@@ -62,6 +62,7 @@ class Parser:
         factor: int = 1,
         normalize: bool = False,
         test_every: int = 8,
+        build_point_index: bool = False,
     ):
         self.data_dir = data_dir
         self.factor = factor
@@ -202,17 +203,18 @@ class Parser:
         points = manager.points3D.astype(np.float32)
         points_err = manager.point3D_errors.astype(np.float32)
         points_rgb = manager.point3D_colors.astype(np.uint8)
-        point_indices = dict()
-
-        image_id_to_name = {v: k for k, v in manager.name_to_image_id.items()}
-        for point_id, data in manager.point3D_id_to_images.items():
-            for image_id, _ in data:
-                image_name = image_id_to_name[image_id]
-                point_idx = manager.point3D_id_to_point3D_idx[point_id]
-                point_indices.setdefault(image_name, []).append(point_idx)
-        point_indices = {
-            k: np.array(v).astype(np.int32) for k, v in point_indices.items()
-        }
+        point_indices = None
+        if build_point_index:
+            point_indices = dict()
+            image_id_to_name = {v: k for k, v in manager.name_to_image_id.items()}
+            for point_id, data in manager.point3D_id_to_images.items():
+                for image_id, _ in data:
+                    image_name = image_id_to_name[image_id]
+                    point_idx = manager.point3D_id_to_point3D_idx[point_id]
+                    point_indices.setdefault(image_name, []).append(point_idx)
+            point_indices = {
+                k: np.array(v).astype(np.int32) for k, v in point_indices.items()
+            }
 
         # Normalize the world space.
         if normalize:
@@ -256,7 +258,7 @@ class Parser:
         self.points = points  # np.ndarray, (num_points, 3)
         self.points_err = points_err  # np.ndarray, (num_points,)
         self.points_rgb = points_rgb  # np.ndarray, (num_points, 3)
-        self.point_indices = point_indices  # Dict[str, np.ndarray], image_name -> [M,]
+        self.point_indices = point_indices  # Optional[Dict[str, np.ndarray]]
         self.transform = transform  # np.ndarray, (4, 4)
         self.rel_image_files = [colmap_to_image[f] for f in image_names]  # 例如 "seq/a/b/img_0001.png"
         self.depth_dir = os.path.join(data_dir, "depth_map_gt")
@@ -375,7 +377,16 @@ class Dataset:
 
     def __getitem__(self, item: int) -> Dict[str, Any]:
         index = self.indices[item]
-        image = imageio.imread(self.parser.image_paths[index])[..., :3]
+        image_path = self.parser.image_paths[index]
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        if image is None:
+            raise FileNotFoundError(f"Failed to read image: {image_path}")
+        if image.ndim == 2:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        elif image.shape[2] == 4:
+            image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+        else:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         camera_id = self.parser.camera_ids[index]
         K = self.parser.Ks_dict[camera_id].copy()  # undistorted K
         params = self.parser.params_dict[camera_id]

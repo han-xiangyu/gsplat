@@ -376,6 +376,7 @@ class Runner:
             factor=cfg.data_factor,
             normalize=cfg.normalize_world_space,
             test_every=cfg.test_every,
+            build_point_index=False
         )
         self.trainset = Dataset(
             self.parser,
