@@ -248,7 +248,6 @@ class Config:
         else:
             assert_never(strategy)
 
-
 def create_splats_with_optimizers(
     parser: Parser,
     init_type: str = "sfm",
@@ -385,6 +384,7 @@ class Runner:
         self, local_rank: int, world_rank, world_size: int, cfg: Config
     ) -> None:
         print(f"Runner __init__ started.")
+        init_total_start_time = time.time()
         set_random_seed(42 + local_rank)
 
         self.cfg = cfg
@@ -410,13 +410,17 @@ class Runner:
         self.writer = SummaryWriter(log_dir=f"{cfg.result_dir}/tb")
 
         # Load data: Training data should contain initial points and colors.
-        print(f"Loading data...")
+        print(f"[PROFILING] Starting Parser initialization...")
+        parser_start_time = time.time()
         self.parser = Parser(
             data_dir=cfg.data_dir,
             factor=cfg.data_factor,
             normalize=cfg.normalize_world_space,
             test_every=cfg.test_every,
         )
+        parser_end_time = time.time()
+        print(f"✅ [PROFILING] Parser initialization took: {parser_end_time - parser_start_time:.4f} seconds.")
+        print(f"[PROFILING] Starting training Dataset creation...")
         self.trainset = Dataset(
             self.parser,
             split="train",
@@ -601,9 +605,6 @@ class Runner:
         # )
         # self.difix.set_progress_bar_config(disable=True)
         # self.difix.to(self.device if torch.cuda.is_available() else "cpu")
-
-        
-
 
     def rasterize_splats(
         self,

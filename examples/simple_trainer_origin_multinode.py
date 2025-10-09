@@ -282,7 +282,12 @@ def create_splats_with_optimizers(
         raise ValueError("Please specify a correct init_type: sfm or random")
 
     # Initialize the GS size to be the average dist of the 3 nearest neighbors
+    print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
+    knn_start_time = time.time()
     dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
+    knn_end_time = time.time()
+    print(f"✅ [PROFILING] KNN calculation took: {knn_end_time - knn_start_time:.4f} seconds.")
+
     dist_avg = torch.sqrt(dist2_avg)
     scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)  # [N, 3]
 
@@ -384,7 +389,8 @@ class Runner:
     def __init__(
         self, local_rank: int, world_rank, world_size: int, cfg: Config
     ) -> None:
-        print(f"Runner __init__ started.")
+        print(f"============== [PROFILING] Runner __init__ START ==============")
+        init_total_start_time = time.time()
         set_random_seed(42 + local_rank)
 
         self.cfg = cfg
@@ -410,19 +416,28 @@ class Runner:
         self.writer = SummaryWriter(log_dir=f"{cfg.result_dir}/tb")
 
         # Load data: Training data should contain initial points and colors.
-        print(f"Loading data...")
+        print(f"[PROFILING] Starting Parser initialization...")
+        parser_start_time = time.time()
         self.parser = Parser(
             data_dir=cfg.data_dir,
             factor=cfg.data_factor,
             normalize=cfg.normalize_world_space,
             test_every=cfg.test_every,
         )
+        parser_end_time = time.time()
+        print(f"✅ [PROFILING] Parser initialization took: {parser_end_time - parser_start_time:.4f} seconds.")
+
+        print(f"[PROFILING] Starting training Dataset creation...")
+        trainset_start_time = time.time()
         self.trainset = Dataset(
             self.parser,
             split="train",
             patch_size=cfg.patch_size,
             load_depths=cfg.depth_loss,
         )
+        trainset_end_time = time.time()
+        print(f"✅ [PROFILING] Training Dataset creation took: {trainset_end_time - trainset_start_time:.4f} seconds.")
+
         self.valset = Dataset(self.parser, split="val") if cfg.use_val else None
         # self.scene_scale = self.parser.scene_scale * 1.1 * cfg.global_scale
         self.scene_scale = cfg.global_scale
@@ -583,26 +598,8 @@ class Runner:
                 resume="auto",
             )
 
-                    
-        # # Fixer trajectory 
-        # self.interpolator = CameraPoseInterpolator(rotation_weight=1.0, translation_weight=1.0)
-
-        # self.base_novel_poses = self.parser.camtoworlds[self.trainset.indices]
-        # self.current_novel_poses = self.base_novel_poses
-        # self.current_parser = self.parser
-
-        # self.novelloaders = []
-        # self.novelloaders_iter = []
-
-        # # ---- Difix: load once per-rank ----
-        # self.difix = DifixPipeline.from_pretrained(
-        #     "nvidia/difix_ref", trust_remote_code=True
-        # )
-        # self.difix.set_progress_bar_config(disable=True)
-        # self.difix.to(self.device if torch.cuda.is_available() else "cpu")
-
-        
-
+        init_total_end_time = time.time()
+        print(f"============== [PROFILING] Runner __init__ END. Total time: {init_total_end_time - init_total_start_time:.4f} seconds ==============")
 
 
     def rasterize_splats(
@@ -805,7 +802,8 @@ class Runner:
                 for scheduler in schedulers: 
                     scheduler.step()
 
-        #print(f"[RANK {self.world_rank}] Creating DataLoader...")
+        print(f"[PROFILING] Creating DataLoader object...")
+        dataloader_creation_start_time = time.time()
         trainloader = torch.utils.data.DataLoader(
             self.trainset,
             batch_size=cfg.batch_size,
@@ -815,8 +813,9 @@ class Runner:
             pin_memory=True,
         )
         trainloader_iter = iter(trainloader)
+        dataloader_creation_end_time = time.time()
+        print(f"✅ [PROFILING] DataLoader object creation took: {dataloader_creation_end_time - dataloader_creation_start_time:.4f} seconds.")
 
-        #print(f"[RANK {world_rank}] Initialized successfully. Entering training loop at step {init_step}...")
         # Training loop.
         global_tic = time.time()
         pbar = tqdm.tqdm(range(init_step, max_steps))
@@ -827,12 +826,20 @@ class Runner:
                 self.viewer.lock.acquire()
                 tic = time.time()
 
+            if step == init_step:
+                print(f"[PROFILING] Fetching first data batch...")
+                first_batch_start_time = time.time()
+
             try:
                 data = next(trainloader_iter)
             except StopIteration:
                 trainloader_iter = iter(trainloader)
                 data = next(trainloader_iter)
 
+            if step == init_step:
+                first_batch_end_time = time.time()
+                print(f"✅ [PROFILING] Fetching first data batch took: {first_batch_end_time - first_batch_start_time:.4f} seconds.")
+                
             camtoworlds = camtoworlds_gt = data["camtoworld"].to(device)  # [1, 4, 4]
             Ks = data["K"].to(device)  # [1, 3, 3]
             pixels = data["image"].to(device) / 255.0  # [1, H, W, 3]
