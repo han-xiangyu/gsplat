@@ -29,7 +29,7 @@ from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMe
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from typing_extensions import Literal, assert_never
 from utils import AppearanceOptModule, CameraOptModule, knn, rgb_to_sh, set_random_seed
-
+from utils import knn_pytorch3d
 from gsplat import export_splats
 from gsplat.compression import PngCompression
 from gsplat.distributed import cli
@@ -281,10 +281,19 @@ def create_splats_with_optimizers(
     else:
         raise ValueError("Please specify a correct init_type: sfm or random")
 
+    points = points.to(device)
+
     # Initialize the GS size to be the average dist of the 3 nearest neighbors
     print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
     knn_start_time = time.time()
-    dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
+    points_input = points.unsqueeze(0)
+    dists, _ = knn_points(
+        points_input, 
+        points_input, 
+        K=4
+    ) 
+    dist2_avg = (dists.squeeze(0)[:, 1:].pow(2)).mean(dim=-1)
+    #dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
     knn_end_time = time.time()
     print(f"✅ [PROFILING] KNN calculation took: {knn_end_time - knn_start_time:.4f} seconds.")
 
