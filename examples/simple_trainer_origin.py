@@ -15,7 +15,7 @@ import tqdm
 import tyro
 import viser
 import yaml
-from datasets.colmap import Dataset, Parser
+from datasets.colmap_new import Dataset, Parser
 from datasets.traj import (
     generate_ellipse_path_z,
     generate_interpolated_path,
@@ -281,7 +281,12 @@ def create_splats_with_optimizers(
         raise ValueError("Please specify a correct init_type: sfm or random")
 
     # Initialize the GS size to be the average dist of the 3 nearest neighbors
+    print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
+    knn_start_time = time.time()
     dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
+    knn_end_time = time.time()
+    print(f"✅ [PROFILING] KNN calculation took: {knn_end_time - knn_start_time:.4f} seconds.")
+    
     dist_avg = torch.sqrt(dist2_avg)
     scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)  # [N, 3]
 
@@ -420,7 +425,6 @@ class Runner:
         )
         parser_end_time = time.time()
         print(f"✅ [PROFILING] Parser initialization took: {parser_end_time - parser_start_time:.4f} seconds.")
-        print(f"[PROFILING] Starting training Dataset creation...")
         self.trainset = Dataset(
             self.parser,
             split="train",
