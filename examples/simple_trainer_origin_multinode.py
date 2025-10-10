@@ -281,8 +281,6 @@ def create_splats_with_optimizers(
     else:
         raise ValueError("Please specify a correct init_type: sfm or random")
 
-    points = points.to(device)
-
     # Initialize the GS size to be the average dist of the 3 nearest neighbors
     print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
     knn_start_time = time.time()
