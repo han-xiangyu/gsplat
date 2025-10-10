@@ -29,7 +29,7 @@ from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMe
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from typing_extensions import Literal, assert_never
 from utils import AppearanceOptModule, CameraOptModule, knn, rgb_to_sh, set_random_seed
-from utils import knn_pytorch3d
+
 from gsplat import export_splats
 from gsplat.compression import PngCompression
 from gsplat.distributed import cli
@@ -286,14 +286,7 @@ def create_splats_with_optimizers(
     # Initialize the GS size to be the average dist of the 3 nearest neighbors
     print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
     knn_start_time = time.time()
-    points_input = points.unsqueeze(0)
-    dists, _ = knn_points(
-        points_input, 
-        points_input, 
-        K=4
-    ) 
-    dist2_avg = (dists.squeeze(0)[:, 1:].pow(2)).mean(dim=-1)
-    #dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
+    dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
     knn_end_time = time.time()
     print(f"✅ [PROFILING] KNN calculation took: {knn_end_time - knn_start_time:.4f} seconds.")
 
@@ -436,7 +429,6 @@ class Runner:
         parser_end_time = time.time()
         print(f"✅ [PROFILING] Parser initialization took: {parser_end_time - parser_start_time:.4f} seconds.")
 
-        print(f"[PROFILING] Starting training Dataset creation...")
         trainset_start_time = time.time()
         self.trainset = Dataset(
             self.parser,
@@ -445,7 +437,6 @@ class Runner:
             load_depths=cfg.depth_loss,
         )
         trainset_end_time = time.time()
-        print(f"✅ [PROFILING] Training Dataset creation took: {trainset_end_time - trainset_start_time:.4f} seconds.")
 
         self.valset = Dataset(self.parser, split="val") if cfg.use_val else None
         # self.scene_scale = self.parser.scene_scale * 1.1 * cfg.global_scale
@@ -608,8 +599,6 @@ class Runner:
             )
 
         init_total_end_time = time.time()
-        print(f"============== [PROFILING] Runner __init__ END. Total time: {init_total_end_time - init_total_start_time:.4f} seconds ==============")
-
 
     def rasterize_splats(
         self,
@@ -811,7 +800,6 @@ class Runner:
                 for scheduler in schedulers: 
                     scheduler.step()
 
-        print(f"[PROFILING] Creating DataLoader object...")
         dataloader_creation_start_time = time.time()
         trainloader = torch.utils.data.DataLoader(
             self.trainset,
@@ -823,7 +811,6 @@ class Runner:
         )
         trainloader_iter = iter(trainloader)
         dataloader_creation_end_time = time.time()
-        print(f"✅ [PROFILING] DataLoader object creation took: {dataloader_creation_end_time - dataloader_creation_start_time:.4f} seconds.")
 
         # Training loop.
         global_tic = time.time()
@@ -836,7 +823,6 @@ class Runner:
                 tic = time.time()
 
             if step == init_step:
-                print(f"[PROFILING] Fetching first data batch...")
                 first_batch_start_time = time.time()
 
             try:
@@ -847,7 +833,6 @@ class Runner:
 
             if step == init_step:
                 first_batch_end_time = time.time()
-                print(f"✅ [PROFILING] Fetching first data batch took: {first_batch_end_time - first_batch_start_time:.4f} seconds.")
                 
             camtoworlds = camtoworlds_gt = data["camtoworld"].to(device)  # [1, 4, 4]
             Ks = data["K"].to(device)  # [1, 3, 3]
