@@ -7,7 +7,6 @@ from torch import Tensor
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
-from pytorch3d.ops import knn_points
 
 class CameraOptModule(torch.nn.Module):
     """Camera pose optimization module."""
@@ -143,14 +142,6 @@ def knn(x: Tensor, K: int = 4) -> Tensor:
     model = NearestNeighbors(n_neighbors=K, metric="euclidean").fit(x_np)
     distances, _ = model.kneighbors(x_np)
     return torch.from_numpy(distances).to(x)
-
-def knn_pytorch3d(x: Tensor, K: int = 4) -> Tensor:
-
-    if x.ndim == 2:
-        x = x.unsqueeze(0)
-    dists, _ = knn_points(x, x, K=K)
-
-    return dists.squeeze(0)
 
 def rgb_to_sh(rgb: Tensor) -> Tensor:
     C0 = 0.28209479177387814
