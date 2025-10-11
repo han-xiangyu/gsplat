@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Any, Dict, List, Optional
-
+import time
 import cv2
 import imageio.v2 as imageio
 import numpy as np
@@ -64,6 +64,10 @@ class Parser:
         test_every: int = 8,
         build_point_index: bool = False,
     ):
+        print("[Parser] start recording ...")
+        total_start_time = time.time()
+        last_tic = total_start_time
+
         self.data_dir = data_dir
         self.factor = factor
         self.normalize = normalize
@@ -77,9 +81,21 @@ class Parser:
         ), f"COLMAP directory {colmap_dir} does not exist."
         image_path = os.path.join(data_dir, "images/")
         manager = SceneManager(colmap_dir, image_path=image_path)
+
         manager.load_cameras()
+        tic = time.time()
+        print(f"[Parser] -> Load camera: {tic - last_tic:.4f} s")
+        last_tic = tic
+
         manager.load_images()
+        tic = time.time()
+        print(f"[Parser] -> Load images: {tic - last_tic:.4f} s")
+        last_tic = tic
+
         manager.load_points3D()
+        tic = time.time()
+        print(f"[Parser] -> Load 3d points: {tic - last_tic:.4f} s")
+        last_tic = tic
 
         # Extract extrinsic matrices in world-to-camera format.
         imdata = manager.images
@@ -160,6 +176,10 @@ class Parser:
         camtoworlds = camtoworlds[inds]
         camera_ids = [camera_ids[i] for i in inds]
 
+        tic = time.time()
+        print(f"[Parser] -> process camera K, [R|t]: {tic - last_tic:.4f} s")
+        last_tic = tic
+
         # Load extended metadata. Used by Bilarf dataset.
         self.extconf = {
             "spiral_radius_scale": 1.0,
@@ -199,6 +219,10 @@ class Parser:
         colmap_to_image = dict(zip(colmap_files, image_files))
         image_paths = [os.path.join(image_dir, colmap_to_image[f]) for f in image_names]
 
+        tic = time.time()
+        print(f"[Parser] -> file path mapping and processing: {tic - last_tic:.4f} s")
+        last_tic = tic
+
         # 3D points and {image_name -> [point_idx]}
         points = manager.points3D.astype(np.float32)
         points_err = manager.point3D_errors.astype(np.float32)
@@ -215,6 +239,10 @@ class Parser:
             point_indices = {
                 k: np.array(v).astype(np.int32) for k, v in point_indices.items()
             }
+
+        tic = time.time()
+        print(f"[Parser] -> pcd assignment and index construction: {tic - last_tic:.4f} s")
+        last_tic = tic
 
         # Normalize the world space.
         if normalize:
@@ -246,6 +274,10 @@ class Parser:
                 transform = T3 @ transform
         else:
             transform = np.eye(4)
+
+        tic = time.time()
+        print(f"[Parser] -> Normalize the world space: {tic - last_tic:.4f} s")
+        last_tic = tic
 
         self.image_names = image_names  # List[str], (num_images,)
         self.image_paths = image_paths  # List[str], (num_images,)
@@ -345,12 +377,17 @@ class Parser:
             self.imsize_dict[camera_id] = (roi_undist[2], roi_undist[3])
             self.mask_dict[camera_id] = mask
 
+        tic = time.time()
+        print(f"[Parser] -> image undistortion: {tic - last_tic:.4f} s")
+        last_tic = tic
+
         # size of the scene measured by cameras
         camera_locations = camtoworlds[:, :3, 3]
         scene_center = np.mean(camera_locations, axis=0)
         dists = np.linalg.norm(camera_locations - scene_center, axis=1)
         self.scene_scale = np.max(dists)
 
+        print(f"[Parser] ✅ init sum time: {time.time() - total_start_time:.4f} s")
 
 class Dataset:
     """A simple dataset class."""
