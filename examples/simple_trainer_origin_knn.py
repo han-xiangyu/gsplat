@@ -250,6 +250,7 @@ class Config:
 
 def create_splats_with_optimizers(
     parser: Parser,
+    result_dir: str,
     init_type: str = "sfm",
     init_num_pts: int = 100_000,
     init_extent: float = 3.0,
@@ -295,14 +296,58 @@ def create_splats_with_optimizers(
     print(f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds.")
     
     dist_avg = torch.sqrt(dist2_avg)
-    # 创建 `scales`
-    scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)
-    # ==================== 修正点 1 ====================
-    # 确保 `scales` 是连续的
-    scales = scales.contiguous()
-    # ================================================
 
-    # 步骤 4: 使用分片后的数据来定义所有模型参数
+    gathered_dists = None
+    if world_size > 1:
+        output_list = [None for _ in range(world_size)]
+        dist.all_gather_object(output_list, dist_avg.cpu())
+        if world_rank == 0:
+            gathered_dists = torch.cat(output_list, dim=0)
+    else:
+        gathered_dists = dist_avg
+
+    if world_rank == 0:
+        distances_np = gathered_dists.cpu().numpy()
+        mean_dist = np.mean(distances_np)
+        std_dist = np.std(distances_np)
+        median_dist = np.median(distances_np)
+        min_dist = np.min(distances_np)
+        max_dist = np.max(distances_np)
+
+        print("\n" + "="*50)
+        print("📊 Statistics on KNN distance distribution")
+        print(f"  - Mean:    {mean_dist:.6f}")
+        print(f"  - Std:   {std_dist:.6f}")
+        print(f"  - Median: {median_dist:.6f}")
+        print(f"  - Min:     {min_dist:.6f}")
+        print(f"  - Max:     {max_dist:.6f}")
+        print("="*50 + "\n")
+
+        try:
+            import matplotlib.pyplot as plt
+            plt.figure(figsize=(12, 7))
+            plt.hist(distances_np, bins=200, log=True)
+            plt.title("Statistics on KNN distance distribution")
+            plt.xlabel("mean distance")
+            plt.ylabel("Frequency (log)")
+            plt.grid(True, which="both", linestyle='--', linewidth=0.5)
+            plt.axvline(mean_dist, color='r', linestyle='dashed', linewidth=2, label=f'mean: {mean_dist:.4f}')
+            plt.axvline(median_dist, color='g', linestyle='dashed', linewidth=2, label=f'median: {median_dist:.4f}')
+            plt.legend()
+            save_path = os.path.join(result_dir, "knn_distance_distribution.png")
+            plt.savefig(save_path)
+            plt.close()
+            print(f"📈 save in: {save_path}\n")
+        except ImportError:
+            print("⚠️ no matplotlib, please run `pip install matplotlib`")
+
+    if world_size > 1:
+        dist.barrier()
+        
+    scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)
+
+    scales = scales.contiguous()
+
     N = points_shard.shape[0]
     quats = torch.rand((N, 4), device=device)
     opacities = torch.logit(torch.full((N,), init_opacity, device=device))
@@ -758,6 +803,7 @@ class Runner:
             feature_dim = 32 if cfg.app_opt else None
             self.splats, self.optimizers = create_splats_with_optimizers(
                 self.parser,
+                result_dir=cfg.result_dir,
                 init_type=cfg.init_type,
                 init_num_pts=cfg.init_num_pts,
                 init_extent=cfg.init_extent,
