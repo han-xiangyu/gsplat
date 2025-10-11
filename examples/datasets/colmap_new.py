@@ -176,9 +176,9 @@ class Parser:
         camtoworlds = camtoworlds[inds]
         camera_ids = [camera_ids[i] for i in inds]
 
-        tic = time.time()
-        print(f"[Parser] -> process camera K, [R|t]: {tic - last_tic:.4f} s")
-        last_tic = tic
+        # tic = time.time()
+        # print(f"[Parser] -> process camera K, [R|t]: {tic - last_tic:.4f} s")
+        # last_tic = tic
 
         # Load extended metadata. Used by Bilarf dataset.
         self.extconf = {
