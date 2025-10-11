@@ -280,37 +280,36 @@ def create_splats_with_optimizers(
     else:
         raise ValueError("Please specify a correct init_type: sfm or random")
 
-    # 步骤 1: 在 CPU 上对数据进行分片 (Shard ONCE on CPU)
-    points_shard = points[world_rank::world_size]
-    rgbs_shard = rgbs[world_rank::world_size]
-
-    points_shard = points_shard.contiguous()
-    rgbs_shard = rgbs_shard.contiguous()
+    # 步骤 1: 在 CPU 上分片并立刻转为连续内存
+    points_shard = points[world_rank::world_size].contiguous()
+    rgbs_shard = rgbs[world_rank::world_size].contiguous()
     
-    # 步骤 2: 将分片后的数据移动到 GPU (Move shard to GPU)
-    points_shard_cuda = points_shard.to(device)
+    # 步骤 2: 将分片后的数据移动到 GPU
+    points_shard = points_shard.to(device)
 
     # 步骤 3: 只对分片后的 GPU 数据进行 KNN 计算
-    print(f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard_cuda.shape[0]} points...")
+    print(f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard.shape[0]} points...")
     knn_start_time = time.time()
-    dist2_avg = (knn(points_shard_cuda, 4)[:, 1:] ** 2).mean(dim=-1)
+    dist2_avg = (knn(points_shard, 4)[:, 1:] ** 2).mean(dim=-1)
     knn_end_time = time.time()
     print(f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds.")
     
     dist_avg = torch.sqrt(dist2_avg)
-    # `scales` 张量现在和 `points_shard` 具有相同的长度和设备
+    # 创建 `scales`
     scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)
+    # ==================== 修正点 1 ====================
+    # 确保 `scales` 是连续的
+    scales = scales.contiguous()
+    # ================================================
 
     # 步骤 4: 使用分片后的数据来定义所有模型参数
-    # (NO MORE SHARDING NEEDED!)
-    N = points_shard_cuda.shape[0]
-    quats = torch.rand((N, 4), device=device) # 直接在 GPU 上创建
+    N = points_shard.shape[0]
+    quats = torch.rand((N, 4), device=device)
     opacities = torch.logit(torch.full((N,), init_opacity, device=device))
 
     params = [
         # name, value, lr
-        # 修正: 使用分片后的 `points_shard_cuda` 初始化 `means`
-        ("means", torch.nn.Parameter(points_shard_cuda), means_lr * scene_scale),
+        ("means", torch.nn.Parameter(points_shard), means_lr * scene_scale),
         ("scales", torch.nn.Parameter(scales), scales_lr),
         ("quats", torch.nn.Parameter(quats), quats_lr),
         ("opacities", torch.nn.Parameter(opacities), opacities_lr),
@@ -318,20 +317,24 @@ def create_splats_with_optimizers(
 
     if feature_dim is None:
         colors = torch.zeros((N, (sh_degree + 1) ** 2, 3), device=device)
-        # 修正: `rgb_to_sh` 的输入也应该是分片后的数据
         colors[:, 0, :] = rgb_to_sh(rgbs_shard.to(device))
-        params.append(("sh0", torch.nn.Parameter(colors[:, :1, :]), sh0_lr))
-        params.append(("shN", torch.nn.Parameter(colors[:, 1:, :]), shN_lr))
+        
+        # ==================== 修正点 2 和 3 ====================
+        # 确保切片后的 sh0 和 shN 也是连续的
+        sh0 = colors[:, :1, :].contiguous()
+        shN = colors[:, 1:, :].contiguous()
+        params.append(("sh0", torch.nn.Parameter(sh0), sh0_lr))
+        params.append(("shN", torch.nn.Parameter(shN), shN_lr))
+        # =======================================================
     else:
         features = torch.rand(N, feature_dim, device=device)
         params.append(("features", torch.nn.Parameter(features), sh0_lr))
-        colors = torch.logit(rgbs_shard.to(device))
-        params.append(("colors", torch.nn.Parameter(colors), sh0_lr))
+        # 确保 colors 也是连续的
+        colors_param = torch.logit(rgbs_shard.to(device)).contiguous()
+        params.append(("colors", torch.nn.Parameter(colors_param), sh0_lr))
 
-    # `params` 中的所有张量都已经在正确的设备上，但 .to(device) 是幂等的，所以保留也无妨
     splats = torch.nn.ParameterDict({n: v for n, v, _ in params}).to(device)
     
-    # ... (后续优化器创建部分不变)
     BS = batch_size * world_size
     optimizer_class = None
     if sparse_grad:
