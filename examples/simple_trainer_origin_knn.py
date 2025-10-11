@@ -284,6 +284,9 @@ def create_splats_with_optimizers(
     points_shard = points[world_rank::world_size]
     rgbs_shard = rgbs[world_rank::world_size]
 
+    points_shard = points_shard.contiguous()
+    rgbs_shard = rgbs_shard.contiguous()
+    
     # 步骤 2: 将分片后的数据移动到 GPU (Move shard to GPU)
     points_shard_cuda = points_shard.to(device)
 
