@@ -282,6 +282,7 @@ def create_splats_with_optimizers(
 
     # Initialize the GS size to be the average dist of the 3 nearest neighbors
     print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
+    points = points.to(device)
     knn_start_time = time.time()
     dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
     knn_end_time = time.time()
