@@ -27,8 +27,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+<<<<<<< HEAD
         with:
           submodules: recursive
+=======
+>>>>>>> origin/main
 
       - name: Download packages
         id: download_artifacts
@@ -95,8 +98,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+<<<<<<< HEAD
         with:
           submodules: recursive
+=======
+>>>>>>> origin/main
 
       - name: Set up Python
         uses: actions/setup-python@v4

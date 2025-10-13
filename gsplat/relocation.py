@@ -44,6 +44,6 @@ def compute_relocation(
     ratios = ratios.int().contiguous()
 
     new_opacities, new_scales = _make_lazy_cuda_func("relocation")(
-        opacities, scales, ratios, binoms, n_max
+        opacities, scales, ratios, binoms.to(opacities.device), n_max
     )
     return new_opacities, new_scales
