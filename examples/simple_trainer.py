@@ -904,9 +904,9 @@ class Runner:
             )
             image_ids = data["image_id"].to(device)
             masks = data["mask"].to(device) if "mask" in data else None  # [1, H, W]
-            if cfg.depth_loss and ("depths" in data):
+            # if cfg.depth_loss and ("depths" in data):
                 # points = data["points"].to(device)  # [1, M, 2]
-                depths_gt = data["depths"].to(device)  # [1, M]
+                # depths_gt = data["depths"].to(device)  # [1, M]
 
             height, width = pixels.shape[1:3]
 
