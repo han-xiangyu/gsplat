@@ -320,14 +320,24 @@ def cli(fn: Callable, args: Any, verbose: bool = False) -> bool:
     ```
     """
     assert torch.cuda.is_available(), "CUDA device is required!"
-    if "OMPI_COMM_WORLD_SIZE" in os.environ:  # multi-node
-        local_rank = int(os.environ["OMPI_COMM_WORLD_LOCAL_RANK"])
-        world_size = int(os.environ["OMPI_COMM_WORLD_SIZE"])  # dist.get_world_size()
-        world_rank = int(os.environ["OMPI_COMM_WORLD_RANK"])  # dist.get_rank()
+    # if "OMPI_COMM_WORLD_SIZE" in os.environ:  # multi-node
+    #     local_rank = int(os.environ["OMPI_COMM_WORLD_LOCAL_RANK"])
+    #     world_size = int(os.environ["OMPI_COMM_WORLD_SIZE"])  # dist.get_world_size()
+    #     world_rank = int(os.environ["OMPI_COMM_WORLD_RANK"])  # dist.get_rank()
+    #     return _distributed_worker(
+    #         world_rank, world_size, fn, args, local_rank, verbose
+    #     )
+    if "WORLD_SIZE" in os.environ:
+        local_rank = int(os.environ["LOCAL_RANK"])
+        world_rank = int(os.environ["RANK"])
+        world_size = int(os.environ["WORLD_SIZE"])
+
+        print(f"Initializing distributed process group... Rank {world_rank}/{world_size}, Local Rank {local_rank}")
+
         return _distributed_worker(
             world_rank, world_size, fn, args, local_rank, verbose
         )
-
+    
     world_size = torch.cuda.device_count()
     distributed = world_size > 1
 

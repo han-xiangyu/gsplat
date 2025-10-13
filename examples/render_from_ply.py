@@ -30,10 +30,8 @@ def apply_jet_cmap01(x01: np.ndarray, reverse: bool = True) -> np.ndarray:
 
 
 # 1) 正则表达式：匹配 loc, trav, ch, frame
-PAT = re.compile(
-    r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)\.(?:png|jpg|jpeg)$",
-    re.IGNORECASE,
-)
+PAT = re.compile( r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)\.(?:png|jpg|jpeg)$", re.IGNORECASE, )
+
 
 # 2) 解析函数：缺失 loc 时给默认值 0
 def parse_meta(name: str):
@@ -194,7 +192,7 @@ def render_multichannel(cfg: RenderConfig):
     device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
 
     # 1) 读相机与文件名（文件名用于解析 loc/trav/ch/frame）
-    parser = Parser(data_dir=cfg.data_dir, factor=1, normalize=False, test_every=60)
+    parser = Parser(data_dir=cfg.data_dir, factor=1, normalize=False, test_every=1000000)
     image_names = None
     for cand in ["image_paths", "image_names", "filenames", "images"]:
         if hasattr(parser, cand):
@@ -223,7 +221,8 @@ def render_multichannel(cfg: RenderConfig):
     for i, name in enumerate(image_names):
         meta = parse_meta(name)
         if meta is None:
-            raise ValueError(f"文件名不符合规范: {name}")
+            #raise ValueError(f"文件名不符合规范: {name}")
+            continue
         key = (meta["loc"], meta["trav"], meta["frame"], meta["ch"])
         index[key] = i
         lg = (meta["loc"], meta["trav"])

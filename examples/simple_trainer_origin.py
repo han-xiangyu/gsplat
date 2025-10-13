@@ -250,7 +250,6 @@ class Config:
 
 def create_splats_with_optimizers(
     parser: Parser,
-    result_dir: str,
     init_type: str = "sfm",
     init_num_pts: int = 100_000,
     init_extent: float = 3.0,
@@ -281,105 +280,48 @@ def create_splats_with_optimizers(
     else:
         raise ValueError("Please specify a correct init_type: sfm or random")
 
-    # 步骤 1: 在 CPU 上分片并立刻转为连续内存
-    points_shard = points[world_rank::world_size].contiguous()
-    rgbs_shard = rgbs[world_rank::world_size].contiguous()
-    
-    # 步骤 2: 将分片后的数据移动到 GPU
-    points_shard = points_shard.to(device)
-
-    # 步骤 3: 只对分片后的 GPU 数据进行 KNN 计算
-    print(f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard.shape[0]} points...")
+    # Initialize the GS size to be the average dist of the 3 nearest neighbors
+    print(f"[PROFILING] Starting KNN calculation for {points.shape[0]} points...")
+    points = points.to(device)
     knn_start_time = time.time()
-    dist2_avg = (knn(points_shard, 4)[:, 1:] ** 2).mean(dim=-1)
+    dist2_avg = (knn(points, 4)[:, 1:] ** 2).mean(dim=-1)  # [N,]
     knn_end_time = time.time()
-    print(f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds.")
+    print(f"✅ [PROFILING] KNN calculation took: {knn_end_time - knn_start_time:.4f} seconds.")
     
     dist_avg = torch.sqrt(dist2_avg)
+    scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)  # [N, 3]
 
-    gathered_dists = None
-    if world_size > 1:
-        output_list = [None for _ in range(world_size)]
-        dist.all_gather_object(output_list, dist_avg.cpu())
-        if world_rank == 0:
-            gathered_dists = torch.cat(output_list, dim=0)
-    else:
-        gathered_dists = dist_avg
+    # Distribute the GSs to different ranks (also works for single rank)
+    points = points[world_rank::world_size]
+    rgbs = rgbs[world_rank::world_size]
+    scales = scales[world_rank::world_size]
 
-    if world_rank == 0:
-        distances_np = gathered_dists.cpu().numpy()
-        mean_dist = np.mean(distances_np)
-        std_dist = np.std(distances_np)
-        median_dist = np.median(distances_np)
-        min_dist = np.min(distances_np)
-        max_dist = np.max(distances_np)
-
-        print("\n" + "="*50)
-        print("📊 Statistics on KNN distance distribution")
-        print(f"  - Mean:    {mean_dist:.6f}")
-        print(f"  - Std:   {std_dist:.6f}")
-        print(f"  - Median: {median_dist:.6f}")
-        print(f"  - Min:     {min_dist:.6f}")
-        print(f"  - Max:     {max_dist:.6f}")
-        print("="*50 + "\n")
-
-        try:
-            import matplotlib.pyplot as plt
-            plt.figure(figsize=(12, 7))
-            plt.hist(distances_np, bins=200, log=True)
-            plt.title("Statistics on KNN distance distribution")
-            plt.xlabel("mean distance")
-            plt.ylabel("Frequency (log)")
-            plt.grid(True, which="both", linestyle='--', linewidth=0.5)
-            plt.axvline(mean_dist, color='r', linestyle='dashed', linewidth=2, label=f'mean: {mean_dist:.4f}')
-            plt.axvline(median_dist, color='g', linestyle='dashed', linewidth=2, label=f'median: {median_dist:.4f}')
-            plt.legend()
-            save_path = os.path.join(result_dir, "knn_distance_distribution.png")
-            plt.savefig(save_path)
-            plt.close()
-            print(f"📈 save in: {save_path}\n")
-        except ImportError:
-            print("⚠️ no matplotlib, please run `pip install matplotlib`")
-
-    if world_size > 1:
-        dist.barrier()
-        
-    scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)
-
-    scales = scales.contiguous()
-
-    N = points_shard.shape[0]
-    quats = torch.rand((N, 4), device=device)
-    opacities = torch.logit(torch.full((N,), init_opacity, device=device))
+    N = points.shape[0]
+    quats = torch.rand((N, 4))  # [N, 4]
+    opacities = torch.logit(torch.full((N,), init_opacity))  # [N,]
 
     params = [
         # name, value, lr
-        ("means", torch.nn.Parameter(points_shard), means_lr * scene_scale),
+        ("means", torch.nn.Parameter(points), means_lr * scene_scale),
         ("scales", torch.nn.Parameter(scales), scales_lr),
         ("quats", torch.nn.Parameter(quats), quats_lr),
         ("opacities", torch.nn.Parameter(opacities), opacities_lr),
     ]
 
     if feature_dim is None:
-        colors = torch.zeros((N, (sh_degree + 1) ** 2, 3), device=device)
-        colors[:, 0, :] = rgb_to_sh(rgbs_shard.to(device))
-        
-        # ==================== 修正点 2 和 3 ====================
-        # 确保切片后的 sh0 和 shN 也是连续的
-        sh0 = colors[:, :1, :].contiguous()
-        shN = colors[:, 1:, :].contiguous()
-        params.append(("sh0", torch.nn.Parameter(sh0), sh0_lr))
-        params.append(("shN", torch.nn.Parameter(shN), shN_lr))
-        # =======================================================
+        # color is SH coefficients.
+        colors = torch.zeros((N, (sh_degree + 1) ** 2, 3))  # [N, K, 3]
+        colors[:, 0, :] = rgb_to_sh(rgbs)
+        params.append(("sh0", torch.nn.Parameter(colors[:, :1, :]), sh0_lr))
+        params.append(("shN", torch.nn.Parameter(colors[:, 1:, :]), shN_lr))
     else:
-        features = torch.rand(N, feature_dim, device=device)
+        # features will be used for appearance and view-dependent shading
+        features = torch.rand(N, feature_dim)  # [N, feature_dim]
         params.append(("features", torch.nn.Parameter(features), sh0_lr))
-        # 确保 colors 也是连续的
-        colors_param = torch.logit(rgbs_shard.to(device)).contiguous()
-        params.append(("colors", torch.nn.Parameter(colors_param), sh0_lr))
+        colors = torch.logit(rgbs)  # [N, 3]
+        params.append(("colors", torch.nn.Parameter(colors), sh0_lr))
 
     splats = torch.nn.ParameterDict({n: v for n, v, _ in params}).to(device)
-    
     # Scale learning rate based on batch size, reference:
     # https://www.cs.princeton.edu/~smalladi/blog/2024/01/22/SDEs-ScalingRules/
     # Note that this would not make the training exactly equivalent, see
@@ -808,7 +750,6 @@ class Runner:
             feature_dim = 32 if cfg.app_opt else None
             self.splats, self.optimizers = create_splats_with_optimizers(
                 self.parser,
-                result_dir=cfg.result_dir,
                 init_type=cfg.init_type,
                 init_num_pts=cfg.init_num_pts,
                 init_extent=cfg.init_extent,

@@ -7,7 +7,7 @@ from torch import Tensor
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
-
+from pytorch3d.ops import knn_points
 
 class CameraOptModule(torch.nn.Module):
     """Camera pose optimization module."""
@@ -138,12 +138,36 @@ def rotation_6d_to_matrix(d6: Tensor) -> Tensor:
     return torch.stack((b1, b2, b3), dim=-2)
 
 
-def knn(x: Tensor, K: int = 4) -> Tensor:
-    x_np = x.cpu().numpy()
-    model = NearestNeighbors(n_neighbors=K, metric="euclidean").fit(x_np)
-    distances, _ = model.kneighbors(x_np)
-    return torch.from_numpy(distances).to(x)
+# def knn(x: Tensor, K: int = 4) -> Tensor:
+#     x_np = x.cpu().numpy()
+#     model = NearestNeighbors(n_neighbors=K, metric="euclidean").fit(x_np)
+#     distances, _ = model.kneighbors(x_np)
+#     return torch.from_numpy(distances).to(x)
 
+def knn(x: Tensor, K: int = 4) -> Tensor:
+    """
+    Find K nearest neighbors for each point in x using pytorch3d.
+    This is a GPU-accelerated replacement for the original scikit-learn based knn.
+    
+    Args:
+        x (Tensor): A tensor of points with shape [N, 3].
+        K (int): The number of nearest neighbors to find.
+
+    Returns:
+        Tensor: A tensor of distances with shape [N, K].
+    """
+    # pytorch3d.ops.knn_points expects a batch dimension.
+    # x is [N, 3], so we add a batch dimension to get [1, N, 3].
+    x_batch = x.unsqueeze(0)
+
+    # Find K nearest neighbors for each point in x_batch within itself.
+    # The function returns a namedtuple with `dists`, `idx`, and `nn`. We only need dists.
+    # return squared Euclidean distances
+    knn_result = knn_points(x_batch, x_batch, K=K, return_sorted=True)
+    dists_sq = knn_result.dists
+    distances = torch.sqrt(dists_sq)
+
+    return distances.squeeze(0)
 
 def rgb_to_sh(rgb: Tensor) -> Tensor:
     C0 = 0.28209479177387814
