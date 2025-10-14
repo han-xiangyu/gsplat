@@ -7,11 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-<<<<<<< HEAD
-        with:
-          submodules: recursive
-=======
->>>>>>> origin/main
       - name: Strip unsupported tags in README
         run: |
           sed -i '/<!-- pypi-strip -->/,/<!-- \/pypi-strip -->/d' README.md
@@ -31,11 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-<<<<<<< HEAD
-        os: [ubuntu-22.04, windows-2022]
-=======
         os: [ubuntu-22.04, windows-2019]
->>>>>>> origin/main
         python-version: ['3.10']
         torch-version: ['2.0.0', '2.1.0', '2.2.0', '2.3.0', '2.4.0']
         cuda-version: ['cu118', 'cu121', 'cu124']
@@ -82,16 +73,9 @@ jobs:
             cuda-version: 'cu116'
           - torch-version: 2.4.0
             cuda-version: 'cu117'
-<<<<<<< HEAD
-          - os: windows-2022
-            cuda-version: 'cu121'
-          - os: windows-2022
-            cuda-version: 'cu118'
-=======
           - os: windows-2019
             torch-version: 2.0.0
             cuda-version: 'cu121'
->>>>>>> origin/main
 
     steps:
       - name: Checkout repository
