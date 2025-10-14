@@ -3,7 +3,7 @@ source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/spatial05_whole_traversal"
-MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_gsplat_mcmc_finalMult1e-2_L1depth2e-3_DensifyStart18000_Stop100k_meansLr2e-3_densifyPortion0.001_cap32M_iter200k_individual_K_wholesquence"
+MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_wholesquence"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -26,7 +26,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 echo "Starting distributed training..."
 torchrun --standalone \
-     --nproc_per_node=8 \
+     --nproc_per_node=4 \
      --nnodes=1 \
      examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
@@ -43,7 +43,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 3000000 \
+     --strategy.cap-max 300000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
