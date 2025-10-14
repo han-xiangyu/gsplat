@@ -109,6 +109,8 @@ class Config:
     # fix_downsample_stride: int = 2
 
 
+    #### use knn cache
+    use_knn_cache: bool = True
     # Whether to save ply file (storage size can be large)
     save_ply: bool = True
     # Steps to save the model as ply
@@ -251,6 +253,8 @@ class Config:
 def create_splats_with_optimizers(
     parser: Parser,
     result_dir: str,
+    data_dir: str,
+    use_knn_cache: bool = True,
     init_type: str = "sfm",
     init_num_pts: int = 100_000,
     init_extent: float = 3.0,
@@ -272,44 +276,99 @@ def create_splats_with_optimizers(
     world_rank: int = 0,
     world_size: int = 1,
 ) -> Tuple[torch.nn.ParameterDict, Dict[str, torch.optim.Optimizer]]:
+    
+    cache_path = os.path.join(data_dir, "knn_dist_avg.pt")
+    dist_avg_full = None
+
+    # 1. Rank 0 尝试加载缓存
+    if world_rank == 0 and use_knn_cache and os.path.exists(cache_path):
+        print(f"✅ Found KNN cache at: {cache_path}. Loading...")
+        try:
+            dist_avg_full = torch.load(cache_path)
+            if not isinstance(dist_avg_full, torch.Tensor):
+                print("⚠️ KNN cache file is corrupted. Recomputing...")
+                dist_avg_full = None
+        except Exception as e:
+            print(f"⚠️ Failed to load KNN cache: {e}. Recomputing...")
+            dist_avg_full = None
+    
+    # 2. 将加载结果（或None）从 Rank 0 广播给所有进程
+    if world_size > 1:
+        object_list = [dist_avg_full]
+        dist.broadcast_object_list(object_list, src=0)
+        dist_avg_full = object_list[0]
+
+    if dist_avg_full is None:
+        # 3. 如果没有缓存，则执行计算
+        print(f"Rank {world_rank}: No valid KNN cache found. Computing from scratch...")
+        if init_type == "sfm":
+            points = torch.from_numpy(parser.points).float()
+        elif init_type == "random":
+            points = init_extent * scene_scale * (torch.rand((init_num_pts, 3)) * 2 - 1)
+        else:
+            raise ValueError("Please specify a correct init_type: sfm or random")
+        
+        points_shard = points[world_rank::world_size].contiguous().to(device)
+
+        print(f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard.shape[0]} points...")
+        knn_start_time = time.time()
+        dist2_avg = (knn(points_shard, 4)[:, 1:] ** 2).mean(dim=-1)
+        knn_end_time = time.time()
+        print(f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds.")
+        
+        dist_avg_shard = torch.sqrt(dist2_avg) # 这是当前进程的分片结果
+
+        # 4. 汇集所有分片结果到 Rank 0
+        if world_size > 1:
+            output_list = [None for _ in range(world_size)]
+            # 将当前 shard 的结果发送到 rank 0
+            dist.all_gather_object(output_list, dist_avg_shard.cpu())
+            if world_rank == 0:
+                # 在 Rank 0 上拼接成完整列表
+                dist_avg_full = torch.cat(output_list, dim=0)
+        else:
+            dist_avg_full = dist_avg_shard # 单卡时，完整列表就是分片结果
+
+        # 5. Rank 0 保存新计算的完整结果
+        if world_rank == 0 and use_knn_cache:
+            print(f"💾 Saving KNN cache for future runs to: {cache_path}")
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            # ========================= FIX 1: 核心错误修正 =========================
+            # 保存的是刚刚拼接好的 dist_avg_full，而不是之前的 None
+            torch.save(dist_avg_full, cache_path)
+            # =====================================================================
+            
+        # 6. (优化) 将完整结果广播回所有进程，确保所有进程都有最新的完整数据
+        if world_size > 1:
+            object_list = [dist_avg_full]
+            dist.broadcast_object_list(object_list, src=0)
+            dist_avg_full = object_list[0]
+
+    # <<< FIX 2: 提取重复代码 >>>
+    # 无论是从缓存加载还是重新计算，此时 dist_avg_full 都应该是一个完整的Tensor
+    # 现在才统一进行数据加载和分片
     if init_type == "sfm":
         points = torch.from_numpy(parser.points).float()
         rgbs = torch.from_numpy(parser.points_rgb / 255.0).float()
-    elif init_type == "random":
+    else: # 'random' case
         points = init_extent * scene_scale * (torch.rand((init_num_pts, 3)) * 2 - 1)
         rgbs = torch.rand((init_num_pts, 3))
-    else:
-        raise ValueError("Please specify a correct init_type: sfm or random")
-
-    # 步骤 1: 在 CPU 上分片并立刻转为连续内存
-    points_shard = points[world_rank::world_size].contiguous()
+        
+    points_shard = points[world_rank::world_size].contiguous().to(device)
     rgbs_shard = rgbs[world_rank::world_size].contiguous()
+    dist_avg = dist_avg_full[world_rank::world_size].to(device)
     
-    # 步骤 2: 将分片后的数据移动到 GPU
-    points_shard = points_shard.to(device)
-
-    # 步骤 3: 只对分片后的 GPU 数据进行 KNN 计算
-    print(f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard.shape[0]} points...")
-    knn_start_time = time.time()
-    dist2_avg = (knn(points_shard, 4)[:, 1:] ** 2).mean(dim=-1)
-    knn_end_time = time.time()
-    print(f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds.")
-    
-    dist_avg = torch.sqrt(dist2_avg)
-
+    # 后续逻辑不变...
     if world_size > 1:
         dist.barrier()
         
     scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)
-
     scales = scales.contiguous()
-
     N = points_shard.shape[0]
     quats = torch.rand((N, 4), device=device)
     opacities = torch.logit(torch.full((N,), init_opacity, device=device))
 
     params = [
-        # name, value, lr
         ("means", torch.nn.Parameter(points_shard), means_lr * scene_scale),
         ("scales", torch.nn.Parameter(scales), scales_lr),
         ("quats", torch.nn.Parameter(quats), quats_lr),
@@ -319,40 +378,29 @@ def create_splats_with_optimizers(
     if feature_dim is None:
         colors = torch.zeros((N, (sh_degree + 1) ** 2, 3), device=device)
         colors[:, 0, :] = rgb_to_sh(rgbs_shard.to(device))
-        
-        # ==================== 修正点 2 和 3 ====================
-        # 确保切片后的 sh0 和 shN 也是连续的
         sh0 = colors[:, :1, :].contiguous()
         shN = colors[:, 1:, :].contiguous()
         params.append(("sh0", torch.nn.Parameter(sh0), sh0_lr))
         params.append(("shN", torch.nn.Parameter(shN), shN_lr))
-        # =======================================================
     else:
         features = torch.rand(N, feature_dim, device=device)
         params.append(("features", torch.nn.Parameter(features), sh0_lr))
-        # 确保 colors 也是连续的
         colors_param = torch.logit(rgbs_shard.to(device)).contiguous()
         params.append(("colors", torch.nn.Parameter(colors_param), sh0_lr))
 
     splats = torch.nn.ParameterDict({n: v for n, v, _ in params}).to(device)
     
-    # Scale learning rate based on batch size, reference:
-    # https://www.cs.princeton.edu/~smalladi/blog/2024/01/22/SDEs-ScalingRules/
-    # Note that this would not make the training exactly equivalent, see
-    # https://arxiv.org/pdf/2402.18824v1
     BS = batch_size * world_size
-    optimizer_class = None
+    optimizer_class = torch.optim.Adam
     if sparse_grad:
         optimizer_class = torch.optim.SparseAdam
     elif visible_adam:
         optimizer_class = SelectiveAdam
-    else:
-        optimizer_class = torch.optim.Adam
+
     optimizers = {
         name: optimizer_class(
             [{"params": splats[name], "lr": lr * math.sqrt(BS), "name": name}],
             eps=1e-15 / math.sqrt(BS),
-            # TODO: check betas logic when BS is larger than 10 betas[0] will be zero.
             betas=(1 - BS * (1 - 0.9), 1 - BS * (1 - 0.999)),
         )
         for name, _, lr in params
@@ -785,6 +833,8 @@ class Runner:
             self.splats, self.optimizers = create_splats_with_optimizers(
                 self.parser,
                 result_dir=cfg.result_dir,
+                data_dir=cfg.data_dir,
+                use_knn_cache=cfg.use_knn_cache,
                 init_type=cfg.init_type,
                 init_num_pts=cfg.init_num_pts,
                 init_extent=cfg.init_extent,
