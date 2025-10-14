@@ -316,6 +316,7 @@
 <span class="k">except</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 
+
 <div class="viewcode-block" id="MCMCStrategy">
 <a class="viewcode-back" href="../../../apis/strategy.html#gsplat.MCMCStrategy">[docs]</a>
 <span class="nd">@dataclass</span>
@@ -365,8 +366,8 @@
     <span class="n">densify_portion</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span>  <span class="c1"># 每次 densify 增加的点数比例</span>
 
     <span class="n">schedule_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cosine&quot;</span><span class="p">,</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span> <span class="s2">&quot;staged&quot;</span><span class="p">,</span> <span class="s2">&quot;original&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cosine&quot;</span>
-    <span class="n">densify_step_portion_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.005</span>     <span class="c1"># 单次 refine 最多按当前点数的增长比例</span>
-    <span class="n">densify_step_min_add</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>               <span class="c1"># 单次最少新增个数（可为 0）</span>
+    <span class="n">densify_step_portion_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.005</span>  <span class="c1"># 单次 refine 最多按当前点数的增长比例</span>
+    <span class="n">densify_step_min_add</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 单次最少新增个数（可为 0）</span>
 
 <div class="viewcode-block" id="MCMCStrategy.initialize_state">
 <a class="viewcode-back" href="../../../apis/strategy.html#gsplat.MCMCStrategy.initialize_state">[docs]</a>
@@ -378,10 +379,11 @@
         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_max</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
                 <span class="n">binoms</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;binoms&quot;</span><span class="p">:</span> <span class="n">binoms</span><span class="p">,</span>
-                <span class="s2">&quot;n0&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>              <span class="c1"># 初始化点数，首次调用时读取</span>
-                <span class="s2">&quot;last_target_n&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>   <span class="c1"># 上次的目标点数，保证单调递增</span>
-                <span class="p">}</span></div>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;binoms&quot;</span><span class="p">:</span> <span class="n">binoms</span><span class="p">,</span>
+            <span class="s2">&quot;n0&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># 初始化点数，首次调用时读取</span>
+            <span class="s2">&quot;last_target_n&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># 上次的目标点数，保证单调递增</span>
+        <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="MCMCStrategy.check_sanity">
@@ -558,7 +560,9 @@
             <span class="k">return</span> <span class="mi">0</span>
 
         <span class="c1"># 每步上限：按当前点数的比例限幅，且保证至少 min_add</span>
-        <span class="n">step_cap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">densify_step_min_add</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">cur</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">densify_step_portion_max</span><span class="p">))</span>
+        <span class="n">step_cap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">densify_step_min_add</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">cur</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">densify_step_portion_max</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">n_add</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">need</span><span class="p">,</span> <span class="n">step_cap</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">n_add</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -571,7 +575,6 @@
                 <span class="n">min_opacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_opacity</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">n_add</span>
-
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_relocate_gs</span><span class="p">(</span>
@@ -603,7 +606,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="n">current_n_points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;means&quot;</span><span class="p">])</span>
 
-        <span class="n">n_target</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cap_max</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">densify_portion</span><span class="p">)</span> <span class="o">*</span> <span class="n">current_n_points</span><span class="p">))</span>
+        <span class="n">n_target</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cap_max</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">densify_portion</span><span class="p">)</span> <span class="o">*</span> <span class="n">current_n_points</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">n_gs</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_target</span> <span class="o">-</span> <span class="n">current_n_points</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">n_gs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">sample_add</span><span class="p">(</span>
