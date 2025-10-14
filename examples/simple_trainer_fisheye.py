@@ -42,7 +42,7 @@ import wandb
 import torch.distributed as dist
 from system_utils import generate_wandb_id
 
-from difix3d.pipeline_difix import DifixPipeline
+#from difix3d.pipeline_difix import DifixPipeline
 from examples.utils import CameraPoseInterpolator
 import random
 from PIL import Image
