@@ -1,6 +1,6 @@
 #!/bin/bash
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate mars_pytorh3d
+conda activate gsplat_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/tra2_spatial05_frames3000_individual_K_6cam_voxel"
 MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_frames3000_gsplat_mcmc_iter50k_individual_K_voxel_1node_8gpu_6cam"
