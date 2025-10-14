@@ -297,50 +297,6 @@ def create_splats_with_optimizers(
     
     dist_avg = torch.sqrt(dist2_avg)
 
-    gathered_dists = None
-    if world_size > 1:
-        output_list = [None for _ in range(world_size)]
-        dist.all_gather_object(output_list, dist_avg.cpu())
-        if world_rank == 0:
-            gathered_dists = torch.cat(output_list, dim=0)
-    else:
-        gathered_dists = dist_avg
-
-    if world_rank == 0:
-        distances_np = gathered_dists.cpu().numpy()
-        mean_dist = np.mean(distances_np)
-        std_dist = np.std(distances_np)
-        median_dist = np.median(distances_np)
-        min_dist = np.min(distances_np)
-        max_dist = np.max(distances_np)
-
-        print("\n" + "="*50)
-        print("📊 Statistics on KNN distance distribution")
-        print(f"  - Mean:    {mean_dist:.6f}")
-        print(f"  - Std:   {std_dist:.6f}")
-        print(f"  - Median: {median_dist:.6f}")
-        print(f"  - Min:     {min_dist:.6f}")
-        print(f"  - Max:     {max_dist:.6f}")
-        print("="*50 + "\n")
-
-        try:
-            import matplotlib.pyplot as plt
-            plt.figure(figsize=(12, 7))
-            plt.hist(distances_np, bins=200, log=True)
-            plt.title("Statistics on KNN distance distribution")
-            plt.xlabel("mean distance")
-            plt.ylabel("Frequency (log)")
-            plt.grid(True, which="both", linestyle='--', linewidth=0.5)
-            plt.axvline(mean_dist, color='r', linestyle='dashed', linewidth=2, label=f'mean: {mean_dist:.4f}')
-            plt.axvline(median_dist, color='g', linestyle='dashed', linewidth=2, label=f'median: {median_dist:.4f}')
-            plt.legend()
-            save_path = os.path.join(result_dir, "knn_distance_distribution.png")
-            plt.savefig(save_path)
-            plt.close()
-            print(f"📈 save in: {save_path}\n")
-        except ImportError:
-            print("⚠️ no matplotlib, please run `pip install matplotlib`")
-
     if world_size > 1:
         dist.barrier()
         
