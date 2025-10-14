@@ -30,7 +30,10 @@ def apply_jet_cmap01(x01: np.ndarray, reverse: bool = True) -> np.ndarray:
 
 
 # 1) 正则表达式：匹配 loc, trav, ch, frame
-PAT = re.compile( r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)\.(?:png|jpg|jpeg)$", re.IGNORECASE, )
+PAT = re.compile(
+    r"(?:loc_(?P<loc>\d+)_)?trav_(?P<trav>\d+)_channel_(?P<ch>\d+)_img_(?P<frame>\d+)\.(?:png|jpg|jpeg)$",
+    re.IGNORECASE,
+)
 
 
 # 2) 解析函数：缺失 loc 时给默认值 0
@@ -40,11 +43,12 @@ def parse_meta(name: str):
         return None
     loc = m.group("loc")
     return {
-        "loc": int(loc) if loc is not None else 0,   # <- 默认 0
+        "loc": int(loc) if loc is not None else 0,  # <- 默认 0
         "trav": int(m.group("trav")),
         "ch": int(m.group("ch")),
         "frame": int(m.group("frame")),
     }
+
 
 def ensure_4x4(c2w: np.ndarray) -> np.ndarray:
     assert c2w.ndim == 3 and c2w.shape[1] in (3, 4)
@@ -54,19 +58,23 @@ def ensure_4x4(c2w: np.ndarray) -> np.ndarray:
     last = np.tile(np.array([[0.0, 0.0, 0.0, 1.0]], dtype=np.float32), (N, 1, 1))
     return np.concatenate([c2w, last], axis=1)
 
+
 def pick_K_and_size(parser: Parser) -> Tuple[np.ndarray, Tuple[int, int]]:
     K = np.asarray(list(parser.Ks_dict.values())[0], dtype=np.float32)
     W, H = list(parser.imsize_dict.values())[0]
     return K, (W, H)
+
 
 def sorted_props_by_prefix(names: List[str], prefix: str) -> List[str]:
     pat = re.compile(re.escape(prefix) + r"_(\d+)$")
     pairs = []
     for n in names:
         m = pat.match(n)
-        if m: pairs.append((int(m.group(1)), n))
+        if m:
+            pairs.append((int(m.group(1)), n))
     pairs.sort(key=lambda x: x[0])
     return [n for _, n in pairs]
+
 
 def load_splats_from_ply(ply_path: str, device: torch.device):
     """
@@ -109,11 +117,12 @@ def load_splats_from_ply(ply_path: str, device: torch.device):
     rest_keys = [k for k in names if k.startswith("f_rest_")]
     rest_keys.sort(key=lambda x: int(x.split("_")[-1]))
 
-    rest_flat = np.stack([col(k) for k in rest_keys], 1)  # (N, K*3)，顺序是 c-major: [c0:k0..kK-1, c1:..., c2:...]
+    rest_flat = np.stack(
+        [col(k) for k in rest_keys], 1
+    )  # (N, K*3)，顺序是 c-major: [c0:k0..kK-1, c1:..., c2:...]
     N = rest_flat.shape[0]
     K = rest_flat.shape[1] // 3
-    shN = rest_flat.reshape(N, 3, K).transpose(0, 2, 1)   # -> (N, K, 3)
-
+    shN = rest_flat.reshape(N, 3, K).transpose(0, 2, 1)  # -> (N, K, 3)
 
     # opacity (logit)
     opacity = col("opacity")  # (N,)
@@ -122,28 +131,46 @@ def load_splats_from_ply(ply_path: str, device: torch.device):
     scales = np.stack([col("scale_0"), col("scale_1"), col("scale_2")], 1)  # (N,3)
 
     # quats（按 rot_0..3 原样读取，不重排）
-    quats = np.stack([col("rot_0"), col("rot_1"), col("rot_2"), col("rot_3")], 1)  # (N,4)
+    quats = np.stack(
+        [col("rot_0"), col("rot_1"), col("rot_2"), col("rot_3")], 1
+    )  # (N,4)
 
-    pd = torch.nn.ParameterDict({
-        "means":     torch.nn.Parameter(torch.from_numpy(means).to(device), requires_grad=False),
-        "scales":    torch.nn.Parameter(torch.from_numpy(scales).to(device), requires_grad=False),     # log
-        "quats":     torch.nn.Parameter(torch.from_numpy(quats).to(device), requires_grad=False),      # as-is
-        "opacities": torch.nn.Parameter(torch.from_numpy(opacity).to(device), requires_grad=False),    # logit
-        "sh0":       torch.nn.Parameter(torch.from_numpy(sh0).to(device), requires_grad=False),
-        "shN":       torch.nn.Parameter(torch.from_numpy(shN).to(device), requires_grad=False),
-    })
+    pd = torch.nn.ParameterDict(
+        {
+            "means": torch.nn.Parameter(
+                torch.from_numpy(means).to(device), requires_grad=False
+            ),
+            "scales": torch.nn.Parameter(
+                torch.from_numpy(scales).to(device), requires_grad=False
+            ),  # log
+            "quats": torch.nn.Parameter(
+                torch.from_numpy(quats).to(device), requires_grad=False
+            ),  # as-is
+            "opacities": torch.nn.Parameter(
+                torch.from_numpy(opacity).to(device), requires_grad=False
+            ),  # logit
+            "sh0": torch.nn.Parameter(
+                torch.from_numpy(sh0).to(device), requires_grad=False
+            ),
+            "shN": torch.nn.Parameter(
+                torch.from_numpy(shN).to(device), requires_grad=False
+            ),
+        }
+    )
 
     meta = {
         "scale_is_log": True,
         "opacity_is_logit": True,
         "quat_order": "as_is",
     }
-    print(f"[PLY meta] 固定约定 -> scale_is_log=True, opacity_is_logit=True, quat_order=as_is")
+    print(
+        f"[PLY meta] 固定约定 -> scale_is_log=True, opacity_is_logit=True, quat_order=as_is"
+    )
     return pd, meta
 
 
-
 # ============ 渲染配置 ============
+
 
 @dataclass
 class RenderConfig:
@@ -180,6 +207,7 @@ def get_gt_path(parser, image_names, i: int) -> Optional[str]:
 
 # ============ 主流程：按 (loc, trav) 输出视频，帧内拼接(2|1|3) × (RGB|DEPTH) ============
 
+
 @torch.no_grad()
 def render_multichannel(cfg: RenderConfig):
     os.makedirs(cfg.result_dir, exist_ok=True)
@@ -192,7 +220,9 @@ def render_multichannel(cfg: RenderConfig):
     device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
 
     # 1) 读相机与文件名（文件名用于解析 loc/trav/ch/frame）
-    parser = Parser(data_dir=cfg.data_dir, factor=1, normalize=False, test_every=1000000)
+    parser = Parser(
+        data_dir=cfg.data_dir, factor=1, normalize=False, test_every=1000000
+    )
     image_names = None
     for cand in ["image_paths", "image_names", "filenames", "images"]:
         if hasattr(parser, cand):
@@ -204,8 +234,16 @@ def render_multichannel(cfg: RenderConfig):
     if image_names is None:
         img_dir = Path(cfg.data_dir) / "images"
         if not img_dir.exists():
-            raise RuntimeError("无法从 Parser 获取图像文件名，且未找到 data_dir/images 兜底目录。")
-        image_names = sorted([p.name for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]])
+            raise RuntimeError(
+                "无法从 Parser 获取图像文件名，且未找到 data_dir/images 兜底目录。"
+            )
+        image_names = sorted(
+            [
+                p.name
+                for p in img_dir.iterdir()
+                if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
+            ]
+        )
 
     camtoworlds_np = ensure_4x4(parser.camtoworlds)  # [N,4,4]
     K_global, (W, H) = pick_K_and_size(parser)
@@ -221,7 +259,7 @@ def render_multichannel(cfg: RenderConfig):
     for i, name in enumerate(image_names):
         meta = parse_meta(name)
         if meta is None:
-            #raise ValueError(f"文件名不符合规范: {name}")
+            # raise ValueError(f"文件名不符合规范: {name}")
             continue
         key = (meta["loc"], meta["trav"], meta["frame"], meta["ch"])
         index[key] = i
@@ -232,15 +270,16 @@ def render_multichannel(cfg: RenderConfig):
     splats, meta = load_splats_from_ply(cfg.ply_path, device=device)
 
     # 计算 sh_degree
-    K_total = 1 + splats["shN"].shape[1]   # 1=DC, 其余为 f_rest
+    K_total = 1 + splats["shN"].shape[1]  # 1=DC, 其余为 f_rest
     sh_degree = int(math.isqrt(K_total)) - 1
     assert (sh_degree + 1) ** 2 == K_total, f"Invalid SH channels: {K_total}"
-
 
     # 4) 按 (loc, trav) 输出视频
     # order = [2, 1, 3]  # 左、中、右 的 channel 顺序
     order = list(cfg.channels)
-    placeholder_rgb = np.full((H, W, 3), np.array(cfg.placeholder_rgb, dtype=np.uint8), dtype=np.uint8)
+    placeholder_rgb = np.full(
+        (H, W, 3), np.array(cfg.placeholder_rgb, dtype=np.uint8), dtype=np.uint8
+    )
     placeholder_depth = np.zeros((H, W, 3), dtype=np.uint8)
 
     for (loc, trav), frame_set in sorted(groups.items()):
@@ -248,12 +287,20 @@ def render_multichannel(cfg: RenderConfig):
         out_name = f"loc_{loc}_trav_{trav}.mp4"
         video_path = os.path.join(videos_dir, out_name)
         writer = imageio.get_writer(video_path, fps=cfg.fps)
-        print(f"[Render] (loc={loc}, trav={trav}) 共 {len(frames_sorted)} 帧 -> {video_path}")
+        print(
+            f"[Render] (loc={loc}, trav={trav}) 共 {len(frames_sorted)} 帧 -> {video_path}"
+        )
 
-        for fidx, frame_id in tqdm(enumerate(frames_sorted, 1), desc="Processing images", total=len(frames_sorted)):
+        for fidx, frame_id in tqdm(
+            enumerate(frames_sorted, 1),
+            desc="Processing images",
+            total=len(frames_sorted),
+        ):
             rgb_tiles: List[np.ndarray] = []
-            gt_tiles: List[np.ndarray] = [] 
-            depth_tensors: List[Optional[torch.Tensor]] = []  # 保存 raw depth，用于统一归一化
+            gt_tiles: List[np.ndarray] = []
+            depth_tensors: List[Optional[torch.Tensor]] = (
+                []
+            )  # 保存 raw depth，用于统一归一化
             rgb_raw_cache: List[Optional[torch.Tensor]] = []
 
             # 4.1 先渲染 3 个通道，收集每个通道的 depth（用于统一归一化）
@@ -268,7 +315,7 @@ def render_multichannel(cfg: RenderConfig):
 
                 i = index[key]
                 c2w = camtoworlds[i : i + 1]  # [1,4,4]
-                
+
                 # 逐帧K
                 camera_id = parser.camera_ids[i]
                 K_np = np.asarray(parser.Ks_dict[camera_id], dtype=np.float32)
@@ -279,19 +326,28 @@ def render_multichannel(cfg: RenderConfig):
                 quats = splats["quats"]
 
                 # 按导出约定做参数域变换
-                scales = torch.exp(splats["scales"]) if meta["scale_is_log"] else splats["scales"]
-                opacities = torch.sigmoid(splats["opacities"]) if meta["opacity_is_logit"] else splats["opacities"]
+                scales = (
+                    torch.exp(splats["scales"])
+                    if meta["scale_is_log"]
+                    else splats["scales"]
+                )
+                opacities = (
+                    torch.sigmoid(splats["opacities"])
+                    if meta["opacity_is_logit"]
+                    else splats["opacities"]
+                )
 
                 # 组 SH 颜色并显式给 sh_degree
-                colors = torch.cat([splats["sh0"], splats["shN"]], 1)  # [N, (sh_degree+1)^2, 3]
-
+                colors = torch.cat(
+                    [splats["sh0"], splats["shN"]], 1
+                )  # [N, (sh_degree+1)^2, 3]
 
                 renders, alphas, info = rasterization(
                     means=means,
                     quats=quats,
                     scales=scales,
                     opacities=opacities,
-                    colors=colors,                     # [N, (sh_degree+1)^2, 3]
+                    colors=colors,  # [N, (sh_degree+1)^2, 3]
                     viewmats=torch.linalg.inv(c2w),
                     Ks=Ks,
                     width=W,
@@ -309,8 +365,8 @@ def render_multichannel(cfg: RenderConfig):
                     far_plane=cfg.far_plane,
                     sh_degree=sh_degree,
                 )
-                rgb = torch.clamp(renders[..., :3], 0.0, 1.0)   # [1,H,W,3]
-                depth = renders[..., 3:4]                        # [1,H,W,1]
+                rgb = torch.clamp(renders[..., :3], 0.0, 1.0)  # [1,H,W,3]
+                depth = renders[..., 3:4]  # [1,H,W,1]
 
                 rgb_np = (rgb[0].cpu().numpy() * 255).astype(np.uint8)
                 rgb_tiles.append(rgb_np)
@@ -350,10 +406,10 @@ def render_multichannel(cfg: RenderConfig):
                 if d is None:
                     depth_tiles.append(placeholder_depth.copy())
                     continue
-                dv = d[0, ..., 0].cpu().numpy()                  # 原始 depth
+                dv = d[0, ..., 0].cpu().numpy()  # 原始 depth
                 valid = np.isfinite(dv) & (dv > 1e-6)
                 disp = np.zeros_like(dv, dtype=np.float32)
-                disp[valid] = 1.0 / dv[valid]                    # 视差：近大远小（近 -> 红）
+                disp[valid] = 1.0 / dv[valid]  # 视差：近大远小（近 -> 红）
                 if pmax > pmin:
                     norm = (np.clip(disp, pmin, pmax) - pmin) / (pmax - pmin)
                 else:

@@ -32,6 +32,7 @@ def searchForMaxIteration(folder):
 
 import hashlib
 
+
 def generate_wandb_id(experiment_name):
     base = experiment_name
     return hashlib.md5(base.encode()).hexdigest()

@@ -260,7 +260,9 @@ class Parser:
         self.points_rgb = points_rgb  # np.ndarray, (num_points, 3)
         self.point_indices = point_indices  # Optional[Dict[str, np.ndarray]]
         self.transform = transform  # np.ndarray, (4, 4)
-        self.rel_image_files = [colmap_to_image[f] for f in image_names]  # 例如 "seq/a/b/img_0001.png"
+        self.rel_image_files = [
+            colmap_to_image[f] for f in image_names
+        ]  # 例如 "seq/a/b/img_0001.png"
         self.depth_dir = os.path.join(data_dir, "depth_map_gt")
 
         # load one image to check the size. In the case of tanksandtemples dataset, the

@@ -21,12 +21,14 @@ class PairedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
 
         img_id = self.img_ids[idx]
-        
+
         input_img = self.data[img_id]["image"]
         output_img = self.data[img_id]["target_image"]
-        ref_img = self.data[img_id]["ref_image"] if "ref_image" in self.data[img_id] else None
+        ref_img = (
+            self.data[img_id]["ref_image"] if "ref_image" in self.data[img_id] else None
+        )
         caption = self.data[img_id]["prompt"]
-        
+
         try:
             input_img = Image.open(input_img)
             output_img = Image.open(output_img)
@@ -47,9 +49,9 @@ class PairedDataset(torch.utils.data.Dataset):
             ref_t = F.to_tensor(ref_t)
             ref_t = F.resize(ref_t, self.image_size)
             ref_t = F.normalize(ref_t, mean=[0.5], std=[0.5])
-        
+
             img_t = torch.stack([img_t, ref_t], dim=0)
-            output_t = torch.stack([output_t, ref_t], dim=0)            
+            output_t = torch.stack([output_t, ref_t], dim=0)
         else:
             img_t = img_t.unsqueeze(0)
             output_t = output_t.unsqueeze(0)
@@ -59,11 +61,14 @@ class PairedDataset(torch.utils.data.Dataset):
             "conditioning_pixel_values": img_t,
             "caption": caption,
         }
-        
+
         if self.tokenizer is not None:
             input_ids = self.tokenizer(
-                caption, max_length=self.tokenizer.model_max_length,
-                padding="max_length", truncation=True, return_tensors="pt"
+                caption,
+                max_length=self.tokenizer.model_max_length,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt",
             ).input_ids
             out["input_ids"] = input_ids
 

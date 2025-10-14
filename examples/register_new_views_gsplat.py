@@ -18,6 +18,7 @@ PAT = re.compile(
     re.IGNORECASE,
 )
 
+
 def parse_meta(name: str):
     m = PAT.search(name)
     if not m:
@@ -30,6 +31,7 @@ def parse_meta(name: str):
         "frame": int(m.group("frame")),
     }
 
+
 def ensure_4x4(c2w: np.ndarray) -> np.ndarray:
     assert c2w.ndim == 3 and c2w.shape[1] in (3, 4)
     if c2w.shape[1] == 4:
@@ -37,7 +39,6 @@ def ensure_4x4(c2w: np.ndarray) -> np.ndarray:
     N = c2w.shape[0]
     last = np.tile(np.array([[0.0, 0.0, 0.0, 1.0]], dtype=np.float32), (N, 1, 1))
     return np.concatenate([c2w, last], axis=1)
-
 
 
 def rotmat_to_qvec(R):
@@ -59,6 +60,7 @@ def rotmat_to_qvec(R):
         qvec *= -1
     return qvec
 
+
 @dataclass
 class Args:
     data_dir: str
@@ -69,21 +71,26 @@ class Args:
     right_suffix: str = "_right_difix3d"
     sine_suffix: str = "_sine"
 
+
 @dataclass
 class BaseCam:
-    idx: int                # 在 Parser 里的索引
-    image_name: str         # 原 basename
-    camera_id: int          # COLMAP cameras.txt 的 camera_id
-    R_c2w: np.ndarray       # 3x3
-    C: np.ndarray           # 3, camera center in world
+    idx: int  # 在 Parser 里的索引
+    image_name: str  # 原 basename
+    camera_id: int  # COLMAP cameras.txt 的 camera_id
+    R_c2w: np.ndarray  # 3x3
+    C: np.ndarray  # 3, camera center in world
 
 
 def _with_suffix(name: str, suffix: str) -> str:
     stem, ext = os.path.splitext(name)
     return f"{stem}{suffix}{ext if ext else '.jpg'}"
 
-def register_to_new_sparse(data_dir: str, new_sparse_dir: str,
-                           image_entries: List[Tuple[str, int, np.ndarray, np.ndarray]]):
+
+def register_to_new_sparse(
+    data_dir: str,
+    new_sparse_dir: str,
+    image_entries: List[Tuple[str, int, np.ndarray, np.ndarray]],
+):
     """
     image_entries: list of (image_name, camera_id, R_w2c(3x3), t_w2c(3,))
     """
@@ -103,7 +110,7 @@ def register_to_new_sparse(data_dir: str, new_sparse_dir: str,
 
     # 2) 读取原 images.txt，确定最后的 image_id
     orig_images = os.path.join(original_sparse, "images.txt")
-    new_images  = os.path.join(new_sparse_path, "images.txt")
+    new_images = os.path.join(new_sparse_path, "images.txt")
     if not os.path.exists(orig_images):
         raise FileNotFoundError(f"Original images.txt not found at {orig_images}")
 
@@ -124,7 +131,9 @@ def register_to_new_sparse(data_dir: str, new_sparse_dir: str,
         print(f"✅ Last original IMAGE_ID is {last_id}. New start from {last_id + 1}.")
 
         # 3) 追加新图像
-        for k, (img_name, cam_id, R_w2c, t_w2c) in enumerate(tqdm(image_entries, desc="Appending new views")):
+        for k, (img_name, cam_id, R_w2c, t_w2c) in enumerate(
+            tqdm(image_entries, desc="Appending new views")
+        ):
             new_id = last_id + 1 + k
             qvec = rotmat_to_qvec(R_w2c)
             q_str = " ".join(map(lambda x: f"{x:.10f}", qvec.tolist()))
@@ -137,11 +146,11 @@ def register_to_new_sparse(data_dir: str, new_sparse_dir: str,
     print(f"🎉 Successfully wrote {len(image_entries)} new entries into {new_images}")
 
 
-
 # ========== 主流程 ==========
 def main(args: Args):
     # 1) 用 datasets.colmap.Parser 读取（与你 render_from_ply 同步）
     from datasets_utils.colmap import Parser
+
     parser = Parser(data_dir=args.data_dir, factor=1, normalize=False, test_every=60)
 
     # 获得 basename 列表
@@ -155,11 +164,19 @@ def main(args: Args):
     if image_names is None:
         img_dir = Path(args.data_dir) / "images"
         if not img_dir.exists():
-            raise RuntimeError("无法从 Parser 获取图像文件名，且未找到 data_dir/images 兜底目录。")
-        image_names = sorted([p.name for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]])
+            raise RuntimeError(
+                "无法从 Parser 获取图像文件名，且未找到 data_dir/images 兜底目录。"
+            )
+        image_names = sorted(
+            [
+                p.name
+                for p in img_dir.iterdir()
+                if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
+            ]
+        )
 
     camtoworlds_np = ensure_4x4(parser.camtoworlds).astype(np.float32)  # [N,4,4]
-    camera_ids = parser.camera_ids                                      # len N
+    camera_ids = parser.camera_ids  # len N
     N = camtoworlds_np.shape[0]
     assert len(image_names) == N == len(camera_ids)
 
@@ -169,30 +186,34 @@ def main(args: Args):
         c2w = camtoworlds_np[i]
         R = c2w[:3, :3]
         C = c2w[:3, 3]
-        base_cams.append(BaseCam(
-            idx=i,
-            image_name=image_names[i],
-            camera_id=int(camera_ids[i]),
-            R_c2w=R.copy(),
-            C=C.copy()
-        ))
+        base_cams.append(
+            BaseCam(
+                idx=i,
+                image_name=image_names[i],
+                camera_id=int(camera_ids[i]),
+                R_c2w=R.copy(),
+                C=C.copy(),
+            )
+        )
 
     # 3) 生成新位姿
     new_entries = []  # 记录：[(image_name, camera_id, R_w2c, t_w2c)]
     if args.traj_type == "parallel":
         for cam in tqdm(base_cams, desc="Generating parallel views"):
             right = cam.R_c2w[:, 0]
-            leftC  = cam.C - args.amplitude * right
+            leftC = cam.C - args.amplitude * right
             rightC = cam.C + args.amplitude * right
             R_w2c = cam.R_c2w.T
-            t_left  = -R_w2c @ leftC
+            t_left = -R_w2c @ leftC
             t_right = -R_w2c @ rightC
 
-            left_name  = _with_suffix(cam.image_name, args.left_suffix)
+            left_name = _with_suffix(cam.image_name, args.left_suffix)
             right_name = _with_suffix(cam.image_name, args.right_suffix)
 
-            new_entries.append((left_name,  cam.camera_id, R_w2c.copy(), t_left.copy()))
-            new_entries.append((right_name, cam.camera_id, R_w2c.copy(), t_right.copy()))
+            new_entries.append((left_name, cam.camera_id, R_w2c.copy(), t_left.copy()))
+            new_entries.append(
+                (right_name, cam.camera_id, R_w2c.copy(), t_right.copy())
+            )
 
     elif args.traj_type == "horizontal_sine":
         period = 60
@@ -212,9 +233,10 @@ def main(args: Args):
     register_to_new_sparse(
         data_dir=args.data_dir,
         new_sparse_dir=args.output_sparse_dir_name,
-        image_entries=new_entries
+        image_entries=new_entries,
     )
     print("✨ All done.")
+
 
 if __name__ == "__main__":
 

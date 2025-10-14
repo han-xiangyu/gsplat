@@ -332,12 +332,14 @@ def cli(fn: Callable, args: Any, verbose: bool = False) -> bool:
         world_rank = int(os.environ["RANK"])
         world_size = int(os.environ["WORLD_SIZE"])
 
-        print(f"Initializing distributed process group... Rank {world_rank}/{world_size}, Local Rank {local_rank}")
+        print(
+            f"Initializing distributed process group... Rank {world_rank}/{world_size}, Local Rank {local_rank}"
+        )
 
         return _distributed_worker(
             world_rank, world_size, fn, args, local_rank, verbose
         )
-    
+
     world_size = torch.cuda.device_count()
     distributed = world_size > 1
 

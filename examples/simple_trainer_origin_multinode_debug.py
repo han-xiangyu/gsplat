@@ -48,15 +48,18 @@ import random
 from PIL import Image
 from copy import deepcopy
 
+
 @dataclass
 class Config:
     # Disable viewer
     disable_viewer: bool = True
     # Path to the .pt files. If provide, it will skip training and run evaluation only.
     ckpt: Optional[List[str]] = None
-    resume: bool = True                         # 是否继续训练
-    resume_ckpt: Optional[str] = None         # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
-    resume_dir: Optional[str] = None          # 或者给目录，自动找当前 rank 最新的 ckpt
+    resume: bool = True  # 是否继续训练
+    resume_ckpt: Optional[str] = (
+        None  # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
+    )
+    resume_dir: Optional[str] = None  # 或者给目录，自动找当前 rank 最新的 ckpt
     # Name of compression strategy to use
     compression: Optional[Literal["png"]] = None
     # Render trajectory path
@@ -71,10 +74,10 @@ class Config:
     # Every N images there is a test image
     test_every: int = 60
     use_val: bool = True
-    eval_max_images: Optional[int] = 64   # 每次评估最多评多少张（None=全量）
-    eval_stride: int = 50                  # 间隔抽样
-    eval_save_images: bool = True         # 评估时是否落盘示例图
-    eval_save_images_n: int = 2           # 最多保存多少张示例图
+    eval_max_images: Optional[int] = 64  # 每次评估最多评多少张（None=全量）
+    eval_stride: int = 50  # 间隔抽样
+    eval_save_images: bool = True  # 评估时是否落盘示例图
+    eval_save_images_n: int = 2  # 最多保存多少张示例图
     # Random crop size for training  (experimental)
     patch_size: Optional[int] = None
     # A global scaler that applies to the scene size related parameters
@@ -95,15 +98,53 @@ class Config:
     # Number of training steps
     max_steps: int = 300_000
     # Steps to evaluate the model
-    eval_steps: List[int] = field(default_factory=lambda: [10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 110_000, 120_000, 130_000, 140_000, 150_000, 170_000, 180_000, 190_000, 200_000, 250_000, 300_000, 350_000, 400_000])
+    eval_steps: List[int] = field(
+        default_factory=lambda: [
+            10_000,
+            20_000,
+            30_000,
+            40_000,
+            50_000,
+            60_000,
+            70_000,
+            80_000,
+            90_000,
+            100_000,
+            110_000,
+            120_000,
+            130_000,
+            140_000,
+            150_000,
+            170_000,
+            180_000,
+            190_000,
+            200_000,
+            250_000,
+            300_000,
+            350_000,
+            400_000,
+        ]
+    )
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [47_000, 80_000, 120_000, 160_000, 200_000, 300_000, 400_000])
+    save_steps: List[int] = field(
+        default_factory=lambda: [
+            47_000,
+            80_000,
+            120_000,
+            160_000,
+            200_000,
+            300_000,
+            400_000,
+        ]
+    )
 
     # Whether to save ply file (storage size can be large)
     save_ply: bool = True
     # Steps to save the model as ply
     # ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
-    ply_steps: List[int] = field(default_factory=lambda: [40_000, 80_000, 120_000, 160_000, 200_000])
+    ply_steps: List[int] = field(
+        default_factory=lambda: [40_000, 80_000, 120_000, 160_000, 200_000]
+    )
     # Steps to save the model as ply
     video_render_steps: List[int] = field(default_factory=lambda: [])
     # Whether to disable video generation during training and evaluation
@@ -125,7 +166,6 @@ class Config:
     init_scale: float = 1.0
     # Weight for SSIM loss
     ssim_lambda: float = 0.2
-
 
     # Near plane clipping distance
     near_plane: float = 0.01
@@ -212,11 +252,11 @@ class Config:
     use_fused_bilagrid: bool = False
 
     wandb_project: Optional[str] = None
-    wandb_group: Optional[str] = None 
-    wandb_name: Optional[str] = None 
+    wandb_group: Optional[str] = None
+    wandb_name: Optional[str] = None
     wandb_mode: Literal["online", "offline", "disabled"] = "offline"
-    wandb_dir: Optional[str] = None 
-    wandb_log_images_every: int = 50000 
+    wandb_dir: Optional[str] = None
+    wandb_log_images_every: int = 50000
 
     def adjust_steps(self, factor: float):
         self.eval_steps = [int(i * factor) for i in self.eval_steps]
@@ -324,20 +364,18 @@ def create_splats_with_optimizers(
             [{"params": splats[name], "lr": lr * math.sqrt(BS), "name": name}],
             eps=1e-15 / math.sqrt(BS),
             # check betas logic when BS is larger than 10, betas[0] will be zero
-            betas=(0.9, 0.999)
+            betas=(0.9, 0.999),
         )
         for name, _, lr in params
     }
     return splats, optimizers
 
+
 def create_optimizers_for_splats(
-    splats: torch.nn.ParameterDict,
-    cfg: Config,
-    scene_scale: float,
-    world_size: int = 1
+    splats: torch.nn.ParameterDict, cfg: Config, scene_scale: float, world_size: int = 1
 ) -> Dict[str, torch.optim.Optimizer]:
     """为给定的 splats 参数字典创建优化器。"""
-    
+
     param_lr_map = {
         "means": cfg.means_lr * scene_scale,
         "scales": cfg.scales_lr,
@@ -355,7 +393,7 @@ def create_optimizers_for_splats(
         optimizer_class = torch.optim.SparseAdam
     elif cfg.visible_adam:
         optimizer_class = SelectiveAdam
-    
+
     optimizers = {}
     for name, param in splats.items():
         if name in param_lr_map:
@@ -365,8 +403,9 @@ def create_optimizers_for_splats(
                 eps=1e-15 / math.sqrt(BS),
                 betas=(1 - BS * (1 - 0.9), 1 - BS * (1 - 0.999)),
             )
-            
+
     return optimizers
+
 
 class Runner:
     """Engine for training and testing."""
@@ -559,7 +598,7 @@ class Runner:
     ) -> Tuple[Tensor, Tensor, Dict]:
 
         if distributed is False:
-            distributed_flag = distributed 
+            distributed_flag = distributed
         else:
             distributed_flag = self.world_size > 1
 
@@ -634,7 +673,9 @@ class Runner:
             ckpt_dir = Path(cfg.resume_dir) / "ckpts"
             if ckpt_dir.exists():
                 pattern = f"ckpt_*_rank{self.world_rank}.pt"
-                ckpts = sorted(ckpt_dir.glob(pattern), key=lambda f: int(f.stem.split('_')[1]))
+                ckpts = sorted(
+                    ckpt_dir.glob(pattern), key=lambda f: int(f.stem.split("_")[1])
+                )
                 if ckpts:
                     resume_path = ckpts[-1]
 
@@ -642,42 +683,50 @@ class Runner:
             print(f"***** Resuming training from checkpoint: {resume_path} *****")
             checkpoint = torch.load(resume_path, map_location=self.device)
 
-            splat_state_dict = checkpoint['splats']
+            splat_state_dict = checkpoint["splats"]
             self.splats = torch.nn.ParameterDict(
                 {
-                    name: torch.nn.Parameter(tensor) for name, tensor in splat_state_dict.items()
+                    name: torch.nn.Parameter(tensor)
+                    for name, tensor in splat_state_dict.items()
                 }
             ).to(self.device)
-            self.optimizers = create_optimizers_for_splats(self.splats, cfg, self.scene_scale, world_size)
+            self.optimizers = create_optimizers_for_splats(
+                self.splats, cfg, self.scene_scale, world_size
+            )
 
-            if 'optimizers' in checkpoint:
+            if "optimizers" in checkpoint:
                 for name, opt in self.optimizers.items():
-                    if name in checkpoint['optimizers']:
-                        opt.load_state_dict(checkpoint['optimizers'][name])
+                    if name in checkpoint["optimizers"]:
+                        opt.load_state_dict(checkpoint["optimizers"][name])
 
-            if cfg.pose_opt and 'pose_adjust' in checkpoint: 
-                pose_adjust_state = checkpoint['pose_adjust'] 
-                if world_size > 1: 
-                    self.pose_adjust.module.load_state_dict(pose_adjust_state) 
-                else: 
-                    self.pose_adjust.load_state_dict(pose_adjust_state) 
+            if cfg.pose_opt and "pose_adjust" in checkpoint:
+                pose_adjust_state = checkpoint["pose_adjust"]
+                if world_size > 1:
+                    self.pose_adjust.module.load_state_dict(pose_adjust_state)
+                else:
+                    self.pose_adjust.load_state_dict(pose_adjust_state)
 
-            if cfg.app_opt and 'app_module' in checkpoint: 
-                app_module_state = checkpoint['app_module'] 
-                if world_size > 1: 
-                    self.app_module.module.load_state_dict(app_module_state) 
-                else: self.app_module.load_state_dict(app_module_state) 
+            if cfg.app_opt and "app_module" in checkpoint:
+                app_module_state = checkpoint["app_module"]
+                if world_size > 1:
+                    self.app_module.module.load_state_dict(app_module_state)
+                else:
+                    self.app_module.load_state_dict(app_module_state)
 
             if "strategy_state" in checkpoint:
                 self.strategy_state = checkpoint["strategy_state"]
                 print("Strategy state loaded.")
 
-            init_step = checkpoint['step'] + 1
-            print(f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****")
+            init_step = checkpoint["step"] + 1
+            print(
+                f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****"
+            )
 
         else:
             if cfg.resume:
-                print("***** Resume enabled, but no checkpoint found. Starting from scratch. *****")
+                print(
+                    "***** Resume enabled, but no checkpoint found. Starting from scratch. *****"
+                )
                 print("***** This is the updated version. *****")
             else:
                 print("***** Starting from scratch. *****")
@@ -713,7 +762,8 @@ class Runner:
         schedulers = [
             # means has a learning rate schedule, that end at 0.01 of the initial value
             torch.optim.lr_scheduler.ExponentialLR(
-                self.optimizers["means"], gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps)
+                self.optimizers["means"],
+                gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps),
             ),
         ]
         if cfg.pose_opt:
@@ -739,16 +789,13 @@ class Runner:
                     ]
                 )
             )
-        if init_step > 0: 
-            for _ in range(init_step): 
-                for scheduler in schedulers: 
+        if init_step > 0:
+            for _ in range(init_step):
+                for scheduler in schedulers:
                     scheduler.step()
 
         train_sampler = torch.utils.data.distributed.DistributedSampler(
-            self.trainset,
-            num_replicas=world_size,
-            rank=world_rank,
-            shuffle=True
+            self.trainset, num_replicas=world_size, rank=world_rank, shuffle=True
         )
 
         trainloader = torch.utils.data.DataLoader(
@@ -775,7 +822,7 @@ class Runner:
             try:
                 data = next(trainloader_iter)
             except StopIteration:
-                train_sampler.set_epoch(step // len(trainloader)) 
+                train_sampler.set_epoch(step // len(trainloader))
                 trainloader_iter = iter(trainloader)
                 data = next(trainloader_iter)
 
@@ -801,7 +848,7 @@ class Runner:
 
             # sh schedule
             sh_degree_to_use = min(step // cfg.sh_degree_interval, cfg.sh_degree)
-                
+
             # forward
             renders, alphas, info = self.rasterize_splats(
                 camtoworlds=camtoworlds,
@@ -857,9 +904,11 @@ class Runner:
                 #### Modified: Sample depth map at all valid pixels and use L1 loss
                 depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
                 valid = torch.isfinite(depth_gt) & (depth_gt > 0)
-                valid = valid & (depths > 0) 
+                valid = valid & (depths > 0)
                 # masked L1
-                depthloss = torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                depthloss = (
+                    torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                )
                 loss += depthloss * cfg.depth_lambda
 
             if cfg.use_bilateral_grid:
@@ -880,7 +929,7 @@ class Runner:
                 )
 
             loss.backward()
-                
+
             desc = f"loss={loss.item():.3f}| " f"sh degree={sh_degree_to_use}| "
             if cfg.depth_loss and ("depths" in data):
                 desc += f"depth loss={depthloss.item():.6f}| "
@@ -910,25 +959,35 @@ class Runner:
                     if len(schedulers) > 0:
                         logs["lr/means"] = float(schedulers[0].get_last_lr()[0])
 
-
                     opa = torch.sigmoid(self.splats["opacities"])
-                    sc  = torch.exp(self.splats["scales"])
+                    sc = torch.exp(self.splats["scales"])
                     vis = (info["radii"] > 0).all(-1).any(0).float().mean()
 
-                    logs.update({
-                    "stats/alpha_mean": float(opa.mean()),
-                    "stats/scale_med":  float(sc.median()),
-                    "stats/vis_frac":   float(vis)
-                    })
+                    logs.update(
+                        {
+                            "stats/alpha_mean": float(opa.mean()),
+                            "stats/scale_med": float(sc.median()),
+                            "stats/vis_frac": float(vis),
+                        }
+                    )
 
                     # Rendering Images
-                    if cfg.wandb_log_images_every > 0 and step % cfg.wandb_log_images_every == 0:
-                        canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
-                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(np.uint8)
-                        logs["train/render"] = wandb.Image(canvas, caption=f"step {step}")
+                    if (
+                        cfg.wandb_log_images_every > 0
+                        and step % cfg.wandb_log_images_every == 0
+                    ):
+                        canvas = (
+                            torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
+                        )
+                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(
+                            np.uint8
+                        )
+                        logs["train/render"] = wandb.Image(
+                            canvas, caption=f"step {step}"
+                        )
 
                     self.wb.log(logs, step=step)
-            
+
             # save checkpoint before updating the model
             if step in [i - 1 for i in cfg.save_steps] or step == max_steps - 1:
                 mem = torch.cuda.max_memory_allocated() / 1024**3
@@ -943,10 +1002,13 @@ class Runner:
                     "w",
                 ) as f:
                     json.dump(stats, f)
-                data = {"step": step, 
-                        "splats": self.splats.state_dict(),
-                        "optimizers": {name: opt.state_dict() for name, opt in self.optimizers.items()},
-                        "strategy_state": self.strategy_state
+                data = {
+                    "step": step,
+                    "splats": self.splats.state_dict(),
+                    "optimizers": {
+                        name: opt.state_dict() for name, opt in self.optimizers.items()
+                    },
+                    "strategy_state": self.strategy_state,
                 }
                 if cfg.pose_opt:
                     if world_size > 1:
@@ -986,46 +1048,64 @@ class Runner:
                 quats = self.splats["quats"]
                 opacities = self.splats["opacities"]
 
-
                 @torch.no_grad()
                 def gather_for_export(t: torch.Tensor) -> Optional[torch.Tensor]:
                     if not dist.is_initialized():
                         return t.detach().cpu()
                     # 1) 收集各 rank 的长度
                     local = t.detach()
-                    n_local = torch.tensor([local.shape[0]], device=local.device, dtype=torch.long)
-                    sizes = [torch.zeros_like(n_local) for _ in range(dist.get_world_size())]
+                    n_local = torch.tensor(
+                        [local.shape[0]], device=local.device, dtype=torch.long
+                    )
+                    sizes = [
+                        torch.zeros_like(n_local) for _ in range(dist.get_world_size())
+                    ]
                     dist.all_gather(sizes, n_local)
                     sizes = [int(s.item()) for s in sizes]
                     maxN = max(sizes)
 
                     # 2) pad 到同长后 all_gather
                     if local.shape[0] < maxN:
-                        pad = torch.zeros((maxN - local.shape[0], *local.shape[1:]),
-                                        device=local.device, dtype=local.dtype)
+                        pad = torch.zeros(
+                            (maxN - local.shape[0], *local.shape[1:]),
+                            device=local.device,
+                            dtype=local.dtype,
+                        )
                         local = torch.cat([local, pad], 0)
 
-                    bufs = [torch.empty_like(local) for _ in range(dist.get_world_size())]
+                    bufs = [
+                        torch.empty_like(local) for _ in range(dist.get_world_size())
+                    ]
                     dist.all_gather(bufs, local)
 
                     # 3) 去 pad + 拼接（只在 rank0 返回，其他 rank 返回 None）
                     if dist.get_rank() == 0:
-                        chunks = [bufs[r][:sizes[r]] for r in range(dist.get_world_size())]
+                        chunks = [
+                            bufs[r][: sizes[r]] for r in range(dist.get_world_size())
+                        ]
                         return torch.cat(chunks, 0).cpu()
                     else:
                         return None
 
                 # 只在 rank0 写盘：
                 if dist.is_initialized():
-                    means     = gather_for_export(self.splats["means"])
-                    scales    = gather_for_export(self.splats["scales"])
-                    quats     = gather_for_export(self.splats["quats"])
+                    means = gather_for_export(self.splats["means"])
+                    scales = gather_for_export(self.splats["scales"])
+                    quats = gather_for_export(self.splats["quats"])
                     opacities = gather_for_export(self.splats["opacities"])
-                    sh0       = gather_for_export(self.splats["sh0"])
-                    shN       = gather_for_export(self.splats["shN"])
-                    if (means is not None):   # 仅 rank0
-                        export_splats(means, scales, quats, opacities, sh0, shN,
-                                    format="ply", save_to=f"{self.ply_dir}/point_cloud_{step}.ply")
+                    sh0 = gather_for_export(self.splats["sh0"])
+                    shN = gather_for_export(self.splats["shN"])
+                    if means is not None:  # 仅 rank0
+                        export_splats(
+                            means,
+                            scales,
+                            quats,
+                            opacities,
+                            sh0,
+                            shN,
+                            format="ply",
+                            save_to=f"{self.ply_dir}/point_cloud_{step}.ply",
+                        )
 
             # Turn Gradients into Sparse Tensor before running optimizer
             if cfg.sparse_grad:
@@ -1188,24 +1268,37 @@ class Runner:
             if world_rank == 0:
                 # 指标
                 pixels_p = pixels.unsqueeze(0).permute(0, 3, 1, 2)  # [1,3,H,W]
-                colors_p = colors.permute(0, 3, 1, 2)               # [1,3,H,W]
+                colors_p = colors.permute(0, 3, 1, 2)  # [1,3,H,W]
                 metrics["psnr"].append(self.psnr(colors_p, pixels_p))
                 metrics["ssim"].append(self.ssim(colors_p, pixels_p))
                 metrics["lpips"].append(self.lpips(colors_p, pixels_p))
 
                 # 仅保存少量示例
                 if cfg.eval_save_images and saved_cnt < cfg.eval_save_images_n:
-                    canvas = torch.cat([pixels.unsqueeze(0), colors], dim=2).squeeze(0).cpu().numpy()
+                    canvas = (
+                        torch.cat([pixels.unsqueeze(0), colors], dim=2)
+                        .squeeze(0)
+                        .cpu()
+                        .numpy()
+                    )
                     canvas = (canvas * 255).astype(np.uint8)
-                    imageio.imwrite(f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas)
+                    imageio.imwrite(
+                        f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas
+                    )
                     saved_cnt += 1
                     last_canvas = canvas
 
         if world_rank == 0:
             ellipse_time /= float(N_eval)
 
-            stats = {k: torch.stack(v).mean().item() for k, v in metrics.items() if len(v) > 0}
-            stats.update({"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])})
+            stats = {
+                k: torch.stack(v).mean().item()
+                for k, v in metrics.items()
+                if len(v) > 0
+            }
+            stats.update(
+                {"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])}
+            )
 
             print(
                 f"[{stage}] PSNR: {stats.get('psnr', float('nan')):.3f}, "
@@ -1231,7 +1324,9 @@ class Runner:
                 self.wb.log(log_dict, step=step)
                 try:
                     if last_canvas is not None:
-                        self.wb.log({f"{stage}/example": wandb.Image(last_canvas)}, step=step)
+                        self.wb.log(
+                            {f"{stage}/example": wandb.Image(last_canvas)}, step=step
+                        )
                 except Exception:
                     pass
 
@@ -1252,7 +1347,9 @@ class Runner:
                 camtoworlds_all = generate_interpolated_path(camtoworlds_all, 1)
             elif cfg.render_traj_path == "ellipse":
                 height = camtoworlds_all[:, 2, 3].mean()
-                camtoworlds_all = generate_ellipse_path_z(camtoworlds_all, height=height)
+                camtoworlds_all = generate_ellipse_path_z(
+                    camtoworlds_all, height=height
+                )
             elif cfg.render_traj_path == "spiral":
                 camtoworlds_all = generate_spiral_path(
                     camtoworlds_all,
@@ -1262,14 +1359,22 @@ class Runner:
             elif cfg.render_traj_path == "original":
                 camtoworlds_all = self.parser.camtoworlds
             else:
-                raise ValueError(f"Render trajectory type not supported: {cfg.render_traj_path}")
+                raise ValueError(
+                    f"Render trajectory type not supported: {cfg.render_traj_path}"
+                )
 
             # 补最后一行变成 [N,4,4]
             if cfg.render_traj_path != "original":
                 camtoworlds_all = np.concatenate(
-                    [camtoworlds_all,
-                    np.repeat(np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0)],
-                    axis=1
+                    [
+                        camtoworlds_all,
+                        np.repeat(
+                            np.array([[[0.0, 0.0, 0.0, 1.0]]]),
+                            len(camtoworlds_all),
+                            axis=0,
+                        ),
+                    ],
+                    axis=1,
                 )
 
         camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
@@ -1287,7 +1392,7 @@ class Runner:
             my_ids = list(range(len(camtoworlds_all)))
 
         # 5) 输出目录（每个 rank 都写自己份，最终 barrier 保证完整）
-        pred_dir  = f"{self.render_dir}/{tag}/{step}/Pred"
+        pred_dir = f"{self.render_dir}/{tag}/{step}/Pred"
         alpha_dir = f"{self.render_dir}/{tag}/{step}/Alpha"
         if len(my_ids) > 0:
             os.makedirs(pred_dir, exist_ok=True)
@@ -1295,13 +1400,18 @@ class Runner:
 
         # 6) 批量渲染（RGB-only）
         B = max(1, int(cfg.render_batch))
-        pbar = tqdm.trange(0, len(my_ids), B, desc=f"Rendering trajectory (rank {rank})",
-                        disable=(world > 1 and rank != 0))
+        pbar = tqdm.trange(
+            0,
+            len(my_ids),
+            B,
+            desc=f"Rendering trajectory (rank {rank})",
+            disable=(world > 1 and rank != 0),
+        )
 
         for s in pbar:
-            ids = my_ids[s:s+B]
-            c2w = camtoworlds_all[ids]                 # [B,4,4]
-            Ks  = K.expand(len(ids), -1, -1)           # [B,3,3]
+            ids = my_ids[s : s + B]
+            c2w = camtoworlds_all[ids]  # [B,4,4]
+            Ks = K.expand(len(ids), -1, -1)  # [B,3,3]
 
             renders, alphas, _ = self.rasterize_splats(
                 camtoworlds=c2w,
@@ -1311,12 +1421,14 @@ class Runner:
                 sh_degree=cfg.sh_degree,
                 near_plane=cfg.near_plane,
                 far_plane=cfg.far_plane,
-                render_mode="RGB",                     # 只算 RGB（关键加速）
-                distributed=False
+                render_mode="RGB",  # 只算 RGB（关键加速）
+                distributed=False,
             )  # [B,H,W,3] and [B,H,W,1]
 
             # 转为 uint8（一次性批量搬运）
-            colors_u8 = (torch.clamp(renders[..., :3], 0.0, 1.0) * 255).byte().cpu().numpy()
+            colors_u8 = (
+                (torch.clamp(renders[..., :3], 0.0, 1.0) * 255).byte().cpu().numpy()
+            )
             alphas_u8 = (alphas[..., 0] * 255).byte().cpu().numpy()
 
             # 7) 快速写盘：Pred 用 JPEG/PNG（PNG 设置为 0 压缩），Alpha 用无压缩 PNG
@@ -1330,7 +1442,7 @@ class Runner:
                     # 高速 PNG：0 压缩
                     img.save(pred_path, compress_level=0, optimize=False)
 
-                aimg = Image.fromarray(alphas_u8[j], mode='L')
+                aimg = Image.fromarray(alphas_u8[j], mode="L")
                 alpha_path = f"{alpha_dir}/{fid:04d}.jpg"
                 aimg.save(alpha_path, quality=95, subsampling=0, optimize=False)
 

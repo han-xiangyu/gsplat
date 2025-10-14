@@ -48,15 +48,18 @@ import random
 from PIL import Image
 from copy import deepcopy
 
+
 @dataclass
 class Config:
     # Disable viewer
     disable_viewer: bool = True
     # Path to the .pt files. If provide, it will skip training and run evaluation only.
     ckpt: Optional[List[str]] = None
-    resume: bool = True                         # 是否继续训练
-    resume_ckpt: Optional[str] = None         # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
-    resume_dir: Optional[str] = None          # 或者给目录，自动找当前 rank 最新的 ckpt
+    resume: bool = True  # 是否继续训练
+    resume_ckpt: Optional[str] = (
+        None  # ckpt 路径；多卡可用模板，如 ".../ckpt_100000_rank{rank}.pt"
+    )
+    resume_dir: Optional[str] = None  # 或者给目录，自动找当前 rank 最新的 ckpt
     # Name of compression strategy to use
     compression: Optional[Literal["png"]] = None
     # Render trajectory path
@@ -71,10 +74,10 @@ class Config:
     # Every N images there is a test image
     test_every: int = 60
     use_val: bool = True
-    eval_max_images: Optional[int] = 64   # 每次评估最多评多少张（None=全量）
-    eval_stride: int = 50                  # 间隔抽样
-    eval_save_images: bool = True         # 评估时是否落盘示例图
-    eval_save_images_n: int = 2           # 最多保存多少张示例图
+    eval_max_images: Optional[int] = 64  # 每次评估最多评多少张（None=全量）
+    eval_stride: int = 50  # 间隔抽样
+    eval_save_images: bool = True  # 评估时是否落盘示例图
+    eval_save_images_n: int = 2  # 最多保存多少张示例图
     # Random crop size for training  (experimental)
     patch_size: Optional[int] = None
     # A global scaler that applies to the scene size related parameters
@@ -95,9 +98,45 @@ class Config:
     # Number of training steps
     max_steps: int = 300_000
     # Steps to evaluate the model
-    eval_steps: List[int] = field(default_factory=lambda: [10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 110_000, 120_000, 130_000, 140_000, 150_000, 170_000, 180_000, 190_000, 200_000, 250_000, 300_000, 350_000, 400_000])
+    eval_steps: List[int] = field(
+        default_factory=lambda: [
+            10_000,
+            20_000,
+            30_000,
+            40_000,
+            50_000,
+            60_000,
+            70_000,
+            80_000,
+            90_000,
+            100_000,
+            110_000,
+            120_000,
+            130_000,
+            140_000,
+            150_000,
+            170_000,
+            180_000,
+            190_000,
+            200_000,
+            250_000,
+            300_000,
+            350_000,
+            400_000,
+        ]
+    )
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [47_000, 80_000, 120_000, 160_000, 200_000, 300_000, 400_000])
+    save_steps: List[int] = field(
+        default_factory=lambda: [
+            47_000,
+            80_000,
+            120_000,
+            160_000,
+            200_000,
+            300_000,
+            400_000,
+        ]
+    )
     # # Steps to fix the artifacts
     # fix_steps: List[int] = field(default_factory=lambda: [300_000])
     # fix_mode: str = "extrapolate"
@@ -108,12 +147,13 @@ class Config:
     # render_batch: int = 4
     # fix_downsample_stride: int = 2
 
-
     # Whether to save ply file (storage size can be large)
     save_ply: bool = True
     # Steps to save the model as ply
     # ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
-    ply_steps: List[int] = field(default_factory=lambda: [40_000, 80_000, 120_000, 160_000, 200_000])
+    ply_steps: List[int] = field(
+        default_factory=lambda: [40_000, 80_000, 120_000, 160_000, 200_000]
+    )
     # Steps to save the model as ply
     video_render_steps: List[int] = field(default_factory=lambda: [])
     # Whether to disable video generation during training and evaluation
@@ -135,7 +175,6 @@ class Config:
     init_scale: float = 1.0
     # Weight for SSIM loss
     ssim_lambda: float = 0.2
-
 
     # Near plane clipping distance
     near_plane: float = 0.01
@@ -222,11 +261,11 @@ class Config:
     use_fused_bilagrid: bool = False
 
     wandb_project: Optional[str] = None
-    wandb_group: Optional[str] = None 
-    wandb_name: Optional[str] = None 
+    wandb_group: Optional[str] = None
+    wandb_name: Optional[str] = None
     wandb_mode: Literal["online", "offline", "disabled"] = "offline"
-    wandb_dir: Optional[str] = None 
-    wandb_log_images_every: int = 50000 
+    wandb_dir: Optional[str] = None
+    wandb_log_images_every: int = 50000
 
     def adjust_steps(self, factor: float):
         self.eval_steps = [int(i * factor) for i in self.eval_steps]
@@ -247,6 +286,7 @@ class Config:
             strategy.refine_every = int(strategy.refine_every * factor)
         else:
             assert_never(strategy)
+
 
 def create_splats_with_optimizers(
     parser: Parser,
@@ -284,17 +324,21 @@ def create_splats_with_optimizers(
     # 步骤 1: 在 CPU 上分片并立刻转为连续内存
     points_shard = points[world_rank::world_size].contiguous()
     rgbs_shard = rgbs[world_rank::world_size].contiguous()
-    
+
     # 步骤 2: 将分片后的数据移动到 GPU
     points_shard = points_shard.to(device)
 
     # 步骤 3: 只对分片后的 GPU 数据进行 KNN 计算
-    print(f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard.shape[0]} points...")
+    print(
+        f"[PROFILING] Rank {world_rank}: Starting KNN for {points_shard.shape[0]} points..."
+    )
     knn_start_time = time.time()
     dist2_avg = (knn(points_shard, 4)[:, 1:] ** 2).mean(dim=-1)
     knn_end_time = time.time()
-    print(f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds.")
-    
+    print(
+        f"✅ [PROFILING] Rank {world_rank}: KNN took {knn_end_time - knn_start_time:.4f} seconds."
+    )
+
     dist_avg = torch.sqrt(dist2_avg)
 
     gathered_dists = None
@@ -314,25 +358,38 @@ def create_splats_with_optimizers(
         min_dist = np.min(distances_np)
         max_dist = np.max(distances_np)
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("📊 Statistics on KNN distance distribution")
         print(f"  - Mean:    {mean_dist:.6f}")
         print(f"  - Std:   {std_dist:.6f}")
         print(f"  - Median: {median_dist:.6f}")
         print(f"  - Min:     {min_dist:.6f}")
         print(f"  - Max:     {max_dist:.6f}")
-        print("="*50 + "\n")
+        print("=" * 50 + "\n")
 
         try:
             import matplotlib.pyplot as plt
+
             plt.figure(figsize=(12, 7))
             plt.hist(distances_np, bins=200, log=True)
             plt.title("Statistics on KNN distance distribution")
             plt.xlabel("mean distance")
             plt.ylabel("Frequency (log)")
-            plt.grid(True, which="both", linestyle='--', linewidth=0.5)
-            plt.axvline(mean_dist, color='r', linestyle='dashed', linewidth=2, label=f'mean: {mean_dist:.4f}')
-            plt.axvline(median_dist, color='g', linestyle='dashed', linewidth=2, label=f'median: {median_dist:.4f}')
+            plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+            plt.axvline(
+                mean_dist,
+                color="r",
+                linestyle="dashed",
+                linewidth=2,
+                label=f"mean: {mean_dist:.4f}",
+            )
+            plt.axvline(
+                median_dist,
+                color="g",
+                linestyle="dashed",
+                linewidth=2,
+                label=f"median: {median_dist:.4f}",
+            )
             plt.legend()
             save_path = os.path.join(result_dir, "knn_distance_distribution.png")
             plt.savefig(save_path)
@@ -343,7 +400,7 @@ def create_splats_with_optimizers(
 
     if world_size > 1:
         dist.barrier()
-        
+
     scales = torch.log(dist_avg * init_scale).unsqueeze(-1).repeat(1, 3)
 
     scales = scales.contiguous()
@@ -363,7 +420,7 @@ def create_splats_with_optimizers(
     if feature_dim is None:
         colors = torch.zeros((N, (sh_degree + 1) ** 2, 3), device=device)
         colors[:, 0, :] = rgb_to_sh(rgbs_shard.to(device))
-        
+
         # ==================== 修正点 2 和 3 ====================
         # 确保切片后的 sh0 和 shN 也是连续的
         sh0 = colors[:, :1, :].contiguous()
@@ -379,7 +436,7 @@ def create_splats_with_optimizers(
         params.append(("colors", torch.nn.Parameter(colors_param), sh0_lr))
 
     splats = torch.nn.ParameterDict({n: v for n, v, _ in params}).to(device)
-    
+
     # Scale learning rate based on batch size, reference:
     # https://www.cs.princeton.edu/~smalladi/blog/2024/01/22/SDEs-ScalingRules/
     # Note that this would not make the training exactly equivalent, see
@@ -403,14 +460,12 @@ def create_splats_with_optimizers(
     }
     return splats, optimizers
 
+
 def create_optimizers_for_splats(
-    splats: torch.nn.ParameterDict,
-    cfg: Config,
-    scene_scale: float,
-    world_size: int = 1
+    splats: torch.nn.ParameterDict, cfg: Config, scene_scale: float, world_size: int = 1
 ) -> Dict[str, torch.optim.Optimizer]:
     """为给定的 splats 参数字典创建优化器。"""
-    
+
     param_lr_map = {
         "means": cfg.means_lr * scene_scale,
         "scales": cfg.scales_lr,
@@ -428,7 +483,7 @@ def create_optimizers_for_splats(
         optimizer_class = torch.optim.SparseAdam
     elif cfg.visible_adam:
         optimizer_class = SelectiveAdam
-    
+
     optimizers = {}
     for name, param in splats.items():
         if name in param_lr_map:
@@ -438,8 +493,9 @@ def create_optimizers_for_splats(
                 eps=1e-15 / math.sqrt(BS),
                 betas=(1 - BS * (1 - 0.9), 1 - BS * (1 - 0.999)),
             )
-            
+
     return optimizers
+
 
 class Runner:
     """Engine for training and testing."""
@@ -483,7 +539,9 @@ class Runner:
             test_every=cfg.test_every,
         )
         parser_end_time = time.time()
-        print(f"✅ [PROFILING] Parser initialization took: {parser_end_time - parser_start_time:.4f} seconds.")
+        print(
+            f"✅ [PROFILING] Parser initialization took: {parser_end_time - parser_start_time:.4f} seconds."
+        )
         self.trainset = Dataset(
             self.parser,
             split="train",
@@ -525,7 +583,7 @@ class Runner:
         #     world_size=world_size,
         # )
         # print("Model initialized. Number of GS:", len(self.splats["means"]))
-        #print(f"[RANK {self.world_rank}] Runner __init__ finished.")
+        # print(f"[RANK {self.world_rank}] Runner __init__ finished.")
         # Densification Strategy
         # self.cfg.strategy.check_sanity(self.splats, self.optimizers)
 
@@ -648,11 +706,10 @@ class Runner:
                 mode=self.cfg.wandb_mode,
                 config=vars(self.cfg),
                 resume="auto",
-                settings=wandb.Settings(init_timeout=300)
+                settings=wandb.Settings(init_timeout=300),
             )
 
-                    
-        # # Fixer trajectory 
+        # # Fixer trajectory
         # self.interpolator = CameraPoseInterpolator(rotation_weight=1.0, translation_weight=1.0)
 
         # self.base_novel_poses = self.parser.camtoworlds[self.trainset.indices]
@@ -683,7 +740,7 @@ class Runner:
     ) -> Tuple[Tensor, Tensor, Dict]:
 
         if distributed is False:
-            distributed_flag = distributed 
+            distributed_flag = distributed
         else:
             distributed_flag = self.world_size > 1
 
@@ -758,7 +815,9 @@ class Runner:
             ckpt_dir = Path(cfg.resume_dir) / "ckpts"
             if ckpt_dir.exists():
                 pattern = f"ckpt_*_rank{self.world_rank}.pt"
-                ckpts = sorted(ckpt_dir.glob(pattern), key=lambda f: int(f.stem.split('_')[1]))
+                ckpts = sorted(
+                    ckpt_dir.glob(pattern), key=lambda f: int(f.stem.split("_")[1])
+                )
                 if ckpts:
                     resume_path = ckpts[-1]
 
@@ -766,42 +825,50 @@ class Runner:
             print(f"***** Resuming training from checkpoint: {resume_path} *****")
             checkpoint = torch.load(resume_path, map_location=self.device)
 
-            splat_state_dict = checkpoint['splats']
+            splat_state_dict = checkpoint["splats"]
             self.splats = torch.nn.ParameterDict(
                 {
-                    name: torch.nn.Parameter(tensor) for name, tensor in splat_state_dict.items()
+                    name: torch.nn.Parameter(tensor)
+                    for name, tensor in splat_state_dict.items()
                 }
             ).to(self.device)
-            self.optimizers = create_optimizers_for_splats(self.splats, cfg, self.scene_scale, world_size)
+            self.optimizers = create_optimizers_for_splats(
+                self.splats, cfg, self.scene_scale, world_size
+            )
 
-            if 'optimizers' in checkpoint:
+            if "optimizers" in checkpoint:
                 for name, opt in self.optimizers.items():
-                    if name in checkpoint['optimizers']:
-                        opt.load_state_dict(checkpoint['optimizers'][name])
+                    if name in checkpoint["optimizers"]:
+                        opt.load_state_dict(checkpoint["optimizers"][name])
 
-            if cfg.pose_opt and 'pose_adjust' in checkpoint: 
-                pose_adjust_state = checkpoint['pose_adjust'] 
-                if world_size > 1: 
-                    self.pose_adjust.module.load_state_dict(pose_adjust_state) 
-                else: 
-                    self.pose_adjust.load_state_dict(pose_adjust_state) 
+            if cfg.pose_opt and "pose_adjust" in checkpoint:
+                pose_adjust_state = checkpoint["pose_adjust"]
+                if world_size > 1:
+                    self.pose_adjust.module.load_state_dict(pose_adjust_state)
+                else:
+                    self.pose_adjust.load_state_dict(pose_adjust_state)
 
-            if cfg.app_opt and 'app_module' in checkpoint: 
-                app_module_state = checkpoint['app_module'] 
-                if world_size > 1: 
-                    self.app_module.module.load_state_dict(app_module_state) 
-                else: self.app_module.load_state_dict(app_module_state) 
+            if cfg.app_opt and "app_module" in checkpoint:
+                app_module_state = checkpoint["app_module"]
+                if world_size > 1:
+                    self.app_module.module.load_state_dict(app_module_state)
+                else:
+                    self.app_module.load_state_dict(app_module_state)
 
             if "strategy_state" in checkpoint:
                 self.strategy_state = checkpoint["strategy_state"]
                 print("Strategy state loaded.")
 
-            init_step = checkpoint['step'] + 1
-            print(f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****")
+            init_step = checkpoint["step"] + 1
+            print(
+                f"***** Resumed from step {checkpoint['step']}. Starting next step at {init_step} *****"
+            )
 
         else:
             if cfg.resume:
-                print("***** Resume enabled, but no checkpoint found. Starting from scratch. *****")
+                print(
+                    "***** Resume enabled, but no checkpoint found. Starting from scratch. *****"
+                )
                 print("***** This is the updated version. *****")
             else:
                 print("***** Starting from scratch. *****")
@@ -838,7 +905,8 @@ class Runner:
         schedulers = [
             # means has a learning rate schedule, that end at 0.01 of the initial value
             torch.optim.lr_scheduler.ExponentialLR(
-                self.optimizers["means"], gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps)
+                self.optimizers["means"],
+                gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps),
             ),
         ]
         if cfg.pose_opt:
@@ -864,10 +932,10 @@ class Runner:
                     ]
                 )
             )
-        if init_step > 0: 
-            print(f"Fast-forwarding schedulers to step {init_step}...") 
-            for _ in range(init_step): 
-                for scheduler in schedulers: 
+        if init_step > 0:
+            print(f"Fast-forwarding schedulers to step {init_step}...")
+            for _ in range(init_step):
+                for scheduler in schedulers:
                     scheduler.step()
 
         trainloader = torch.utils.data.DataLoader(
@@ -905,8 +973,8 @@ class Runner:
             image_ids = data["image_id"].to(device)
             masks = data["mask"].to(device) if "mask" in data else None  # [1, H, W]
             # if cfg.depth_loss and ("depths" in data):
-                # points = data["points"].to(device)  # [1, M, 2]
-                # depths_gt = data["depths"].to(device)  # [1, M]
+            # points = data["points"].to(device)  # [1, M, 2]
+            # depths_gt = data["depths"].to(device)  # [1, M]
 
             height, width = pixels.shape[1:3]
 
@@ -974,11 +1042,12 @@ class Runner:
                 #### Modified: Sample depth map at all valid pixels and use L1 loss
                 depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
                 valid = torch.isfinite(depth_gt) & (depth_gt > 0)
-                valid = valid & (depths > 0) 
+                valid = valid & (depths > 0)
                 # masked L1
-                depthloss = torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                depthloss = (
+                    torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                )
                 loss += depthloss * cfg.depth_lambda
-
 
                 #### Oringinal: Sample depth map at query points and use disparity loss
                 # # query depths from depth map
@@ -1073,25 +1142,34 @@ class Runner:
                     if len(schedulers) > 0:
                         logs["lr/means"] = float(schedulers[0].get_last_lr()[0])
 
-
                     opa = torch.sigmoid(self.splats["opacities"])
-                    sc  = torch.exp(self.splats["scales"])
+                    sc = torch.exp(self.splats["scales"])
                     vis = (info["radii"] > 0).all(-1).any(0).float().mean()
 
-                    logs.update({
-                    "stats/alpha_mean": float(opa.mean()),
-                    "stats/scale_med":  float(sc.median()),
-                    "stats/vis_frac":   float(vis)
-                    })
+                    logs.update(
+                        {
+                            "stats/alpha_mean": float(opa.mean()),
+                            "stats/scale_med": float(sc.median()),
+                            "stats/vis_frac": float(vis),
+                        }
+                    )
 
                     # Rendering Images
-                    if cfg.wandb_log_images_every > 0 and step % cfg.wandb_log_images_every == 0:
-                        canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
-                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(np.uint8)
-                        logs["train/render"] = wandb.Image(canvas, caption=f"step {step}")
+                    if (
+                        cfg.wandb_log_images_every > 0
+                        and step % cfg.wandb_log_images_every == 0
+                    ):
+                        canvas = (
+                            torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
+                        )
+                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(
+                            np.uint8
+                        )
+                        logs["train/render"] = wandb.Image(
+                            canvas, caption=f"step {step}"
+                        )
 
                     self.wb.log(logs, step=step)
-
 
             # save checkpoint before updating the model
             if step in [i - 1 for i in cfg.save_steps] or step == max_steps - 1:
@@ -1107,10 +1185,13 @@ class Runner:
                     "w",
                 ) as f:
                     json.dump(stats, f)
-                data = {"step": step, 
-                        "splats": self.splats.state_dict(),
-                        "optimizers": {name: opt.state_dict() for name, opt in self.optimizers.items()},
-                        "strategy_state": self.strategy_state
+                data = {
+                    "step": step,
+                    "splats": self.splats.state_dict(),
+                    "optimizers": {
+                        name: opt.state_dict() for name, opt in self.optimizers.items()
+                    },
+                    "strategy_state": self.strategy_state,
                 }
                 if cfg.pose_opt:
                     if world_size > 1:
@@ -1150,46 +1231,64 @@ class Runner:
                 quats = self.splats["quats"]
                 opacities = self.splats["opacities"]
 
-
                 @torch.no_grad()
                 def gather_for_export(t: torch.Tensor) -> Optional[torch.Tensor]:
                     if not dist.is_initialized():
                         return t.detach().cpu()
                     # 1) 收集各 rank 的长度
                     local = t.detach()
-                    n_local = torch.tensor([local.shape[0]], device=local.device, dtype=torch.long)
-                    sizes = [torch.zeros_like(n_local) for _ in range(dist.get_world_size())]
+                    n_local = torch.tensor(
+                        [local.shape[0]], device=local.device, dtype=torch.long
+                    )
+                    sizes = [
+                        torch.zeros_like(n_local) for _ in range(dist.get_world_size())
+                    ]
                     dist.all_gather(sizes, n_local)
                     sizes = [int(s.item()) for s in sizes]
                     maxN = max(sizes)
 
                     # 2) pad 到同长后 all_gather
                     if local.shape[0] < maxN:
-                        pad = torch.zeros((maxN - local.shape[0], *local.shape[1:]),
-                                        device=local.device, dtype=local.dtype)
+                        pad = torch.zeros(
+                            (maxN - local.shape[0], *local.shape[1:]),
+                            device=local.device,
+                            dtype=local.dtype,
+                        )
                         local = torch.cat([local, pad], 0)
 
-                    bufs = [torch.empty_like(local) for _ in range(dist.get_world_size())]
+                    bufs = [
+                        torch.empty_like(local) for _ in range(dist.get_world_size())
+                    ]
                     dist.all_gather(bufs, local)
 
                     # 3) 去 pad + 拼接（只在 rank0 返回，其他 rank 返回 None）
                     if dist.get_rank() == 0:
-                        chunks = [bufs[r][:sizes[r]] for r in range(dist.get_world_size())]
+                        chunks = [
+                            bufs[r][: sizes[r]] for r in range(dist.get_world_size())
+                        ]
                         return torch.cat(chunks, 0).cpu()
                     else:
                         return None
 
                 # 只在 rank0 写盘：
                 if dist.is_initialized():
-                    means     = gather_for_export(self.splats["means"])
-                    scales    = gather_for_export(self.splats["scales"])
-                    quats     = gather_for_export(self.splats["quats"])
+                    means = gather_for_export(self.splats["means"])
+                    scales = gather_for_export(self.splats["scales"])
+                    quats = gather_for_export(self.splats["quats"])
                     opacities = gather_for_export(self.splats["opacities"])
-                    sh0       = gather_for_export(self.splats["sh0"])
-                    shN       = gather_for_export(self.splats["shN"])
-                    if (means is not None):   # 仅 rank0
-                        export_splats(means, scales, quats, opacities, sh0, shN,
-                                    format="ply", save_to=f"{self.ply_dir}/point_cloud_{step}.ply")
+                    sh0 = gather_for_export(self.splats["sh0"])
+                    shN = gather_for_export(self.splats["shN"])
+                    if means is not None:  # 仅 rank0
+                        export_splats(
+                            means,
+                            scales,
+                            quats,
+                            opacities,
+                            sh0,
+                            shN,
+                            format="ply",
+                            save_to=f"{self.ply_dir}/point_cloud_{step}.ply",
+                        )
 
             # Turn Gradients into Sparse Tensor before running optimizer
             if cfg.sparse_grad:
@@ -1296,7 +1395,7 @@ class Runner:
     #         novel_poses = self.interpolator.shift_poses(self.current_novel_poses, self.parser.camtoworlds[self.valset.indices], distance)
     #     elif fix_mode == "extrapolate":
     #         novel_poses = self.interpolator.horizontal_shift_poses(self.base_novel_poses, distance, downsample_stride)
-        
+
     #     self.render_traj(step, novel_poses)
     #     image_paths = [f"{self.render_dir}/novel/{step}/Pred/{i:04d}.jpg" for i in range(len(novel_poses))]
 
@@ -1318,7 +1417,7 @@ class Runner:
     #     #     if ref_image is not None:
     #     #         os.makedirs(f"{self.render_dir}/novel/{step}/Ref", exist_ok=True)
     #     #         ref_image.save(f"{self.render_dir}/novel/{step}/Ref/{i:04d}.png")
-    
+
     #     # parser = deepcopy(self.parser)
     #     # parser.test_every = 0
     #     # parser.image_paths = [f"{self.render_dir}/novel/{step}/Fixed/{i:04d}.png" for i in range(len(novel_poses))]
@@ -1326,7 +1425,7 @@ class Runner:
     #     # parser.alpha_mask_paths = [f"{self.render_dir}/novel/{step}/Alpha/{i:04d}.png" for i in range(len(novel_poses))]
     #     # parser.camtoworlds = novel_poses
     #     # parser.camera_ids = [parser.camera_ids[0]] * len(novel_poses)
-        
+
     #     # print(f"Adding {len(parser.image_paths)} fixed images to novel dataset...")
     #     # dataset = Dataset(parser, split="train")
     #     # dataloader = torch.utils.data.DataLoader(
@@ -1370,7 +1469,7 @@ class Runner:
     #         ref_image.save(f"{self.render_dir}/novel/{step}/Ref/{idx:04d}.jpg")
 
     #     if dist.is_initialized():
-    #         dist.barrier() 
+    #         dist.barrier()
 
     #     from copy import deepcopy
     #     if dist.is_initialized():
@@ -1423,7 +1522,7 @@ class Runner:
     #     self.current_novel_poses = novel_poses
 
     #     torch.cuda.empty_cache()
-    
+
     @torch.no_grad()
     def eval(self, step: int, stage: str = "val"):
         """Evaluate metrics on a split with subset sampling and limited image saving."""
@@ -1490,24 +1589,37 @@ class Runner:
             if world_rank == 0:
                 # 指标
                 pixels_p = pixels.unsqueeze(0).permute(0, 3, 1, 2)  # [1,3,H,W]
-                colors_p = colors.permute(0, 3, 1, 2)               # [1,3,H,W]
+                colors_p = colors.permute(0, 3, 1, 2)  # [1,3,H,W]
                 metrics["psnr"].append(self.psnr(colors_p, pixels_p))
                 metrics["ssim"].append(self.ssim(colors_p, pixels_p))
                 metrics["lpips"].append(self.lpips(colors_p, pixels_p))
 
                 # 仅保存少量示例
                 if cfg.eval_save_images and saved_cnt < cfg.eval_save_images_n:
-                    canvas = torch.cat([pixels.unsqueeze(0), colors], dim=2).squeeze(0).cpu().numpy()
+                    canvas = (
+                        torch.cat([pixels.unsqueeze(0), colors], dim=2)
+                        .squeeze(0)
+                        .cpu()
+                        .numpy()
+                    )
                     canvas = (canvas * 255).astype(np.uint8)
-                    imageio.imwrite(f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas)
+                    imageio.imwrite(
+                        f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas
+                    )
                     saved_cnt += 1
                     last_canvas = canvas
 
         if world_rank == 0:
             ellipse_time /= float(N_eval)
 
-            stats = {k: torch.stack(v).mean().item() for k, v in metrics.items() if len(v) > 0}
-            stats.update({"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])})
+            stats = {
+                k: torch.stack(v).mean().item()
+                for k, v in metrics.items()
+                if len(v) > 0
+            }
+            stats.update(
+                {"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])}
+            )
 
             print(
                 f"[{stage}] PSNR: {stats.get('psnr', float('nan')):.3f}, "
@@ -1533,7 +1645,9 @@ class Runner:
                 self.wb.log(log_dict, step=step)
                 try:
                     if last_canvas is not None:
-                        self.wb.log({f"{stage}/example": wandb.Image(last_canvas)}, step=step)
+                        self.wb.log(
+                            {f"{stage}/example": wandb.Image(last_canvas)}, step=step
+                        )
                 except Exception:
                     pass
 
@@ -1554,7 +1668,9 @@ class Runner:
                 camtoworlds_all = generate_interpolated_path(camtoworlds_all, 1)
             elif cfg.render_traj_path == "ellipse":
                 height = camtoworlds_all[:, 2, 3].mean()
-                camtoworlds_all = generate_ellipse_path_z(camtoworlds_all, height=height)
+                camtoworlds_all = generate_ellipse_path_z(
+                    camtoworlds_all, height=height
+                )
             elif cfg.render_traj_path == "spiral":
                 camtoworlds_all = generate_spiral_path(
                     camtoworlds_all,
@@ -1564,14 +1680,22 @@ class Runner:
             elif cfg.render_traj_path == "original":
                 camtoworlds_all = self.parser.camtoworlds
             else:
-                raise ValueError(f"Render trajectory type not supported: {cfg.render_traj_path}")
+                raise ValueError(
+                    f"Render trajectory type not supported: {cfg.render_traj_path}"
+                )
 
             # 补最后一行变成 [N,4,4]
             if cfg.render_traj_path != "original":
                 camtoworlds_all = np.concatenate(
-                    [camtoworlds_all,
-                    np.repeat(np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0)],
-                    axis=1
+                    [
+                        camtoworlds_all,
+                        np.repeat(
+                            np.array([[[0.0, 0.0, 0.0, 1.0]]]),
+                            len(camtoworlds_all),
+                            axis=0,
+                        ),
+                    ],
+                    axis=1,
                 )
 
         camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
@@ -1589,7 +1713,7 @@ class Runner:
             my_ids = list(range(len(camtoworlds_all)))
 
         # 5) 输出目录（每个 rank 都写自己份，最终 barrier 保证完整）
-        pred_dir  = f"{self.render_dir}/{tag}/{step}/Pred"
+        pred_dir = f"{self.render_dir}/{tag}/{step}/Pred"
         alpha_dir = f"{self.render_dir}/{tag}/{step}/Alpha"
         if len(my_ids) > 0:
             os.makedirs(pred_dir, exist_ok=True)
@@ -1597,13 +1721,18 @@ class Runner:
 
         # 6) 批量渲染（RGB-only）
         B = max(1, int(cfg.render_batch))
-        pbar = tqdm.trange(0, len(my_ids), B, desc=f"Rendering trajectory (rank {rank})",
-                        disable=(world > 1 and rank != 0))
+        pbar = tqdm.trange(
+            0,
+            len(my_ids),
+            B,
+            desc=f"Rendering trajectory (rank {rank})",
+            disable=(world > 1 and rank != 0),
+        )
 
         for s in pbar:
-            ids = my_ids[s:s+B]
-            c2w = camtoworlds_all[ids]                 # [B,4,4]
-            Ks  = K.expand(len(ids), -1, -1)           # [B,3,3]
+            ids = my_ids[s : s + B]
+            c2w = camtoworlds_all[ids]  # [B,4,4]
+            Ks = K.expand(len(ids), -1, -1)  # [B,3,3]
 
             renders, alphas, _ = self.rasterize_splats(
                 camtoworlds=c2w,
@@ -1613,12 +1742,14 @@ class Runner:
                 sh_degree=cfg.sh_degree,
                 near_plane=cfg.near_plane,
                 far_plane=cfg.far_plane,
-                render_mode="RGB",                     # 只算 RGB（关键加速）
-                distributed=False
+                render_mode="RGB",  # 只算 RGB（关键加速）
+                distributed=False,
             )  # [B,H,W,3] and [B,H,W,1]
 
             # 转为 uint8（一次性批量搬运）
-            colors_u8 = (torch.clamp(renders[..., :3], 0.0, 1.0) * 255).byte().cpu().numpy()
+            colors_u8 = (
+                (torch.clamp(renders[..., :3], 0.0, 1.0) * 255).byte().cpu().numpy()
+            )
             alphas_u8 = (alphas[..., 0] * 255).byte().cpu().numpy()
 
             # 7) 快速写盘：Pred 用 JPEG/PNG（PNG 设置为 0 压缩），Alpha 用无压缩 PNG
@@ -1632,11 +1763,9 @@ class Runner:
                     # 高速 PNG：0 压缩
                     img.save(pred_path, compress_level=0, optimize=False)
 
-                aimg = Image.fromarray(alphas_u8[j], mode='L')
+                aimg = Image.fromarray(alphas_u8[j], mode="L")
                 alpha_path = f"{alpha_dir}/{fid:04d}.jpg"
                 aimg.save(alpha_path, quality=95, subsampling=0, optimize=False)
-
-
 
     # @torch.no_grad()
     # def render_traj(self, step: int, camtoworlds_all=None, tag="novel"):
@@ -1670,7 +1799,7 @@ class Runner:
     #             raise ValueError(
     #                 f"Render trajectory type not supported: {cfg.render_traj_path}"
     #             )
-            
+
     #         if cfg.render_traj_path != "original":
     #             camtoworlds_all = np.concatenate(
     #                 [
@@ -1685,8 +1814,6 @@ class Runner:
     #     camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
     #     K = torch.from_numpy(list(self.parser.Ks_dict.values())[0]).float().to(device)
     #     width, height = list(self.parser.imsize_dict.values())[0]
-
-
 
     #     rank = dist.get_rank() if (dist.is_initialized()) else 0
 
@@ -1724,7 +1851,7 @@ class Runner:
     #             colors_canvas = colors.cpu().numpy()
     #             colors_canvas = (colors.squeeze(0).cpu().numpy() * 255).astype(np.uint8)
     #             imageio.imwrite(colors_path, colors_canvas)
-                
+
     #             alphas_path = f"{self.render_dir}/{tag}/{step}/Alpha/{i:04d}.png"
     #             os.makedirs(os.path.dirname(alphas_path), exist_ok=True)
     #             alphas_canvas = alphas.squeeze(0).float().cpu().numpy()

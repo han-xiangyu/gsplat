@@ -35,7 +35,9 @@ class Pose:
     rotation_deg: np.ndarray
 
     @classmethod
-    def from_lists(cls, translation: Sequence[float], rotation_deg: Sequence[float]) -> "Pose":
+    def from_lists(
+        cls, translation: Sequence[float], rotation_deg: Sequence[float]
+    ) -> "Pose":
         return cls(
             translation=np.asarray(translation, dtype=np.float32),
             rotation_deg=np.asarray(rotation_deg, dtype=np.float32),
@@ -102,9 +104,15 @@ class StreetRenderer:
         self.sh_degree = math.isqrt(1 + self.splats["shN"].shape[1]) - 1
         self.means = self.splats["means"]
         self.quats = self.splats["quats"]
-        self.scales = torch.exp(self.splats["scales"]) if self.meta["scale_is_log"] else self.splats["scales"]
+        self.scales = (
+            torch.exp(self.splats["scales"])
+            if self.meta["scale_is_log"]
+            else self.splats["scales"]
+        )
         self.opacities = (
-            torch.sigmoid(self.splats["opacities"]) if self.meta["opacity_is_logit"] else self.splats["opacities"]
+            torch.sigmoid(self.splats["opacities"])
+            if self.meta["opacity_is_logit"]
+            else self.splats["opacities"]
         )
         self.colors = torch.cat([self.splats["sh0"], self.splats["shN"]], dim=1)
 
@@ -163,7 +171,9 @@ class VLMNavigator:
         step_index: int,
         task: str,
     ) -> StepLog:
-        history_text = "\n".join(log.as_text() for log in history) if history else "None yet."
+        history_text = (
+            "\n".join(log.as_text() for log in history) if history else "None yet."
+        )
         user_text = (
             f"Task: {task}\n"
             f"Step: {step_index}\n"
@@ -176,7 +186,10 @@ class VLMNavigator:
             temperature=self.cfg.temperature,
             top_p=self.cfg.top_p,
             input=[
-                {"role": "system", "content": [{"type": "text", "text": self.system_prompt}]},
+                {
+                    "role": "system",
+                    "content": [{"type": "text", "text": self.system_prompt}],
+                },
                 {
                     "role": "user",
                     "content": [
@@ -268,7 +281,9 @@ if __name__ == "__main__":
     try:
         import tyro
     except ImportError as exc:
-        raise ImportError("Please install tyro (pip install tyro) to run CLI entrypoints.") from exc
+        raise ImportError(
+            "Please install tyro (pip install tyro) to run CLI entrypoints."
+        ) from exc
 
     cfg = tyro.cli(SimulatorConfig)
     logs = run_simulation(cfg)

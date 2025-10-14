@@ -42,7 +42,6 @@ import wandb
 import torch.distributed as dist
 
 
-
 @dataclass
 class Config:
     # Disable viewer
@@ -90,16 +89,34 @@ class Config:
     # Number of training steps
     max_steps: int = 200_000
     # Steps to evaluate the model
-    eval_steps: List[int] = field(default_factory=lambda: [7_000, 25_000, 50_000, 75_000, 100_000, 125_000, 150_000, 175_000, 200_000, 250_000, 300_000, 350_000, 400_000])
+    eval_steps: List[int] = field(
+        default_factory=lambda: [
+            7_000,
+            25_000,
+            50_000,
+            75_000,
+            100_000,
+            125_000,
+            150_000,
+            175_000,
+            200_000,
+            250_000,
+            300_000,
+            350_000,
+            400_000,
+        ]
+    )
     # Steps to save the model
-    save_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
-
-
+    save_steps: List[int] = field(
+        default_factory=lambda: [100_000, 200_000, 300_000, 400_000]
+    )
 
     # Whether to save ply file (storage size can be large)
     save_ply: bool = True
     # Steps to save the model as ply
-    ply_steps: List[int] = field(default_factory=lambda: [100_000, 200_000, 300_000, 400_000])
+    ply_steps: List[int] = field(
+        default_factory=lambda: [100_000, 200_000, 300_000, 400_000]
+    )
     # Steps to save the model as ply
     video_render_steps: List[int] = field(default_factory=lambda: [])
     # Whether to disable video generation during training and evaluation
@@ -121,7 +138,6 @@ class Config:
     init_scale: float = 1.0
     # Weight for SSIM loss
     ssim_lambda: float = 0.2
-
 
     # Near plane clipping distance
     near_plane: float = 0.01
@@ -208,11 +224,11 @@ class Config:
     use_fused_bilagrid: bool = False
 
     wandb_project: Optional[str] = None
-    wandb_group: Optional[str] = None 
-    wandb_name: Optional[str] = None 
+    wandb_group: Optional[str] = None
+    wandb_name: Optional[str] = None
     wandb_mode: Literal["online", "offline", "disabled"] = "offline"
-    wandb_dir: Optional[str] = None 
-    wandb_log_images_every: int = 50000 
+    wandb_dir: Optional[str] = None
+    wandb_log_images_every: int = 50000
 
     def adjust_steps(self, factor: float):
         self.eval_steps = [int(i * factor) for i in self.eval_steps]
@@ -525,9 +541,6 @@ class Runner:
                 resume="allow",
             )
 
-        
-
-
     def rasterize_splats(
         self,
         camtoworlds: Tensor,
@@ -608,7 +621,8 @@ class Runner:
         schedulers = [
             # means has a learning rate schedule, that end at 0.01 of the initial value
             torch.optim.lr_scheduler.ExponentialLR(
-                self.optimizers["means"], gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps)
+                self.optimizers["means"],
+                gamma=cfg.mean_lr_final_mult ** (1.0 / max_steps),
             ),
         ]
         if cfg.pose_opt:
@@ -749,11 +763,12 @@ class Runner:
                 #### Modified: Sample depth map at all valid pixels and use L1 loss
                 depth_gt = data["depths"].to(device)[None, ..., None]  # [1, H, W, 1]
                 valid = torch.isfinite(depth_gt) & (depth_gt > 0)
-                valid = valid & (depths > 0) 
+                valid = valid & (depths > 0)
                 # masked L1
-                depthloss = torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                depthloss = (
+                    torch.abs(depths - depth_gt)[valid].mean() * self.scene_scale
+                )
                 loss += depthloss * cfg.depth_lambda
-
 
                 #### Oringinal: Sample depth map at query points and use disparity loss
                 # # query depths from depth map
@@ -848,25 +863,34 @@ class Runner:
                     if len(schedulers) > 0:
                         logs["lr/means"] = float(schedulers[0].get_last_lr()[0])
 
-
                     opa = torch.sigmoid(self.splats["opacities"])
-                    sc  = torch.exp(self.splats["scales"])
+                    sc = torch.exp(self.splats["scales"])
                     vis = (info["radii"] > 0).all(-1).any(0).float().mean()
 
-                    logs.update({
-                    "stats/alpha_mean": float(opa.mean()),
-                    "stats/scale_med":  float(sc.median()),
-                    "stats/vis_frac":   float(vis)
-                    })
+                    logs.update(
+                        {
+                            "stats/alpha_mean": float(opa.mean()),
+                            "stats/scale_med": float(sc.median()),
+                            "stats/vis_frac": float(vis),
+                        }
+                    )
 
                     # Rendering Images
-                    if cfg.wandb_log_images_every > 0 and step % cfg.wandb_log_images_every == 0:
-                        canvas = torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
-                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(np.uint8)
-                        logs["train/render"] = wandb.Image(canvas, caption=f"step {step}")
+                    if (
+                        cfg.wandb_log_images_every > 0
+                        and step % cfg.wandb_log_images_every == 0
+                    ):
+                        canvas = (
+                            torch.cat([pixels, colors], dim=2).detach().cpu().numpy()
+                        )
+                        canvas = (canvas.reshape(-1, *canvas.shape[2:]) * 255).astype(
+                            np.uint8
+                        )
+                        logs["train/render"] = wandb.Image(
+                            canvas, caption=f"step {step}"
+                        )
 
                     self.wb.log(logs, step=step)
-
 
             # save checkpoint before updating the model
             if step in [i - 1 for i in cfg.save_steps] or step == max_steps - 1:
@@ -921,46 +945,64 @@ class Runner:
                 quats = self.splats["quats"]
                 opacities = self.splats["opacities"]
 
-
                 @torch.no_grad()
                 def gather_for_export(t: torch.Tensor) -> Optional[torch.Tensor]:
                     if not dist.is_initialized():
                         return t.detach().cpu()
                     # 1) 收集各 rank 的长度
                     local = t.detach()
-                    n_local = torch.tensor([local.shape[0]], device=local.device, dtype=torch.long)
-                    sizes = [torch.zeros_like(n_local) for _ in range(dist.get_world_size())]
+                    n_local = torch.tensor(
+                        [local.shape[0]], device=local.device, dtype=torch.long
+                    )
+                    sizes = [
+                        torch.zeros_like(n_local) for _ in range(dist.get_world_size())
+                    ]
                     dist.all_gather(sizes, n_local)
                     sizes = [int(s.item()) for s in sizes]
                     maxN = max(sizes)
 
                     # 2) pad 到同长后 all_gather
                     if local.shape[0] < maxN:
-                        pad = torch.zeros((maxN - local.shape[0], *local.shape[1:]),
-                                        device=local.device, dtype=local.dtype)
+                        pad = torch.zeros(
+                            (maxN - local.shape[0], *local.shape[1:]),
+                            device=local.device,
+                            dtype=local.dtype,
+                        )
                         local = torch.cat([local, pad], 0)
 
-                    bufs = [torch.empty_like(local) for _ in range(dist.get_world_size())]
+                    bufs = [
+                        torch.empty_like(local) for _ in range(dist.get_world_size())
+                    ]
                     dist.all_gather(bufs, local)
 
                     # 3) 去 pad + 拼接（只在 rank0 返回，其他 rank 返回 None）
                     if dist.get_rank() == 0:
-                        chunks = [bufs[r][:sizes[r]] for r in range(dist.get_world_size())]
+                        chunks = [
+                            bufs[r][: sizes[r]] for r in range(dist.get_world_size())
+                        ]
                         return torch.cat(chunks, 0).cpu()
                     else:
                         return None
 
                 # 只在 rank0 写盘：
                 if dist.is_initialized():
-                    means     = gather_for_export(self.splats["means"])
-                    scales    = gather_for_export(self.splats["scales"])
-                    quats     = gather_for_export(self.splats["quats"])
+                    means = gather_for_export(self.splats["means"])
+                    scales = gather_for_export(self.splats["scales"])
+                    quats = gather_for_export(self.splats["quats"])
                     opacities = gather_for_export(self.splats["opacities"])
-                    sh0       = gather_for_export(self.splats["sh0"])
-                    shN       = gather_for_export(self.splats["shN"])
-                    if (means is not None):   # 仅 rank0
-                        export_splats(means, scales, quats, opacities, sh0, shN,
-                                    format="ply", save_to=f"{self.ply_dir}/point_cloud_{step}.ply")
+                    sh0 = gather_for_export(self.splats["sh0"])
+                    shN = gather_for_export(self.splats["shN"])
+                    if means is not None:  # 仅 rank0
+                        export_splats(
+                            means,
+                            scales,
+                            quats,
+                            opacities,
+                            sh0,
+                            shN,
+                            format="ply",
+                            save_to=f"{self.ply_dir}/point_cloud_{step}.ply",
+                        )
 
             # Turn Gradients into Sparse Tensor before running optimizer
             if cfg.sparse_grad:
@@ -1053,7 +1095,6 @@ class Runner:
                 # Update the scene.
                 self.viewer.update(step, num_train_rays_per_step)
 
-    
     @torch.no_grad()
     def eval(self, step: int, stage: str = "val"):
         """Evaluate metrics on a split with subset sampling and limited image saving."""
@@ -1120,24 +1161,37 @@ class Runner:
             if world_rank == 0:
                 # 指标
                 pixels_p = pixels.unsqueeze(0).permute(0, 3, 1, 2)  # [1,3,H,W]
-                colors_p = colors.permute(0, 3, 1, 2)               # [1,3,H,W]
+                colors_p = colors.permute(0, 3, 1, 2)  # [1,3,H,W]
                 metrics["psnr"].append(self.psnr(colors_p, pixels_p))
                 metrics["ssim"].append(self.ssim(colors_p, pixels_p))
                 metrics["lpips"].append(self.lpips(colors_p, pixels_p))
 
                 # 仅保存少量示例
                 if cfg.eval_save_images and saved_cnt < cfg.eval_save_images_n:
-                    canvas = torch.cat([pixels.unsqueeze(0), colors], dim=2).squeeze(0).cpu().numpy()
+                    canvas = (
+                        torch.cat([pixels.unsqueeze(0), colors], dim=2)
+                        .squeeze(0)
+                        .cpu()
+                        .numpy()
+                    )
                     canvas = (canvas * 255).astype(np.uint8)
-                    imageio.imwrite(f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas)
+                    imageio.imwrite(
+                        f"{self.render_dir}/{stage}_step{step}_{i:04d}.png", canvas
+                    )
                     saved_cnt += 1
                     last_canvas = canvas
 
         if world_rank == 0:
             ellipse_time /= float(N_eval)
 
-            stats = {k: torch.stack(v).mean().item() for k, v in metrics.items() if len(v) > 0}
-            stats.update({"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])})
+            stats = {
+                k: torch.stack(v).mean().item()
+                for k, v in metrics.items()
+                if len(v) > 0
+            }
+            stats.update(
+                {"ellipse_time": ellipse_time, "num_GS": len(self.splats["means"])}
+            )
 
             print(
                 f"[{stage}] PSNR: {stats.get('psnr', float('nan')):.3f}, "
@@ -1163,11 +1217,11 @@ class Runner:
                 self.wb.log(log_dict, step=step)
                 try:
                     if last_canvas is not None:
-                        self.wb.log({f"{stage}/example": wandb.Image(last_canvas)}, step=step)
+                        self.wb.log(
+                            {f"{stage}/example": wandb.Image(last_canvas)}, step=step
+                        )
                 except Exception:
                     pass
-
-
 
     @torch.no_grad()
     def render_traj(self, step: int, camtoworlds_all=None, tag="novel"):
@@ -1201,13 +1255,15 @@ class Runner:
                 raise ValueError(
                     f"Render trajectory type not supported: {cfg.render_traj_path}"
                 )
-            
+
             if cfg.render_traj_path != "original":
                 camtoworlds_all = np.concatenate(
                     [
                         camtoworlds_all,
                         np.repeat(
-                            np.array([[[0.0, 0.0, 0.0, 1.0]]]), len(camtoworlds_all), axis=0
+                            np.array([[[0.0, 0.0, 0.0, 1.0]]]),
+                            len(camtoworlds_all),
+                            axis=0,
                         ),
                     ],
                     axis=1,
@@ -1216,8 +1272,6 @@ class Runner:
         camtoworlds_all = torch.from_numpy(camtoworlds_all).float().to(device)
         K = torch.from_numpy(list(self.parser.Ks_dict.values())[0]).float().to(device)
         width, height = list(self.parser.imsize_dict.values())[0]
-
-
 
         rank = dist.get_rank() if (dist.is_initialized()) else 0
 
@@ -1248,19 +1302,19 @@ class Runner:
             canvas = torch.cat(canvas_list, dim=2).squeeze(0).cpu().numpy()
             canvas = (canvas * 255).astype(np.uint8)
             # writer.append_data(canvas)
-            if self.world_size == 1 or (self.world_size > 1 and rank==0):
+            if self.world_size == 1 or (self.world_size > 1 and rank == 0):
                 # Write for Difix3d fixer
                 colors_path = f"{self.render_dir}/{tag}/{step}/Pred/{i:04d}.png"
                 os.makedirs(os.path.dirname(colors_path), exist_ok=True)
                 colors_canvas = colors.cpu().numpy()
                 colors_canvas = (colors.squeeze(0).cpu().numpy() * 255).astype(np.uint8)
                 imageio.imwrite(colors_path, colors_canvas)
-                
+
                 alphas_path = f"{self.render_dir}/{tag}/{step}/Alpha/{i:04d}.png"
                 os.makedirs(os.path.dirname(alphas_path), exist_ok=True)
                 alphas_canvas = alphas.squeeze(0).float().cpu().numpy()
                 alphas_canvas = (alphas_canvas * 255).astype(np.uint8)
-                Image.fromarray(alphas_canvas.squeeze(), mode='L').save(alphas_path)
+                Image.fromarray(alphas_canvas.squeeze(), mode="L").save(alphas_path)
 
         # writer.close()
         # print(f"Video saved to {video_dir}/traj_{step}.mp4")

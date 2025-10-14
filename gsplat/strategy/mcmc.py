@@ -13,6 +13,7 @@ try:
 except:
     from typing_extensions import Literal
 
+
 @dataclass
 class MCMCStrategy(Strategy):
     """Strategy that follows the paper:
@@ -60,8 +61,8 @@ class MCMCStrategy(Strategy):
     densify_portion: float = 0.001  # 每次 densify 增加的点数比例
 
     schedule_mode: Literal["cosine", "linear", "exp", "staged", "original"] = "cosine"
-    densify_step_portion_max: float = 0.005     # 单次 refine 最多按当前点数的增长比例
-    densify_step_min_add: int = 0               # 单次最少新增个数（可为 0）
+    densify_step_portion_max: float = 0.005  # 单次 refine 最多按当前点数的增长比例
+    densify_step_min_add: int = 0  # 单次最少新增个数（可为 0）
 
     def initialize_state(self) -> Dict[str, Any]:
         """Initialize and return the running state for this strategy."""
@@ -71,10 +72,11 @@ class MCMCStrategy(Strategy):
         for n in range(n_max):
             for k in range(n + 1):
                 binoms[n, k] = math.comb(n, k)
-        return {"binoms": binoms,
-                "n0": None,              # 初始化点数，首次调用时读取
-                "last_target_n": None,   # 上次的目标点数，保证单调递增
-                }
+        return {
+            "binoms": binoms,
+            "n0": None,  # 初始化点数，首次调用时读取
+            "last_target_n": None,  # 上次的目标点数，保证单调递增
+        }
 
     def check_sanity(
         self,
@@ -244,7 +246,9 @@ class MCMCStrategy(Strategy):
             return 0
 
         # 每步上限：按当前点数的比例限幅，且保证至少 min_add
-        step_cap = max(self.densify_step_min_add, int(cur * self.densify_step_portion_max))
+        step_cap = max(
+            self.densify_step_min_add, int(cur * self.densify_step_portion_max)
+        )
         n_add = int(min(need, step_cap))
 
         if n_add > 0:
@@ -257,7 +261,6 @@ class MCMCStrategy(Strategy):
                 min_opacity=self.min_opacity,
             )
         return n_add
-
 
     @torch.no_grad()
     def _relocate_gs(
@@ -289,7 +292,9 @@ class MCMCStrategy(Strategy):
     ) -> int:
         current_n_points = len(params["means"])
 
-        n_target = min(self.cap_max, int((1.0 + self.densify_portion) * current_n_points))
+        n_target = min(
+            self.cap_max, int((1.0 + self.densify_portion) * current_n_points)
+        )
         n_gs = max(0, n_target - current_n_points)
         if n_gs > 0:
             sample_add(
