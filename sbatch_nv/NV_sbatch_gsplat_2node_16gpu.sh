@@ -1,8 +1,8 @@
-job_name="gsplat_2node_16gpu"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_2node_16gpu"
+job_name="gsplat_wholesquence_4node_32gpu"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_wholesquence_4node_32gpu"
 account=nvr_av_foundations
 gpus_per_node=8
-nodes=2
+nodes=4
 
 submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --partition=grizzly,polar \
@@ -14,5 +14,5 @@ submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --name $job_name \
     --dependency=singleton \
     --notimestamp \
-    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/sbatch_nv/NV_train_origin_2node_16gpu.sh"
+    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/sbatch_nv/NV_train_wholesquence.sh"
 
