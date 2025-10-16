@@ -1,3 +1,4 @@
+#!/bin/bash
 gpus_per_node=1
 nodes=2
 account=nvr_av_foundations
