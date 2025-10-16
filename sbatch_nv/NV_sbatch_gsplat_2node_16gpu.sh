@@ -1,8 +1,8 @@
-job_name="gsplat_wholesquence_2node_16gpu"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_wholesquence_2node_16gpu"
+job_name="gsplat_5000frames"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_5000frames_voxel"
 account=nvr_av_foundations
 gpus_per_node=8
-nodes=2
+nodes=1
 
 submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --partition=grizzly,polar \
