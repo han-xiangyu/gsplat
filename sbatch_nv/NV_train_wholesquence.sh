@@ -26,7 +26,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 echo "Starting distributed training..."
 torchrun --standalone \
-     --nproc_per_node=4 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
