@@ -1,14 +1,14 @@
 #!/bin/bash
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate gsplat_new
-cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat
+conda activate mars_pytorh3d
+cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/tra2_spatial05_frames3000_individual_K_6cam_voxel"
 MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_frames3000_gsplat_mcmc_iter50k_individual_K_voxel_1node_8gpu_6cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/pycolmap
+export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
+export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat/pycolmap
 export WANDB_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true

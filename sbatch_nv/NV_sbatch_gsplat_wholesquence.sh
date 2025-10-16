@@ -1,5 +1,5 @@
-job_name="gsplat_wholesquence"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_1node_8gpu_wholesquence"
+job_name="gsplat_knn"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_knn_wholesquence"
 account=nvr_av_foundations
 
 for i in {1..5}; do
