@@ -28,7 +28,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=8 \
+     --nproc_per_node=4 \
      --nnodes=1 \
      examples/simple_trainer_fisheye.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
