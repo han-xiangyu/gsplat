@@ -2,8 +2,8 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/tra2_spatial05_frames3000_individual_K_voxel_pinhole_fisheye_new"
-MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_frames3000_gsplat_mcmc_iter50k_individual_K_voxel_pinhole_fisheye"
+SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/tra2_spatial05_frames3000_voxel_6cam"
+MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/tra2_spatial05_frames3000_voxel_6cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -16,7 +16,7 @@ export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
-video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
+video_output_path="${MODEL_PATH}/videos/traj_149999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=150_000
 MEANS_LR=2e-3
@@ -30,7 +30,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 torchrun --standalone \
      --nproc_per_node=8 \
      --nnodes=1 \
-     examples/simple_trainer_fisheye.py mcmc  \
+     examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
