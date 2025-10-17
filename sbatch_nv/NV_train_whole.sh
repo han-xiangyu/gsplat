@@ -1,9 +1,9 @@
 #!/bin/bash
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate gsplat_new
-cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat
+conda activate mars_pytorh3d
+cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/spatial05_whole_traversal"
-MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_whole_individual_K_voxel_3cam"
+MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_whole_voxel_3cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -16,7 +16,7 @@ export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
-video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
+video_output_path="${MODEL_PATH}/videos/traj_149999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=150_000
 MEANS_LR=2e-3
@@ -27,10 +27,12 @@ pose_opt_start=1e5
 # --use_bilateral_grid
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --standalone \
-     --nproc_per_node=4 \
-     --nnodes=1 \
-     examples/simple_trainer_fisheye.py mcmc  \
+torchrun --nnodes=${SLURM_NNODES} \
+     --nproc_per_node=8 \
+     --rdzv_id=$SLURM_JOB_ID \
+     --rdzv_backend=c10d \
+     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+     examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
@@ -45,18 +47,18 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 3000000 \
+     --strategy.cap-max 300000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
 
-# echo "Training finished. Starting rendering ..."
-# python examples/render_from_ply.py \
-#      --data_dir $SOURCE_PATH \
-#      --ply_path $MODEL_PATH/ply/point_cloud_199999.ply  \
-#      --result_dir $MODEL_PATH \
-#      --fps 15 \
-#      --channels 2 1 3
+echo "Training finished. Starting rendering ..."
+python examples/render_from_ply.py \
+     --data_dir $SOURCE_PATH \
+     --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
+     --result_dir $MODEL_PATH \
+     --fps 15 \
+     --channels 2 1 3
 
