@@ -1,5 +1,5 @@
-job_name="gsplat_6cam"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_6cam"
+job_name="gsplat_9000frames_3cam"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_9000frames_3cam"
 account=nvr_av_foundations
 
 for i in {1..2}; do
