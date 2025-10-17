@@ -53,7 +53,7 @@ torchrun --standalone \
 
 CUDA_VISIBLE_DEVICES=0 python examples/render_from_ply.py \
      --data_dir $SOURCE_PATH \
-     --ply_path $MODEL_PATH/ply/point_cloud_199999.ply  \
+     --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
      --result_dir $MODEL_PATH \
      --fps 15 \
      --channels 2 1 3
