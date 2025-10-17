@@ -2,7 +2,6 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-#SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/spatial05_whole_traversal"
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/tra2_spatial05_frames15000_individual_K_voxel_3cam"
 MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/tra2_spatial05_frames15000_individual_K_voxel_3cam"
 model_name=$(basename "$MODEL_PATH")
@@ -15,7 +14,7 @@ export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
-video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
+video_output_path="${MODEL_PATH}/videos/traj_149999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=150_000
 MEANS_LR=2e-3
@@ -44,7 +43,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 10000000 \
+     --strategy.cap-max 8000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
