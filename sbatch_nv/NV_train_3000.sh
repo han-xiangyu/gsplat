@@ -3,7 +3,7 @@ source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/spatial05_frames3000_individual_K_fps_bin"
-MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_frames3000_gsplat_mcmc_iter50k_individual_K_fps_1node_1gpu"
+MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_frames3000_individual_K_fps_bin"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -16,9 +16,9 @@ export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
-video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
+video_output_path="${MODEL_PATH}/videos/traj_149999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
-max_steps=1_000
+max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-4
 densify_portion=0.001
@@ -28,7 +28,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=1 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
