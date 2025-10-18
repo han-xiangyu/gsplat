@@ -2,7 +2,7 @@ job_name="gsplat_3000frames_6cam"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_3000frames_6cam"
 account=nvr_av_foundations
 
-for i in {1..2}; do
+for i in {1..4}; do
     submit_job --gpu 4 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=$account \

@@ -16,7 +16,7 @@ export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
-video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
+video_output_path="${MODEL_PATH}/videos/traj_149999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=150_000
 MEANS_LR=2e-3
@@ -55,7 +55,7 @@ torchrun --standalone \
 # echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
 #      --data_dir $SOURCE_PATH \
-#      --ply_path $MODEL_PATH/ply/point_cloud_199999.ply  \
+#      --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
 #      --result_dir $MODEL_PATH \
 #      --fps 15 \
 #      --channels 2 1 3
