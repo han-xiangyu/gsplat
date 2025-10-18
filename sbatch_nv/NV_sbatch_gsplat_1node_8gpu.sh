@@ -1,5 +1,5 @@
-job_name="gsplat_9000frames_3cam"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_9000frames_3cam"
+job_name="gsplat_15000frames_3cam"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/gsplat_15000frames_3cam"
 account=nvr_av_foundations
 
 for i in {1..2}; do
@@ -11,7 +11,8 @@ for i in {1..2}; do
         --duration 4 \
         --dependency=singleton \
         --name $job_name \
-        --logdir ${base_logdir} \
+        --logdir ${base_logdir}/run_${i} \
+        --notimestamp \
         --exclusive \
         --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train_origin_1node_8gpu.sh"
 done
