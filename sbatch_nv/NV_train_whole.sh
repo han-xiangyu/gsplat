@@ -3,7 +3,7 @@ source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/gaussian/data/spatial05_whole_traversal"
-MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_whole_voxel_3cam"
+MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/spatial05_whole_traversal_3cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -47,7 +47,7 @@ torchrun --nnodes=${SLURM_NNODES} \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 300000000 \
+     --strategy.cap-max 8000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
