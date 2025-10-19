@@ -27,11 +27,9 @@ pose_opt_start=1e5
 # --use_bilateral_grid
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --nnodes=${SLURM_NNODES} \
+torchrun --standalone \
      --nproc_per_node=8 \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_backend=c10d \
-     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+     --nnodes=1 \
      examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
@@ -39,7 +37,7 @@ torchrun --nnodes=${SLURM_NNODES} \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
+     --wandb_mode='offline' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
