@@ -45,18 +45,18 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 9000000 \
+     --strategy.cap-max 6000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
 
-# echo "Training finished. Starting rendering ..."
-# python examples/render_from_ply.py \
-#      --data_dir $SOURCE_PATH \
-#      --ply_path $MODEL_PATH/ply/point_cloud_199999.ply  \
-#      --result_dir $MODEL_PATH \
-#      --fps 15 \
-#      --channels 2 1 3
+echo "Training finished. Starting rendering ..."
+python examples/render_from_ply.py \
+     --data_dir $SOURCE_PATH \
+     --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
+     --result_dir $MODEL_PATH \
+     --fps 15 \
+     --channels 2 1 3
 
