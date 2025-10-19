@@ -1,7 +1,7 @@
-job_name="citygs_3000frames_fps"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/citygs_3000frames_fps"
+job_name="tra2_2000keyframes_fps_3cam"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_2000keyframes_fps_3cam"
 
-for i in {1..5}; do
+for i in {1..4}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
@@ -9,9 +9,9 @@ for i in {1..5}; do
         --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
         --duration 4 \
         --dependency=singleton \
-        --name $job_name \
+        --name ${job_name} \
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/sbatch_nv/NV_train.sh"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train.sh"
 done
