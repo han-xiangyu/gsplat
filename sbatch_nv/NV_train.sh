@@ -5,7 +5,7 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gspl
 
 # configs
 NUM_CAMS=3
-NUM_KEYFRAMES=3000
+NUM_KEYFRAMES=2000
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
