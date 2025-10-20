@@ -1,7 +1,7 @@
-job_name="tra2_3000keyframes_fps_3cam"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000keyframes_fps_3cam"
+job_name="tra2_3000keyframes_fps_3cam_capmax1200w"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000keyframes_fps_3cam_capmax1200w"
 
-for i in {2..4}; do
+for i in {1..5}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
@@ -13,5 +13,5 @@ for i in {2..4}; do
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train.sh"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train_capmax.sh"
 done
