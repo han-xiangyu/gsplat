@@ -26,12 +26,12 @@ source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
 
 # wandb configuration
-export WANDB_DIR="/scratch/xh2967/wandb_logs/${model_name}"
-export WANDB_API_KEY=9700db021b335e724b1c96fef3f087b458aff31e
+export WANDB_DIR="$BASE_PATH/wandb_logs/${model_name}"
+export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 # export WANDB_MODE=disabled
 
-PROJECT_NAME=gsplat_long_video
+PROJECT_NAME=gsplat_difix3d
 EXPERIENT_NAME=$model_name
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
