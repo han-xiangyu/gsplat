@@ -10,8 +10,8 @@ TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${NUM_KEYFRAMES}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
-MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_${NUM_KEYFRAMES}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_clipradius0.01"
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_clips0.1"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -35,7 +35,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 torchrun --standalone \
      --nproc_per_node=8 \
      --nnodes=1 \
-     examples/simple_trainer_origin_knn.py mcmc  \
+     examples/simple_trainer_origin_knn_clip.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
@@ -56,7 +56,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
-     --radius_clip 0.01
+     --radius_clip 0.1
 
 echo "Training finished. Starting rendering ..."
 python examples/render_from_ply.py \
