@@ -1,7 +1,7 @@
 job_name="tra2_3000keyframes_fps_3cam_v2"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000keyframes_fps_3cam_v2"
 
-for i in {4..6}; do
+for i in {5..6}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
