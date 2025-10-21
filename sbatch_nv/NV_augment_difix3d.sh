@@ -47,7 +47,7 @@ conda activate difix3d
 
 python batched_process_w_ref_dist_gsplat.py \
   --input_folder $MODEL_PATH/extrapolated_renders \
-  --ref_folder $MODEL_PATH/images \
+  --ref_folder $SOURCE_PATH/images \
   --output_folder $MODEL_PATH/extrapolated_difixed \
   --prompt "remove degradation"
 
