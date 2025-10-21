@@ -10,8 +10,8 @@ TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${NUM_KEYFRAMES}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
-MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_${NUM_KEYFRAMES}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${NUM_KEYFRAMES}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
+MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_${NUM_KEYFRAMES}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
