@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
 # configs
 NUM_CAMS=3
-NUM_KEYFRAMES=2000
+NUM_KEYFRAMES=3000
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
