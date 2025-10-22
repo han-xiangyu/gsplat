@@ -1,5 +1,5 @@
-job_name="opt_tra2_3000keyframes_fps_3cam"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/opt_tra2_3000keyframes_fps_3cam"
+job_name="opt_debug"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/opt_debug"
 
 for i in {1..5}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
