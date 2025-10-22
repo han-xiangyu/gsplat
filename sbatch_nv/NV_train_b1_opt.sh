@@ -55,7 +55,6 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
-     --radius_clip 0.1 \
 
 echo "Training finished. Starting rendering ..."
 python examples/render_from_ply.py \
