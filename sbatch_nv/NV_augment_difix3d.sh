@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 
 # configs
 NUM_CAMS=3
-NUM_KEYFRAMES=1000
+NUM_KEYFRAMES=3000
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
@@ -59,10 +59,10 @@ python examples/register_new_views_gsplat.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
   --traj_type parallel \
-  --amplitude 1.5
+  --amplitude 0.5
 
 # Copy the original dataset to the new folder
-NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews"
+NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews_amplitude0.5"
 mkdir -p $NEW_SOURCE_PATH
 rsync -av --progress $SOURCE_PATH/ $NEW_SOURCE_PATH/
 
