@@ -454,4 +454,4 @@ if __name__ == "__main__":
 
     cfg = tyro.cli(RenderConfig)
 
-    render_shifted_pairs(cfg, distance=1.5)
+    render_shifted_pairs(cfg, distance=1.0)

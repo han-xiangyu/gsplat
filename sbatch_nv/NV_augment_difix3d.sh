@@ -33,7 +33,7 @@ export WANDB_INSECURE_DISABLE_SSL=true
 
 PROJECT_NAME=gsplat_difix3d
 EXPERIENT_NAME=$model_name
-extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
+extrapolated_output_path="${MODEL_PATH}/extrapolated_renders_1.0/"
 
 # Render new trajectory
 CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
@@ -46,9 +46,9 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/Difix3D
 conda activate difix3d
 
 python batched_process_w_ref_dist_gsplat.py \
-  --input_folder $MODEL_PATH/extrapolated_renders \
+  --input_folder $MODEL_PATH/extrapolated_renders_1.0 \
   --ref_folder $SOURCE_PATH/images \
-  --output_folder $MODEL_PATH/extrapolated_difixed \
+  --output_folder $MODEL_PATH/extrapolated_difixed_1.0 \
   --prompt "remove degradation"
 
 
@@ -59,10 +59,10 @@ python examples/register_new_views_gsplat.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
   --traj_type parallel \
-  --amplitude 0.5
+  --amplitude 1.0
 
 # Copy the original dataset to the new folder
-NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews_amplitude0.5"
+NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews_amplitude1.0"
 mkdir -p $NEW_SOURCE_PATH
 rsync -av --progress $SOURCE_PATH/ $NEW_SOURCE_PATH/
 
