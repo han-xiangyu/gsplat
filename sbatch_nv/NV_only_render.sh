@@ -55,7 +55,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 echo "Training finished. Starting rendering ..."
 python examples/render_from_ply.py \
      --data_dir $SOURCE_PATH \
-     --ply_path $MODEL_PATH/ply/point_cloud_109999.ply  \
+     --ply_path $MODEL_PATH/ply/point_cloud_99999.ply  \
      --result_dir $MODEL_PATH \
      --fps 15 \
      --channels 6 4 5
