@@ -5,7 +5,7 @@ import os
 
 # --- 你需要修改的部分 ---
 # 第一个PLY文件的路径 (例如 0-3000 帧的结果)
-file1_path = "/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/tra2_3000frames_fps_3cam/ply/point_cloud_99999.ply"
+file1_path = "/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/tra2_3000keyframes_fps_3cam/ply/point_cloud_99999.ply"
 file2_path = "/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models/tra2_3000to6000keyframes_fps_3cam/ply/point_cloud_99999.ply" 
 # 第二个PLY文件的路径 (例如 3000-6000 帧的结果)
 
