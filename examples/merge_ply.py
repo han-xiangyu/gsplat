@@ -80,7 +80,7 @@ def merge_ply_files(file1, file2, output_file):
     new_ply_data = PlyData([combined_vertex_element] + other_elements)
     
     # 继承第一个文件的格式（例如是 'binary_little_endian' 还是 'ascii'）
-    is_text = ply1.is_text
+    is_text = ply1.text
     byte_order = ply1.byte_order
 
     # --- 写入新的 PLY 文件 ---
