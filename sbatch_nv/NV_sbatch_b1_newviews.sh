@@ -1,7 +1,7 @@
 job_name="tra2_3000keyframes_fps8w_3cam_newviews_fix"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000keyframes_fps8w_3cam_newviews_fix"
 
-for i in {1..5}; do
+for i in {6..10}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_foundations \
