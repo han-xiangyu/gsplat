@@ -10,8 +10,8 @@ TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_0to3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_roadmask"
-MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_0to3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_roadmask"
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
+MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews_fix"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -35,7 +35,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 torchrun --standalone \
      --nproc_per_node=8 \
      --nnodes=1 \
-     examples/simple_trainer_origin_knn_roadmask.py mcmc  \
+     examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
@@ -50,7 +50,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 15000000 \
+     --strategy.cap-max 10000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
