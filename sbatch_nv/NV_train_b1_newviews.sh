@@ -24,7 +24,7 @@ export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
-max_steps=150_000
+max_steps=250_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-4
 densify_portion=0.001
