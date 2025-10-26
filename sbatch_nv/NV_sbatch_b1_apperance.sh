@@ -1,5 +1,5 @@
-job_name="dmask_tra2_3000keyframes_fps_3cam"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000keyframes_fps_3cam_dmask"
+job_name="appopt_tra2_3000keyframes_fps_3cam"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/appopt_tra2_3000keyframes_fps_3cam"
 
 for i in {1..5}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
@@ -13,5 +13,5 @@ for i in {1..5}; do
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train_b1.sh"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train_b1_app.sh"
 done

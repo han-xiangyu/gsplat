@@ -62,7 +62,7 @@ python examples/register_new_views_gsplat.py \
   --amplitude 1.0
 
 # Copy the original dataset to the new folder
-NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews_amplitude1.0"
+NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews"
 mkdir -p $NEW_SOURCE_PATH
 rsync -av --progress $SOURCE_PATH/ $NEW_SOURCE_PATH/
 
