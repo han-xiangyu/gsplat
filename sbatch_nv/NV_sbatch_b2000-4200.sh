@@ -1,7 +1,7 @@
 job_name="tra2_2000to4200keyframes_fps_3cam"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_2000to4200keyframes_fps_3cam"
 
-for i in {1..5}; do
+for i in {1..6}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
@@ -13,5 +13,5 @@ for i in {1..5}; do
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train_b2.sh"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/NV_train_b2000-4200.sh"
 done
