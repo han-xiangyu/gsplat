@@ -1,5 +1,5 @@
-job_name="tra2_3000keyframes_augment_difix3d_amplitude1.0"
-base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000keyframes_augment_difix3d_amplitude1.0"
+job_name="tra2_3000to6000keyframes_augment_difix3d"
+base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/tra2_3000to6000keyframes_augment_difix3d.0"
 
 
 submit_job --gpu 8 --cpu 16 --nodes 1 \
