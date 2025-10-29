@@ -10,7 +10,7 @@ TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-SOURCE_PATH="${BASE_DIR}/datav2/tra${TRAVERSAL_ID}_0to3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_0to3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 MODEL_PATH="${BASE_DIR}/modelsv2/tra${TRAVERSAL_ID}_0to3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
@@ -50,7 +50,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 5000000 \
+     --strategy.cap-max 10000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
