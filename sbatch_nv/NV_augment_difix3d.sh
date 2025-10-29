@@ -23,7 +23,7 @@ MODEL_PATH=${BASE_PATH}/models/tra${TRAVERSAL_ID}_3000to6000keyframes_${DOWNSAMP
 
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
-extrapolated_output_path="${MODEL_PATH}/extrapolated_renders_1.5/"
+extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
 # Render new trajectory
 CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
@@ -36,9 +36,9 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/Difix3D
 conda activate difix3d
 
 python batched_process_w_ref_dist_gsplat.py \
-  --input_folder $MODEL_PATH/extrapolated_renders_1.5 \
+  --input_folder $MODEL_PATH/extrapolated_renders \
   --ref_folder $SOURCE_PATH/images \
-  --output_folder $MODEL_PATH/extrapolated_difixed_1.5 \
+  --output_folder $MODEL_PATH/extrapolated_difixed \
   --prompt "remove degradation"
 
 
