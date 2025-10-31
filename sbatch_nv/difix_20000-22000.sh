@@ -1,0 +1,65 @@
+# NV cluster script
+
+cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat-city/submodules/gsplat/
+source /lustre/fs12/portfolios/nvr/users/ymingli/miniconda3/etc/profile.d/conda.sh
+conda activate gsplat
+
+export PYTHONNOUSERSITE=1
+unset PYTHONPATH
+export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
+
+# configs
+NUM_CAMS=3
+TRAVERSAL_ID=2
+DOWNSAMPLE_TYPE="fps"
+export HF_ENDPOINT=https://hf-mirror.com
+export CUDA_LAUNCH_BLOCKING=1
+export TORCH_USE_CUDA_DSA=1 
+new_traj_mode=sine
+amplitude=1
+S=20000
+E=22000
+BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+MODEL_PATH="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+
+source_name=$(basename "$SOURCE_PATH")
+model_name=$(basename "$MODEL_PATH")
+extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
+
+# Render new trajectory
+CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
+  --data_dir $SOURCE_PATH \
+  --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
+  --out_img_dir $extrapolated_output_path
+
+# Difix3D repair
+cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/Difix3D
+conda activate difix3d
+
+python batched_process_w_ref_dist_gsplat.py \
+  --input_folder $MODEL_PATH/extrapolated_renders \
+  --ref_folder $SOURCE_PATH/images \
+  --output_folder $MODEL_PATH/extrapolated_difixed \
+  --prompt "remove degradation"
+
+
+# Register new views using GSplat
+cd /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat-city/submodules/gsplat/
+conda activate gsplat
+python examples/register_new_views_gsplat.py \
+  --data_dir $SOURCE_PATH \
+  --output_sparse_dir_name new_sparse \
+  --traj_type parallel \
+  --amplitude 1.5
+
+# Copy the original dataset to the new folder
+NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews"
+mkdir -p $NEW_SOURCE_PATH
+rsync -av --progress $SOURCE_PATH/ $NEW_SOURCE_PATH/
+
+# Rename the new sparse folder inside new dataset
+mv $NEW_SOURCE_PATH/new_sparse/ $NEW_SOURCE_PATH/sparse/
+
+# Copy the difixed images to the new dataset's image folder
+cp $MODEL_PATH/extrapolated_difixed/* $NEW_SOURCE_PATH/images/
