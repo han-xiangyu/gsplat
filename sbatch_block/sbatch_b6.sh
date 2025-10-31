@@ -1,7 +1,7 @@
 job_name="tra2_13000to14000_3cam"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block/tra2_13000to14000_3cam"
 
-for i in {1..2}; do
+for i in {3}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_foundations \
