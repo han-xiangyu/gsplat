@@ -3,12 +3,13 @@ source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 NUM_CAMS=3
-NUM_KEYFRAMES=3000
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
+S=9000
+E=10000
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
-MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_3000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews_fix"
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+MODEL_PATH="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -25,5 +26,6 @@ python examples/render_from_ply.py \
      --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
      --result_dir $MODEL_PATH \
      --fps 15 \
-     --channels 2 1 3
-
+     --channels 2 1 3 \
+     --start $S \
+     --end $E
