@@ -26,7 +26,7 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-for i in {1..4}; do
+for i in {2..4}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_foundations \
@@ -41,4 +41,4 @@ for i in {1..4}; do
         --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_block/NV_train_b4.sh $MODE"
 done
 
-echo "--- 4个任务已提交 ---"
+echo "--- 3个任务已提交 ---"
