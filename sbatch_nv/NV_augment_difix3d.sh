@@ -17,9 +17,11 @@ export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
 new_traj_mode=sine
 amplitude=1
-BASE_PATH=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
-SOURCE_PATH=${BASE_PATH}/data/tra${TRAVERSAL_ID}_3000to6000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam
-MODEL_PATH=${BASE_PATH}/models/tra${TRAVERSAL_ID}_3000to6000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam
+S=9000
+E=10000
+BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
+SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+MODEL_PATH="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
