@@ -9,7 +9,7 @@ MODE="difix"
 JOB_BASE_NAME="tra2_9000to10000_3cam"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block"
 
-JOB_SUFFIX="" # 默认为空
+JOB_SUFFIX=""
 if [ "$MODE" == "difix" ]; then
     echo "--- 'difix' 模式已启用 ---"
     JOB_SUFFIX="_difix"
