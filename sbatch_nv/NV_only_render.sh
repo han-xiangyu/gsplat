@@ -5,8 +5,8 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gspl
 NUM_CAMS=3
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
-S=9000
-E=10000
+S=14000
+E=15000
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 MODEL_PATH="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
