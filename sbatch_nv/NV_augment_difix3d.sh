@@ -12,7 +12,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 NUM_CAMS=3
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
-
+export HF_ENDPOINT=https://hf-mirror.com
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
 new_traj_mode=sine
