@@ -10,8 +10,23 @@ DOWNSAMPLE_TYPE="fps"
 S=9000
 E=10000
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
-MODEL_PATH="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+
+BASE_PATH_NAME="tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+# default
+PATH_SUFFIX=""
+
+if [ "$1" == "difix" ]; then
+    echo "--- 'difix' 开关已启用 ---"
+    echo "--- 将使用 '_with_newviews' 路径 ---"
+    PATH_SUFFIX="_with_newviews"
+else
+    echo "--- 'difix' 开关未启用 ---"
+    echo "--- 将使用标准路径 ---"
+fi
+
+SOURCE_PATH="${BASE_DIR}/data/${BASE_PATH_NAME}${PATH_SUFFIX}"
+MODEL_PATH="${BASE_DIR}/models_block/${BASE_PATH_NAME}${PATH_SUFFIX}"
+
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1

@@ -1,6 +1,5 @@
 S=9000
 E=10000
-
 job_name="difix_tra2_${S}to${E}_3cam"
 base_logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_difix/tra2_${S}to${E}_3cam"
 
