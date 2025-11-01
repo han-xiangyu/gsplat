@@ -27,5 +27,5 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --lidar_in $SOURCE2/sparse/0/points3D.txt \
     --ply_out $MODEL2/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL2/ply/lidar_149999_cache.npy \
-    --voxel_size 1.0 \
+    --voxel_size 0.2 \
     --dilation_radius 0.5
