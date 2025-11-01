@@ -30,8 +30,8 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 echo "Training finished. Starting rendering ..."
 python examples/render_from_merge_ply.py \
      --data-dirs $SOURCE1 $SOURCE2 \
-     --ply_path $MODEL1/ply/point_cloud_149999.ply $MODEL2/ply/point_cloud_149999.ply \
-     --result_dir $MERGE_DIR \
+     --ply-paths $MODEL1/ply/point_cloud_149999.ply $MODEL2/ply/point_cloud_149999.ply \
+     --result-dir $MERGE_DIR \
      --fps 15 \
      --channels 2 1 3 \
      --start $S \
