@@ -28,4 +28,4 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --ply_out $MODEL2/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL2/ply/lidar_149999_cache.npy \
     --voxel_size 1.0 \
-    --dilation_radius 1
+    --dilation_radius 0.5
