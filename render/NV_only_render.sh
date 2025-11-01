@@ -13,8 +13,8 @@ BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 SOURCE1="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${T1}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 SOURCE2="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${T1}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 
-MODEL1="${BASE_DIR}/models/tra${TRAVERSAL_ID}_${S}to${T1}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
-MODEL2="${BASE_DIR}/models/tra${TRAVERSAL_ID}_${T1}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
+MODEL1="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${T1}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
+MODEL2="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${T1}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 
 MERGE_DIR="${BASE_DIR}/merge_models/tra${TRAVERSAL_ID}_${S}to${E}keyframes"
 
