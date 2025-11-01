@@ -14,18 +14,18 @@ SOURCE2="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${T1}to${E}keyframes_${DOWNSAMPLE_T
 MODEL1="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${T1}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 MODEL2="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${T1}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 
-# python $PROJECT_DIR/examples/filter_gs.py \
-#     --ply_in $MODEL1/ply/point_cloud_149999.ply \
-#     --lidar_in $SOURCE1/sparse/0/points3D.txt \
-#     --ply_out $MODEL1/ply/point_cloud_149999_cleaned.ply \
-#     --lidar_cache_path $MODEL1/ply/lidar_149999_cache.npy \
-#     --voxel_size 1.0 \
-#     --dilation_radius 1
+python $PROJECT_DIR/examples/filter_gs.py \
+    --ply_in $MODEL1/ply/point_cloud_149999.ply \
+    --lidar_in $SOURCE1/sparse/0/points3D.txt \
+    --ply_out $MODEL1/ply/point_cloud_149999_cleaned.ply \
+    --lidar_cache_path $MODEL1/ply/lidar_149999_cache.npy \
+    --voxel_size 0.5 \
+    --dilation_radius 0
 
 python $PROJECT_DIR/examples/filter_gs.py \
     --ply_in $MODEL2/ply/point_cloud_149999.ply \
     --lidar_in $SOURCE2/sparse/0/points3D.txt \
     --ply_out $MODEL2/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL2/ply/lidar_149999_cache.npy \
-    --voxel_size 0.2 \
-    --dilation_radius 0.5
+    --voxel_size 0.5 \
+    --dilation_radius 0
