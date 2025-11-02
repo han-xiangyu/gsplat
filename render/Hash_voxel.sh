@@ -19,13 +19,13 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --lidar_in $SOURCE1/sparse/0/points3D.txt \
     --ply_out $MODEL1/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL1/ply/lidar_149999_cache.npy \
-    --voxel_size 0.5 \
-    --dilation_radius 0
+    --voxel_size 1 \
+    --dilation_radius 1
 
 python $PROJECT_DIR/examples/filter_gs.py \
     --ply_in $MODEL2/ply/point_cloud_149999.ply \
     --lidar_in $SOURCE2/sparse/0/points3D.txt \
     --ply_out $MODEL2/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL2/ply/lidar_149999_cache.npy \
-    --voxel_size 0.5 \
-    --dilation_radius 0
+    --voxel_size 1 \
+    --dilation_radius 1
