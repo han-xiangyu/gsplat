@@ -20,7 +20,10 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --ply_out $MODEL1/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL1/ply/lidar_149999_cache.npy \
     --voxel_size 1 \
-    --dilation_radius 1
+    --dilation_radius 1 \
+    --max_scale 10.0 \
+    --min_opacity 0.01 \
+    --max_anisotropy 100.0
 
 python $PROJECT_DIR/examples/filter_gs.py \
     --ply_in $MODEL2/ply/point_cloud_149999.ply \
@@ -28,4 +31,7 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --ply_out $MODEL2/ply/point_cloud_149999_cleaned.ply \
     --lidar_cache_path $MODEL2/ply/lidar_149999_cache.npy \
     --voxel_size 1 \
-    --dilation_radius 1
+    --dilation_radius 1 \
+    --max_scale 10.0 \
+    --min_opacity 0.01 \
+    --max_anisotropy 100.0
