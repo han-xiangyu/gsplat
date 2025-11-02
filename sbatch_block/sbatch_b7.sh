@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 1. 运行 "difix" 模式 (使用 _with_newviews 路径):
-MODE="difix"
+#MODE="difix"
 
 # 2. 运行标准模式 (使用原始路径):
-# MODE=""
+MODE=""
 
 JOB_BASE_NAME="tra2_14000to15000_3cam"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block"
@@ -26,7 +26,7 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-for i in {1..4}; do
+for i in {1..2}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_foundations \

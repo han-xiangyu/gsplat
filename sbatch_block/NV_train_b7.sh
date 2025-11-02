@@ -24,8 +24,8 @@ else
     echo "--- 将使用标准路径 ---"
 fi
 
-SOURCE_PATH="${BASE_DIR}/data/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_block/${BASE_PATH_NAME}${PATH_SUFFIX}"
+SOURCE_PATH="${BASE_DIR}/data_for_merge/${BASE_PATH_NAME}${PATH_SUFFIX}"
+MODEL_PATH="${BASE_DIR}/models_block_merge/${BASE_PATH_NAME}${PATH_SUFFIX}"
 
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
@@ -37,7 +37,7 @@ export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 
-PROJECT_NAME=gsplat_ablation
+PROJECT_NAME=gsplat_merge_debug
 EXPERIENT_NAME=$model_name
 max_steps=150_000
 MEANS_LR=2e-3
