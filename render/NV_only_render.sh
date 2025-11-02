@@ -28,9 +28,18 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 echo "Training finished. Starting rendering ..."
-python examples/render_from_merge_ply.py \
+# python examples/render_from_merge_ply.py \
+#      --data-dirs $SOURCE1 $SOURCE2 \
+#      --ply-paths $MODEL1/ply/point_cloud_149999_cleaned.ply $MODEL2/ply/point_cloud_149999_cleaned.ply \
+#      --result-dir $MERGE_DIR \
+#      --fps 15 \
+#      --channels 2 1 3 \
+#      --start $S \
+#      --end $E
+
+python examples/render_from_merge_ply_switch.py \
      --data-dirs $SOURCE1 $SOURCE2 \
-     --ply-paths $MODEL1/ply/point_cloud_149999_cleaned.ply $MODEL2/ply/point_cloud_149999_cleaned.ply \
+     --ply-paths $MODEL1/ply/point_cloud_149999.ply $MODEL2/ply/point_cloud_149999.ply \
      --result-dir $MERGE_DIR \
      --fps 15 \
      --channels 2 1 3 \
