@@ -21,7 +21,7 @@ S=6000
 E=9000
 BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
 SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
-MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+MODEL_PATH="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 
 source_name=$(basename "$SOURCE_PATH")
 model_name=$(basename "$MODEL_PATH")
