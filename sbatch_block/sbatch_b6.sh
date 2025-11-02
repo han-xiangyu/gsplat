@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # 1. 运行 "difix" 模式 (使用 _with_newviews 路径):
-MODE="difix"
+#MODE="difix"
 
 # 2. 运行标准模式 (使用原始路径):
-# MODE=""
+MODE=""
 
 JOB_BASE_NAME="tra2_13000to14000_3cam"
-LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block"
+LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block_merge"
 
 JOB_SUFFIX=""
 if [ "$MODE" == "difix" ]; then
