@@ -15,8 +15,10 @@ MODEL1="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${S}to${T1}keyframes_${DOWNS
 MODEL2="${BASE_DIR}/models_block/tra${TRAVERSAL_ID}_${T1}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
 
 python $PROJECT_DIR/examples/analyze_gs_attributes.py \
-    --ply_in $MODEL1/ply/point_cloud_149999.ply
+    --ply_in $MODEL1/ply/point_cloud_149999.ply \
+    --save_plots
 
 python $PROJECT_DIR/examples/analyze_gs_attributes.py \
-    --ply_in $MODEL2/ply/point_cloud_149999.ply
+    --ply_in $MODEL2/ply/point_cloud_149999.ply \
+    --save_plots
 
