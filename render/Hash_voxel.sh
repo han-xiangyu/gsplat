@@ -23,7 +23,7 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --dilation_radius 1 \
     --max_scale 600.0 \
     --min_opacity 0.00001 \
-    --max_anisotropy 10000000000.0
+    --max_anisotropy 1000000000000000.0
 
 python $PROJECT_DIR/examples/filter_gs.py \
     --ply_in $MODEL2/ply/point_cloud_149999.ply \
@@ -34,4 +34,4 @@ python $PROJECT_DIR/examples/filter_gs.py \
     --dilation_radius 1 \
     --max_scale 600.0 \
     --min_opacity 0.00001 \
-    --max_anisotropy 10000000000.0
+    --max_anisotropy 100000000000000.0
