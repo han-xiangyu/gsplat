@@ -22,7 +22,7 @@ else
     echo "--- 将使用标准路径 ---"
 fi
 
-SOURCE_PATH="${BASE_DIR}/data/${BASE_PATH_NAME}${PATH_SUFFIX}"
+SOURCE_PATH="${BASE_DIR}/data_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}"
 MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}"
 
 model_name=$(basename "$MODEL_PATH")
