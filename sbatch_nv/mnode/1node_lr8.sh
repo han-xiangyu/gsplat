@@ -9,7 +9,7 @@ TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 
-BASE_PATH_NAME="tra${TRAVERSAL_ID}_1000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
+BASE_PATH_NAME="tra${TRAVERSAL_ID}_0to1000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
 # default
 PATH_SUFFIX=""
 
