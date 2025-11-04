@@ -46,7 +46,7 @@ echo "Training finished. Starting rendering ..."
 #      --start $S \
 #      --end $E
 
-python examples/render_from_merge_ply_prune.py \
+python examples/render_from_merge_ply_prune_own.py \
      --data-dirs $SOURCE1 $SOURCE2 \
      --ply-paths $MODEL1/ply/point_cloud_149999_cleaned.ply $MODEL2/ply/point_cloud_149999_cleaned.ply \
      --result-dir $MERGE_DIR \
