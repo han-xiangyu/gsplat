@@ -13,4 +13,6 @@ submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --name=$job_name \
     --dependency=singleton \
     --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/mnode/2node_lr8.sh" \
-    --notimestamp
+    --notimestamp \
+    --email_mode never \
+    --notification_mode never
