@@ -12,5 +12,5 @@ submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
     --name=$job_name \
     --dependency=singleton \
-    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/sbatch_nv/mnode/2node_lr8.sh" \
+    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/mnode/2node_lr8.sh" \
     --notimestamp
