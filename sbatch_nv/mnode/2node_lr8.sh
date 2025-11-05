@@ -16,7 +16,7 @@ export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_mnode
-EXPERIENT_NAME=$model_name
+EXPERIENT_NAME=2node_16gpu_seletiveadam
 video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=40_000
