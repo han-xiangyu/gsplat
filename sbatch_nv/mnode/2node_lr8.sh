@@ -16,7 +16,7 @@ export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_mnode
-EXPERIENT_NAME=2node_16gpu_seletiveadam
+EXPERIENT_NAME=2node_16gpu_2328
 video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=40_000
@@ -34,14 +34,14 @@ torchrun --nproc_per_node=8 \
      --rdzv_id=$SLURM_JOB_ID \
      --rdzv_backend=c10d \
      --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-     examples/simple_trainer_origin_knn.py mcmc  \
+     examples/simple_trainer_origin_knn_debug2328.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
+     --wandb_mode='offline' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
