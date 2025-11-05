@@ -6,7 +6,7 @@ account=nvr_av_foundations
 submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --partition=grizzly,polar \
     --account=$account \
-    --duration 1 \
+    --duration 4 \
     --exclusive \
     --logroot=$logdir \
     --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
