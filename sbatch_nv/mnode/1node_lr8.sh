@@ -36,8 +36,8 @@ export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_mnode
-EXPERIENT_NAME=$model_name
-max_steps=40_000
+EXPERIENT_NAME=1node_wo_sadam
+max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-4
 densify_portion=0.001
