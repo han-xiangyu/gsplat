@@ -37,7 +37,7 @@ submit_job --gpu 8 --cpu 16 --nodes 1 \
     --logdir ${base_logdir} \
     --notimestamp \
     --exclusive \
-    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/mnode/1node_lr8 copy.sh $MODE"
+    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/mnode/1node_lr8copy.sh $MODE"
 
 
 echo "--- 2个任务已提交 ---"
