@@ -42,4 +42,4 @@ submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --email_mode never \
     --notification_mode never
 
-echo "--- 5个任务已提交 ---"
+echo "--- 1个任务已提交 ---"
