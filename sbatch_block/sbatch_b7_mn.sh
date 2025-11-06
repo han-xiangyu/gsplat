@@ -8,6 +8,8 @@ MODE=""
 
 JOB_BASE_NAME="tra2_14000to15000_3cam"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block"
+gpus_per_node=8
+nodes=2
 
 JOB_SUFFIX=""
 if [ "$MODE" == "difix" ]; then
@@ -27,7 +29,7 @@ echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
 for i in {1..2}; do
-    submit_job --gpu 8 --cpu 16 --nodes 1 \
+    submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_foundations \
         --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
@@ -38,7 +40,9 @@ for i in {1..2}; do
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_block/NV_train_b7.sh $MODE"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_block/NV_train_b7.sh $MODE" \
+        --email_mode never \
+        --notification_mode never
 done
 
 echo "--- 2个任务已提交 ---"

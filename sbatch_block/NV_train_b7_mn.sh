@@ -25,7 +25,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data_for_merge/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_block_merge/${BASE_PATH_NAME}${PATH_SUFFIX}_wo_visible_adam"
+MODEL_PATH="${BASE_DIR}/models_block_merge/${BASE_PATH_NAME}${PATH_SUFFIX}_wo_visible_adam_2node"
 
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
@@ -47,9 +47,11 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --standalone \
-     --nproc_per_node=8 \
-     --nnodes=1 \
+torchrun --nproc_per_node=8 \
+     --nnodes=${SLURM_NNODES} \
+     --rdzv_id=$SLURM_JOB_ID \
+     --rdzv_backend=c10d \
+     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
      examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
@@ -65,7 +67,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 6000000 \
+     --strategy.cap-max 3000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
