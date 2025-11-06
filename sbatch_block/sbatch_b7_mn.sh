@@ -21,7 +21,7 @@ fi
 
 # 2. 组合成最终的 Job Name 和 Log Dir
 job_name="${JOB_BASE_NAME}${JOB_SUFFIX}"
-base_logdir="${LOG_BASE_PREFIX}/${job_name}_mn" # Log Dir 路径现在也包含了后缀
+base_logdir="${LOG_BASE_PREFIX}/${job_name}" # Log Dir 路径现在也包含了后缀
 
 echo "--- 正在提交任务 ---"
 echo "Job Name: $job_name"
