@@ -3,8 +3,8 @@ set -e
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_pytorh3d
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data_mnode/tra2_0to1000keyframes_fps_3cam"
-MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models_mnode/tra2_0to1000keyframes_fps_3cam_2node_wo_selectiveadam"
+SOURCE_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/data/tra2_0to14000keyframes_fps_3cam"
+MODEL_PATH="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/models_mnode/tra2_0to14000keyframes_fps_3cam"
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -16,7 +16,7 @@ export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 
 PROJECT_NAME=gsplat_mnode
-EXPERIENT_NAME=2node_16gpu_w_visible_adam
+EXPERIENT_NAME=tra2_0to14000keyframes_fps_3cam_4node
 video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
 remote_video_name="${model_name}_$(date +%m%d_%H%M)"
 max_steps=150_000
@@ -34,7 +34,7 @@ torchrun --nproc_per_node=8 \
      --rdzv_id=$SLURM_JOB_ID \
      --rdzv_backend=c10d \
      --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-     examples/simple_trainer_origin_knn_localmask.py mcmc  \
+     examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
