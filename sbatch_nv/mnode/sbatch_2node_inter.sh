@@ -8,7 +8,6 @@ submit_job \
     --notification_mode never \
     --more_srun_args=--gpus-per-node=$gpus_per_node \
     --nodes $nodes \
-    --tasks_per_node 1 \
     --partition=grizzly,polar --account=$account \
     --duration 1 \
     --logroot=$logdir \
