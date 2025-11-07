@@ -23,7 +23,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}"
+MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}_test"
 
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
@@ -55,7 +55,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
+     --wandb_mode='disabled' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
