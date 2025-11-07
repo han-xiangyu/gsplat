@@ -15,13 +15,6 @@ export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 
-export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
-export MASTER_PORT=29500
-echo "MASTER_ADDR=$MASTER_ADDR"
-echo "MASTER_PORT=$MASTER_PORT"
-echo "SLURM_NNODES=$SLURM_NNODES"
-echo "SLURM_NODEID=$SLURM_NODEID"
-
 PROJECT_NAME=gsplat_mnode
 EXPERIENT_NAME=2node_16gpu_w_visible_adam
 video_output_path="${MODEL_PATH}/videos/traj_199999.mp4"
