@@ -16,5 +16,6 @@ submit_job \
     --dependency=singleton \
     --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_nv/mnode/2node_lr8.sh" \
     --just_alloc \
-    --notimestamp
+    --notimestamp \
+    --exclusive
 
