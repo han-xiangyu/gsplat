@@ -36,7 +36,7 @@ for i in {1..3}; do
         --duration 4 \
         --dependency=singleton \
         --name ${job_name} \
-        --logdir ${base_logdir} \
+        --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
         --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_block/NV_train_b0-12000_mn.sh $MODE" \
