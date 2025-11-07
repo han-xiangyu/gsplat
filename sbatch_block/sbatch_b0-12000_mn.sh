@@ -27,19 +27,20 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
-    --partition=grizzly,polar,polar3,polar4 \
-    --account=nvr_av_foundations \
-    --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
-    --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
-    --duration 4 \
-    --dependency=singleton \
-    --name ${job_name} \
-    --logdir ${base_logdir} \
-    --notimestamp \
-    --exclusive \
-    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_block/NV_train_b0-12000_mn.sh $MODE" \
-    --email_mode never \
-    --notification_mode never
-
+for i in {1..3}; do
+    submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
+        --partition=grizzly,polar,polar3,polar4 \
+        --account=nvr_av_foundations \
+        --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
+        --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
+        --duration 4 \
+        --dependency=singleton \
+        --name ${job_name} \
+        --logdir ${base_logdir} \
+        --notimestamp \
+        --exclusive \
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/sbatch_block/NV_train_b0-12000_mn.sh $MODE" \
+        --email_mode never \
+        --notification_mode never
+done
 echo "--- 1个任务已提交 ---"
