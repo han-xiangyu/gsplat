@@ -1,6 +1,6 @@
 #!/bin/bash
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate mars_pytorh3d
+conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 
 # configs
