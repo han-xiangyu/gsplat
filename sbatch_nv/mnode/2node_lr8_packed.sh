@@ -17,6 +17,7 @@ export WANDB_SILENT=true
 export CUDA_HOME=/usr/local/cuda-12.1
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+export TORCH_EXTENSIONS_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/cache/torch_extensions
 
 PROJECT_NAME=gsplat_mnode
 EXPERIENT_NAME=2node_16gpu_w_visible_adam_packed
