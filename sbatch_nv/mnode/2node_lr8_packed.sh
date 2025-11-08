@@ -14,10 +14,6 @@ export WANDB_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/wandb
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
-export CUDA_HOME=/usr/local/cuda-12.1
-export PATH=$CUDA_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-export TORCH_EXTENSIONS_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/cache/torch_extensions
 
 PROJECT_NAME=gsplat_mnode
 EXPERIENT_NAME=2node_16gpu_w_visible_adam_packed
