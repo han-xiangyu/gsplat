@@ -37,7 +37,7 @@ export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
-export WANDB_MODE=disabled  # Disable WANDB logging
+export export WANDB_MODE=offline  # Disable WANDB logging
 
 
 PROJECT_NAME=gsplat_ablation
