@@ -6,7 +6,7 @@
 # 2. 运行标准模式 (使用原始路径):
 MODE=""
 
-JOB_BASE_NAME="tra2_0to12000_3cam_4node_rc_3"
+JOB_BASE_NAME="tra2_0to12000_3cam_4node_rc_1"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block"
 gpus_per_node=8
 nodes=4
