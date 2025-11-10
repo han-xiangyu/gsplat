@@ -25,7 +25,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}_visible_adam_radius_clip_1_farplane_400_4node_1110"
+MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}_visible_adam_radius_clip_1_farplane_200_4node_1110"
 
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
