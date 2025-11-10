@@ -1006,10 +1006,7 @@ projection_ut_3dgs_fused(
         radial_coeffs,
         tangential_coeffs,
         thin_prism_coeffs,
-<<<<<<< HEAD
         ftheta_coeffs,
-=======
->>>>>>> origin/main
         // outputs
         radii,
         means2d,
