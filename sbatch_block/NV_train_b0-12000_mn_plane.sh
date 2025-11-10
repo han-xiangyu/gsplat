@@ -25,7 +25,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_block_merge/${BASE_PATH_NAME}${PATH_SUFFIX}_visible_adam_radius_clip_1_farplane_400_4node_1110"
+MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}_visible_adam_radius_clip_1_farplane_400_4node_1110"
 
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
@@ -69,7 +69,7 @@ torchrun --nproc_per_node=8 \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 10000000 \
+     --strategy.cap-max 5000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
