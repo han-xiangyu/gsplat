@@ -1,40 +1,17 @@
 #!/bin/bash
-source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate mars_new
-cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 
-# configs
-NUM_CAMS=3
-TRAVERSAL_ID=2
-DOWNSAMPLE_TYPE="fps"
-S=0
-E=12000
-BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
+conda activate gsplat
 
-BASE_PATH_NAME="tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
-# default
-PATH_SUFFIX=""
 
-if [ "$1" == "difix" ]; then
-    echo "--- 'difix' 开关已启用 ---"
-    echo "--- 将使用 '_with_newviews' 路径 ---"
-    PATH_SUFFIX="_with_newviews"
-else
-    echo "--- 'difix' 开关未启用 ---"
-    echo "--- 将使用标准路径 ---"
-fi
-
-SOURCE_PATH="${BASE_DIR}/data/tra${TRAVERSAL_ID}_1000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
-MODEL_PATH="${BASE_DIR}/models/tra${TRAVERSAL_ID}_1000keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_with_newviews"
-
+SOURCE_PATH="/home/xiangyu/Code/may-data-convert/colmap_output"
+MODEL_PATH="/home/xiangyu/experiments/gsplat/may_data_test"
+GPU_NUM=1
 
 model_name=$(basename "$MODEL_PATH")
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat/pycolmap
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
-export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
+export WANDB_API_KEY=2abdbd8b33b564dd87f1a447a2c59bad93eec4b2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 export WANDB_MODE=offline  # Disable WANDB logging
@@ -50,11 +27,7 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --nproc_per_node=8 \
-     --nnodes=${SLURM_NNODES} \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_backend=c10d \
-     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+torchrun --standalone --nnodes=1 --nproc_per_node ${GPU_NUM} train.py --bsz ${GPU_NUM} \
      examples/simple_trainer_origin_knn.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
@@ -62,7 +35,7 @@ torchrun --nproc_per_node=8 \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='offline' \
+     --wandb_mode='online' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
@@ -70,7 +43,7 @@ torchrun --nproc_per_node=8 \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 10000000 \
+     --strategy.cap-max 150000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
