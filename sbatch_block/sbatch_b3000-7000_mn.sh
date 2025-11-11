@@ -30,7 +30,7 @@ echo "Mode Arg: [${MODE:-standard}]"
 #for i in {1..3}; do
 submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --partition=grizzly,polar,polar3,polar4 \
-    --account=nvr_av_foundations \
+    --account=nvr_av_end2endav \
     --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
     --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
     --duration 4 \
