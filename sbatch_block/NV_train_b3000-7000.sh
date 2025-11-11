@@ -1,6 +1,6 @@
 #!/bin/bash
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate mars_pytorh3d
+conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 
 # configs
@@ -36,6 +36,8 @@ export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
+export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2endav/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
+mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=gsplat_ablation
 EXPERIENT_NAME=$model_name
