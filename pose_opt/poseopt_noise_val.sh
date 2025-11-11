@@ -46,7 +46,7 @@ MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
 densify_portion=0.001
 depth_lambda=2e-3
-pose_opt_start=1e5
+pose_opt_start=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
