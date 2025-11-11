@@ -39,7 +39,7 @@ export WANDB_SILENT=true
 export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2endav/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
-PROJECT_NAME=gsplat_ablation
+PROJECT_NAME=gsplat_pose
 EXPERIENT_NAME=$model_name
 max_steps=150_000
 MEANS_LR=2e-3
@@ -67,7 +67,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 12000000 \
+     --strategy.cap-max 8000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
