@@ -25,9 +25,9 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_mnode/${BASE_PATH_NAME}${PATH_SUFFIX}_visible_adam_radius_clip_1_4node"
+MODEL_PATH="${BASE_DIR}/models_opt/${BASE_PATH_NAME}${PATH_SUFFIX}_visible_adam_radius_clip_1_4node"
 
-model_name=$(basename "$MODEL_PATH")
+model_name=base_multi4
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
 export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
@@ -39,7 +39,7 @@ export WANDB_SILENT=true
 export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2endav/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
-PROJECT_NAME=gsplat_ablation
+PROJECT_NAME=gsplat_pose
 EXPERIENT_NAME=$model_name
 max_steps=150_000
 MEANS_LR=2e-3
@@ -48,13 +48,13 @@ densify_portion=0.001
 depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
-
+# 1,663,220
 torchrun --nproc_per_node=8 \
      --nnodes=${SLURM_NNODES} \
      --rdzv_id=$SLURM_JOB_ID \
      --rdzv_backend=c10d \
      --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-     examples/simple_trainer_origin_knn.py mcmc  \
+     examples/simple_trainer.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
@@ -69,7 +69,7 @@ torchrun --nproc_per_node=8 \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 3500000 \
+     --strategy.cap-max 3000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
