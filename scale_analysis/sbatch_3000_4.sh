@@ -24,7 +24,7 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-for i in {1..4}; do
+for i in {2..4}; do
     submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
