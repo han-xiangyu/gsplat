@@ -48,11 +48,9 @@ pose_opt_reg=1e-5
 pose_opt_lr=1e-3
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --nproc_per_node=8 \
-     --nnodes=${SLURM_NNODES} \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_backend=c10d \
-     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+torchrun --standalone \
+     --nproc_per_node=8 \
+     --nnodes=1 \
      examples/simple_trainer_pose_opt.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
