@@ -7,7 +7,7 @@ NUM_CAMS=3
 TRAVERSAL_ID=2
 DOWNSAMPLE_TYPE="fps"
 S=0
-E=3000
+E=5000
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 
 BASE_PATH_NAME="tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam"
@@ -66,7 +66,7 @@ torchrun --nproc_per_node=8 \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 4000000 \
+     --strategy.cap-max 1000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \

@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="tra2_0to3000_1node"
+JOB_BASE_NAME="tra2_0to5000_1node"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log_block"
 
 JOB_SUFFIX=""
