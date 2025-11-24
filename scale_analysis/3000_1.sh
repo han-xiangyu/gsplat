@@ -46,7 +46,7 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --nproc_per_node=8 \
+torchrun --nproc_per_node=6 \
      --nnodes=${SLURM_NNODES} \
      --rdzv_id=$SLURM_JOB_ID \
      --rdzv_backend=c10d \
