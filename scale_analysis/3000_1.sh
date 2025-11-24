@@ -38,7 +38,7 @@ mkdir -p "$TORCH_EXTENSIONS_ROOT"
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 PROJECT_NAME=gsplat_scale_resource_analysis
-EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_densify_portion0.03_capmax_150w"
+EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_portion0.03_capmax_150w"
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
