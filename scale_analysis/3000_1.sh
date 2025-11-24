@@ -35,6 +35,7 @@ export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
 export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2endav/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 PROJECT_NAME=gsplat_scale_resource_analysis
 EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}"
