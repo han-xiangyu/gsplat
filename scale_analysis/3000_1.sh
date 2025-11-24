@@ -46,11 +46,9 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --nproc_per_node=8 \
+torchrun --standalone \
+     --nproc_per_node=8 \
      --nnodes=1 \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_backend=c10d \
-     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
      examples/simple_trainer.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
