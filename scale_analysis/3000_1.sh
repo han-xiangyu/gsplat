@@ -36,42 +36,42 @@ export WANDB_SILENT=true
 export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2endav/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
-PROJECT_NAME=gsplat_scale_resource_analysis
-EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}"
-max_steps=150_000
-MEANS_LR=2e-3
-MEAN_LR_FINAL_MULT=1e-3
-densify_portion=0.001
-depth_lambda=2e-3
-pose_opt_start=1e5
-export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
+# PROJECT_NAME=gsplat_scale_resource_analysis
+# EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}"
+# max_steps=150_000
+# MEANS_LR=2e-3
+# MEAN_LR_FINAL_MULT=1e-3
+# densify_portion=0.001
+# depth_lambda=2e-3
+# pose_opt_start=1e5
+# export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --nproc_per_node=8 \
-     --nnodes=${SLURM_NNODES} \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_backend=c10d \
-     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-     examples/simple_trainer.py mcmc  \
-     --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
-     --resume \
-     --resume_dir $MODEL_PATH \
-     --wandb_project=$PROJECT_NAME \
-     --wandb_group=gsplat \
-     --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
-     --wandb_dir=$WANDB_DIR \
-     --wandb_log_images_every=50000 \
-     --means_lr $MEANS_LR \
-     --mean_lr_final_mult $MEAN_LR_FINAL_MULT \
-     --max_steps $max_steps \
-     --depth_loss \
-     --depth_lambda $depth_lambda \
-     --strategy.cap-max 1000000 \
-     --strategy.refine-start-iter 9000 \
-     --strategy.refine-stop-iter 50000 \
-     --strategy.refine-every 100 \
-     --strategy.schedule-mode='original' \
-     --strategy.densify_portion $densify_portion \
+# torchrun --nproc_per_node=8 \
+#      --nnodes=${SLURM_NNODES} \
+#      --rdzv_id=$SLURM_JOB_ID \
+#      --rdzv_backend=c10d \
+#      --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+#      examples/simple_trainer.py mcmc  \
+#      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
+#      --resume \
+#      --resume_dir $MODEL_PATH \
+#      --wandb_project=$PROJECT_NAME \
+#      --wandb_group=gsplat \
+#      --wandb_name=$EXPERIENT_NAME \
+#      --wandb_mode='online' \
+#      --wandb_dir=$WANDB_DIR \
+#      --wandb_log_images_every=50000 \
+#      --means_lr $MEANS_LR \
+#      --mean_lr_final_mult $MEAN_LR_FINAL_MULT \
+#      --max_steps $max_steps \
+#      --depth_loss \
+#      --depth_lambda $depth_lambda \
+#      --strategy.cap-max 1000000 \
+#      --strategy.refine-start-iter 9000 \
+#      --strategy.refine-stop-iter 50000 \
+#      --strategy.refine-every 100 \
+#      --strategy.schedule-mode='original' \
+#      --strategy.densify_portion $densify_portion \
 
 echo "Training finished. Starting rendering ..."
 python examples/render_from_ply.py \
