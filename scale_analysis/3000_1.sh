@@ -67,7 +67,7 @@ torchrun --standalone \
      --depth_lambda $depth_lambda \
      --strategy.cap-max 1500000 \
      --strategy.refine-start-iter 9000 \
-     --strategy.refine-stop-iter 100000 \
+     --strategy.refine-stop-iter 500000 \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
