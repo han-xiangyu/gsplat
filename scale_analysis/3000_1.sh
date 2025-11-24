@@ -22,7 +22,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data_scale/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03"
+MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_150w"
 
 model_name=$(basename "$0" .sh)
 export CUDA_LAUNCH_BLOCKING=1
@@ -65,7 +65,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 1000000 \
+     --strategy.cap-max 1500000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 100000 \
      --strategy.refine-every 100 \
