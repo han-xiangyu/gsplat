@@ -22,7 +22,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data_scale/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_150w"
+MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_300w"
 
 model_name=$(basename "$0" .sh)
 export CUDA_LAUNCH_BLOCKING=1
@@ -38,11 +38,11 @@ mkdir -p "$TORCH_EXTENSIONS_ROOT"
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 PROJECT_NAME=gsplat_scale_resource_analysis
-EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_portion0.03_capmax_150w"
+EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_portion0.03_capmax_300w"
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
-densify_portion=0.03
+densify_portion=0.01
 depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
@@ -65,7 +65,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 1500000 \
+     --strategy.cap-max 3000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 500000 \
      --strategy.refine-every 100 \
