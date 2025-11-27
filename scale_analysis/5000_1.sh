@@ -37,7 +37,7 @@ export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2end
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=gsplat_scale_resource_analysis
-EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_portion0.03_capmax_300w"
+EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_lidar_capmax300w"
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
