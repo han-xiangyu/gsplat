@@ -22,7 +22,7 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-for i in {1..4}; do
+for i in {1}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
@@ -37,4 +37,4 @@ for i in {1..4}; do
         --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/scale_analysis/3000_1.sh $MODE"
 done
 
-echo "--- 3个任务已提交 ---"
+echo "--- 1个任务已提交 ---"
