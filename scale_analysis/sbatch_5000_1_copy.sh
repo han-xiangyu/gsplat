@@ -39,4 +39,5 @@ for i in {1..2}; do
         --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/scale_analysis/5000_1.sh $MODE"
 done
 
+
 echo "--- 4个任务已提交 ---"
