@@ -22,7 +22,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data_scale/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_300w"
+MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_300w_slam2"
 
 model_name=$(basename "$0" .sh)
 export CUDA_LAUNCH_BLOCKING=1
