@@ -10,7 +10,7 @@ S=21
 E=5021
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 
-BASE_PATH_NAME="tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_slam"
+BASE_PATH_NAME="tra${TRAVERSAL_ID}_${S}to${E}keyframes_${DOWNSAMPLE_TYPE}_${NUM_CAMS}cam_slam2"
 PATH_SUFFIX=""
 if [ "$1" == "difix" ]; then
     echo "--- 'difix' is on ---"
@@ -22,7 +22,7 @@ else
 fi
 
 SOURCE_PATH="${BASE_DIR}/data_scale/${BASE_PATH_NAME}${PATH_SUFFIX}"
-MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_300w"
+MODEL_PATH="${BASE_DIR}/models_scale/${BASE_PATH_NAME}${PATH_SUFFIX}_densify_portion0.03_capmax_300w_slam2"
 
 model_name=$(basename "$0" .sh)
 export CUDA_LAUNCH_BLOCKING=1
@@ -37,7 +37,7 @@ export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_end2end
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=gsplat_scale_resource_analysis
-EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_portion0.03_capmax_300w_slam"
+EXPERIENT_NAME="${S}to${E}_${SLURM_NNODES}node${PATH_SUFFIX}_portion0.03_capmax_300w_slam2"
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
