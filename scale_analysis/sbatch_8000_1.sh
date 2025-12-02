@@ -22,7 +22,7 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-for i in {1..4}; do
+for i in {5..6}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_end2endav \
