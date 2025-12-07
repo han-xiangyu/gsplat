@@ -15,7 +15,7 @@ else
     echo "--- will use standard path ---"
 fi
 SOURCE_PATH="${BASE_DIR}/data/may/small/colmap_output"
-MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}"
+MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}_sky"
 
 model_name=$(basename "$0" .sh)
 export CUDA_LAUNCH_BLOCKING=1
