@@ -34,7 +34,7 @@ for i in {1..2}; do
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/gaussian/code/gsplat/nv_train/small_origin.sh $MODE"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/nv_train/small_origin.sh $MODE"
 done
 
 echo "--- Tasks have been submited! ---"
