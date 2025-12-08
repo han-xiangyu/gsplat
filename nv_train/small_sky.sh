@@ -70,6 +70,4 @@ python examples/render_from_ply.py \
      --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
      --result_dir $MODEL_PATH \
      --fps 15 \
-     --channels 2 1 3 \
-     --start $S \
-     --end $E
+     --channels 2 1 3 

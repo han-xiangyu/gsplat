@@ -71,5 +71,3 @@ python examples/render_from_ply.py \
      --result_dir $MODEL_PATH \
      --fps 15 \
      --channels 2 1 3 \
-     --start $S \
-     --end $E
