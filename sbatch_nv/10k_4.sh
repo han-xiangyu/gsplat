@@ -2,7 +2,7 @@ job_name="altlanta10k_start_13763"
 logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/altlanta10k_start_13763"
 gpus_per_node=8
 nodes=4
-account=nvr_av_end2endav
+account=nvr_av_foundations
 submit_job --more_srun_args=--gpus-per-node=$gpus_per_node --nodes $nodes \
     --partition=grizzly,polar \
     --account=$account \
