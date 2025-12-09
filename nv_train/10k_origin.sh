@@ -4,7 +4,7 @@ conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-BASE_PATH_NAME="colmap_output_10k_start_13763"
+BASE_PATH_NAME="atlanta_colmap_output_10k_start_32512"
 PATH_SUFFIX=""
 if [ "$1" == "difix" ]; then
     echo "--- 'difix' is on ---"
@@ -14,7 +14,7 @@ else
     echo "--- 'difix' is off ---"
     echo "--- will use standard path ---"
 fi
-SOURCE_PATH="${BASE_DIR}/data/may/colmap_output_10k_start_13763"
+SOURCE_PATH="${BASE_DIR}/data/atlanta_10k_start_32512/colmap_output_10k_start_32512"
 MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}"
 
 model_name=$(basename "$0" .sh)
@@ -59,7 +59,7 @@ torchrun --nproc_per_node=8 \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 18000000 \
+     --strategy.cap-max 5000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \

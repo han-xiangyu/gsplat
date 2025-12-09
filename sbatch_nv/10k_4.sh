@@ -1,5 +1,5 @@
-job_name="10k_start_13763"
-logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/10k_start_13763"
+job_name="altlanta10k_start_13763"
+logdir="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log/altlanta10k_start_13763"
 gpus_per_node=8
 nodes=4
 account=nvr_av_end2endav
