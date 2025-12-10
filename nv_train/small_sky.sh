@@ -65,9 +65,18 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 #      --strategy.densify_portion $densify_portion \
 
 echo "Training finished. Starting rendering ..."
-python examples/render_from_ply.py \
-     --data_dir $SOURCE_PATH \
-     --ply_path $MODEL_PATH/ply/point_cloud_119999.ply  \
-     --result_dir $MODEL_PATH \
-     --fps 15 \
-     --channels 2 1 3 
+# python examples/render_from_ply.py \
+#      --data_dir $SOURCE_PATH \
+#      --ply_path $MODEL_PATH/ply/point_cloud_119999.ply  \
+#      --result_dir $MODEL_PATH \
+#      --fps 15 \
+#      --channels 2 1 3 
+
+python examples/render_from_ckpt_sky.py \
+    --data_dir $SOURCE_PATH \
+    --ply_path $MODEL_PATH/ply/point_cloud_119999.ply \
+    --ckpt $MODEL_PATH/ckpts/ckpt_119999_rank0.pt \
+    --cfg  $MODEL_PATH/cfg.yml \
+    --result_dir $MODEL_PATH \
+    --fps 15 \
+    --channels 2 1 3 \
