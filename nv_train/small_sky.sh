@@ -73,10 +73,10 @@ echo "Training finished. Starting rendering ..."
 #      --channels 2 1 3 
 
 python examples/render_from_ckpt_sky.py \
-    --data_dir $SOURCE_PATH \
-    --ply_path $MODEL_PATH/ply/point_cloud_119999.ply \
-    --ckpt $MODEL_PATH/ckpts/ckpt_119999_rank0.pt \
-    --cfg  $MODEL_PATH/cfg.yml \
-    --result_dir $MODEL_PATH \
-    --fps 15 \
-    --channels 2 1 3 \
+    --cfg.data-dir $SOURCE_PATH \
+    --cfg.ply-path $MODEL_PATH/ply/point_cloud_119999.ply \
+    --cfg.ckpt $MODEL_PATH/ckpts/ckpt_119999_rank0.pt \
+    --cfg.cfg  $MODEL_PATH/cfg.yml \
+    --cfg.result-dir $MODEL_PATH \
+    --cfg.fps 15 \
+    --cfg.channels 2 1 3 \
