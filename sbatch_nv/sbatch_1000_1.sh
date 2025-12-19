@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="may_smallscene_origin"
+JOB_BASE_NAME="may_smallsky_12192102"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 
 JOB_SUFFIX=""
@@ -34,7 +34,7 @@ for i in {1..2}; do
         --logdir ${base_logdir}/run_${i} \
         --notimestamp \
         --exclusive \
-        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/nv_train/small_origin.sh $MODE"
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/nv_train/small_sky.sh $MODE"
 done
 
 echo "--- Tasks have been submited! ---"
