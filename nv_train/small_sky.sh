@@ -40,30 +40,30 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-torchrun --standalone \
-     --nproc_per_node=8 \
-     --nnodes=1 \
-     examples/simple_trainer_sky.py mcmc  \
-     --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
-     --resume \
-     --resume_dir $MODEL_PATH \
-     --wandb_project=$PROJECT_NAME \
-     --wandb_group=gsplat \
-     --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
-     --wandb_dir=$WANDB_DIR \
-     --wandb_log_images_every=50000 \
-     --means_lr $MEANS_LR \
-     --mean_lr_final_mult $MEAN_LR_FINAL_MULT \
-     --max_steps $max_steps \
-     --depth_loss \
-     --depth_lambda $depth_lambda \
-     --strategy.cap-max 3000000 \
-     --strategy.refine-start-iter 9000 \
-     --strategy.refine-stop-iter 50000 \
-     --strategy.refine-every 100 \
-     --strategy.schedule-mode='original' \
-     --strategy.densify_portion $densify_portion \
+# torchrun --standalone \
+#      --nproc_per_node=8 \
+#      --nnodes=1 \
+#      examples/simple_trainer_sky.py mcmc  \
+#      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
+#      --resume \
+#      --resume_dir $MODEL_PATH \
+#      --wandb_project=$PROJECT_NAME \
+#      --wandb_group=gsplat \
+#      --wandb_name=$EXPERIENT_NAME \
+#      --wandb_mode='online' \
+#      --wandb_dir=$WANDB_DIR \
+#      --wandb_log_images_every=50000 \
+#      --means_lr $MEANS_LR \
+#      --mean_lr_final_mult $MEAN_LR_FINAL_MULT \
+#      --max_steps $max_steps \
+#      --depth_loss \
+#      --depth_lambda $depth_lambda \
+#      --strategy.cap-max 3000000 \
+#      --strategy.refine-start-iter 9000 \
+#      --strategy.refine-stop-iter 50000 \
+#      --strategy.refine-every 100 \
+#      --strategy.schedule-mode='original' \
+#      --strategy.densify_portion $densify_portion \
 
 echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
@@ -74,10 +74,10 @@ echo "Training finished. Starting rendering ..."
 #      --channels 2 1 3 
 
 python examples/render_from_ply_sky.py \
-    --cfg.data-dir $SOURCE_PATH \
-    --cfg.ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
-    --cfg.ckpt $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
-    --cfg.cfg  $MODEL_PATH/cfg.yml \
+    --data-dir $SOURCE_PATH \
+    --ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
+    --ckpt-path $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
+    --use-sky True \
     --cfg.result-dir $MODEL_PATH \
     --cfg.fps 15 \
     --cfg.channels 2 1 3 \
