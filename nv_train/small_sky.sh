@@ -78,6 +78,6 @@ python examples/render_from_ply_sky.py \
     --ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
     --ckpt-path $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
     --use-sky True \
-    --cfg.result-dir $MODEL_PATH \
-    --cfg.fps 15 \
-    --cfg.channels 2 1 3 \
+    --result-dir $MODEL_PATH \
+    --fps 15 \
+    --channels 2 1 3 \
