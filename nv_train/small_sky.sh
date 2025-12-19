@@ -77,7 +77,7 @@ python examples/render_from_ply_sky.py \
     --data-dir $SOURCE_PATH \
     --ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
     --ckpt-path $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
-    --use-sky True \
+    --use-sky \
     --result-dir $MODEL_PATH \
     --fps 15 \
     --channels 2 1 3 \
