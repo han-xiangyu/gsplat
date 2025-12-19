@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="1217_2203"
+DATE="1219_1511"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 PATH_SUFFIX=""
@@ -31,7 +31,7 @@ export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_${ACCOU
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="1217_2203sky"
+EXPERIENT_NAME="${DATE}_sky"
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
@@ -41,7 +41,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=6 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer_sky.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
@@ -73,7 +73,7 @@ echo "Training finished. Starting rendering ..."
 #      --fps 15 \
 #      --channels 2 1 3 
 
-python examples/render_from_ckpt_sky.py \
+python examples/render_from_ply_sky.py \
     --cfg.data-dir $SOURCE_PATH \
     --cfg.ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
     --cfg.ckpt $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
