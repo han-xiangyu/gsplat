@@ -6,7 +6,7 @@ DATE="1219_2058"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 PATH_SUFFIX=""
-ACCOUNT="verifvalid"
+ACCOUNT="foundations"
 if [ "$1" == "difix" ]; then
     echo "--- 'difix' is on ---"
     echo "--- use '_with_newviews' path ---"
