@@ -6,6 +6,7 @@ DATE="1217_2203"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 PATH_SUFFIX=""
+ACCOUNT="verifvalid"
 if [ "$1" == "difix" ]; then
     echo "--- 'difix' is on ---"
     echo "--- use '_with_newviews' path ---"
@@ -26,7 +27,7 @@ export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
-export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_foundations/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
+export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_${ACCOUNT}/users/ymingli/cache/torch_extensions_${SLURM_NODEID}
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=citygs_newdata
@@ -40,7 +41,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=8 \
+     --nproc_per_node=6 \
      --nnodes=1 \
      examples/simple_trainer_sky.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
