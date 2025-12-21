@@ -2,9 +2,9 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="1219_2058"
+DATE="1221_large"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-BASE_PATH_NAME="small"
+BASE_PATH_NAME="large"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
 if [ "$1" == "difix" ]; then
@@ -15,7 +15,7 @@ else
     echo "--- 'difix' is off ---"
     echo "--- will use standard path ---"
 fi
-SOURCE_PATH="${BASE_DIR}/data/may/small/colmap_output"
+SOURCE_PATH="${BASE_DIR}/data/colmap_output"
 MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}_${DATE}sky"
 
 model_name=$(basename "$0" .sh)
@@ -40,31 +40,31 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-# torchrun --standalone \
-#      --nproc_per_node=8 \
-#      --nnodes=1 \
-#      examples/simple_trainer_sky.py mcmc  \
-#      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
-#      --resume \
-#      --resume_dir $MODEL_PATH \
-#      --wandb_project=$PROJECT_NAME \
-#      --wandb_group=gsplat \
-#      --wandb_name=$EXPERIENT_NAME \
-#      --wandb_mode='online' \
-#      --wandb_dir=$WANDB_DIR \
-#      --wandb_log_images_every=50000 \
-#      --means_lr $MEANS_LR \
-#      --mean_lr_final_mult $MEAN_LR_FINAL_MULT \
-#      --max_steps $max_steps \
-#      --depth_loss \
-#      --depth_lambda $depth_lambda \
-#      --strategy.cap-max 3000000 \
-#      --strategy.refine-start-iter 9000 \
-#      --strategy.refine-stop-iter 50000 \
-#      --strategy.refine-every 100 \
-#      --strategy.schedule-mode='original' \
-#      --strategy.densify_portion $densify_portion \
-#      --use_sky \
+torchrun --standalone \
+     --nproc_per_node=8 \
+     --nnodes=1 \
+     examples/simple_trainer_sky.py mcmc  \
+     --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
+     --resume \
+     --resume_dir $MODEL_PATH \
+     --wandb_project=$PROJECT_NAME \
+     --wandb_group=gsplat \
+     --wandb_name=$EXPERIENT_NAME \
+     --wandb_mode='online' \
+     --wandb_dir=$WANDB_DIR \
+     --wandb_log_images_every=50000 \
+     --means_lr $MEANS_LR \
+     --mean_lr_final_mult $MEAN_LR_FINAL_MULT \
+     --max_steps $max_steps \
+     --depth_loss \
+     --depth_lambda $depth_lambda \
+     --strategy.cap-max 9000000 \
+     --strategy.refine-start-iter 9000 \
+     --strategy.refine-stop-iter 50000 \
+     --strategy.refine-every 100 \
+     --strategy.schedule-mode='original' \
+     --strategy.densify_portion $densify_portion \
+     --use_sky \
 
 echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
