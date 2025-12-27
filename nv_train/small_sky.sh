@@ -2,9 +2,9 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="1221_large"
+DATE="1219_1511"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
-BASE_PATH_NAME="large"
+BASE_PATH_NAME="small"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
 if [ "$1" == "difix" ]; then
