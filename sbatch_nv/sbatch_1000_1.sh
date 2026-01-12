@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="may_largesky_1221"
+JOB_BASE_NAME="112skydebug"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 
 JOB_SUFFIX=""
@@ -22,7 +22,7 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-for i in {5..8}; do
+for i in {1..2}; do
     submit_job --gpu 8 --cpu 16 --nodes 1 \
         --partition=grizzly,polar,polar3,polar4 \
         --account=nvr_av_foundations \
