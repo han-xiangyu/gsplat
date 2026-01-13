@@ -49,6 +49,9 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
+echo "Using nvcc at: $(which nvcc)"
+nvcc --version
+
 torchrun --standalone \
      --nproc_per_node=2 \
      --nnodes=1 \
