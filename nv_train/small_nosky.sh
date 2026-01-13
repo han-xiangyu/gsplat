@@ -55,7 +55,7 @@ nvcc --version
 torchrun --standalone \
      --nproc_per_node=2 \
      --nnodes=1 \
-     examples/simple_trainer_sky.py mcmc  \
+     examples/simple_trainer_integrated.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
