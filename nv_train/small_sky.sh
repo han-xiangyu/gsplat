@@ -19,6 +19,13 @@ SOURCE_PATH="${BASE_DIR}/data/may/small/colmap_output"
 MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}_${DATE}sky"
 
 model_name=$(basename "$0" .sh)
+export CUDA_HOME=/usr/local/cuda-12.1
+export CUDACXX=$CUDA_HOME/bin/nvcc
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
+export TORCH_CUDA_ARCH_LIST="8.0"
+
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
 export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
