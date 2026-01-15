@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="111_23"
+DATE="115_14"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 PATH_SUFFIX=""
@@ -15,7 +15,7 @@ else
     echo "--- 'difix' is off ---"
     echo "--- will use standard path ---"
 fi
-SOURCE_PATH="${BASE_DIR}/data/colmap_output"
+SOURCE_PATH="${BASE_DIR}/data/may/small/colmap_output"
 MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}_${DATE}sky"
 
 model_name=$(basename "$0" .sh)
@@ -41,7 +41,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=8 \
+     --nproc_per_node=1 \
      --nnodes=1 \
      examples/simple_trainer_sky.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
@@ -64,7 +64,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
-     --use_sky \
+     #--use_sky \
 
 echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
