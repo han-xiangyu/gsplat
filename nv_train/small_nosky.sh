@@ -51,7 +51,7 @@ echo "Using nvcc at: $(which nvcc)"
 nvcc --version
 
 torchrun --standalone \
-     --nproc_per_node=2 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer_sky.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
