@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="112_23"
+DATE="115_11"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 PATH_SUFFIX=""
@@ -19,13 +19,11 @@ SOURCE_PATH="${BASE_DIR}/data/colmap_output"
 MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}_${DATE}sky"
 
 model_name=$(basename "$0" .sh)
-# ===== CUDA 12.1 (CRITICAL) =====
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-# 根据你的 GPU（A100）
 export TORCH_CUDA_ARCH_LIST="8.0"
 
 export CUDA_LAUNCH_BLOCKING=1
