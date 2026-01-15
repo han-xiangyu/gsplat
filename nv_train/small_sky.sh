@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="115_14"
+DATE="115_20"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 PATH_SUFFIX=""
@@ -71,7 +71,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
-     #--use_sky \
+     --use_sky \
 
 echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
