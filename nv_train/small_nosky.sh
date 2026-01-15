@@ -74,6 +74,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
+     --completed_depth True \
      #--use_sky \
 
 echo "Training finished. Starting rendering ..."
