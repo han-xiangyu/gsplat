@@ -53,7 +53,7 @@ nvcc --version
 torchrun --standalone \
      --nproc_per_node=2 \
      --nnodes=1 \
-     examples/simple_trainer_integrated.py mcmc  \
+     examples/simple_trainer_sky.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
@@ -74,7 +74,6 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
-     --completed_depth \
      #--use_sky \
 
 echo "Training finished. Starting rendering ..."
