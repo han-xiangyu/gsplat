@@ -39,7 +39,7 @@ export TORCH_EXTENSIONS_ROOT=/lustre/fs12/portfolios/nvr/projects/nvr_av_${ACCOU
 mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="${DATE}_sky"
+EXPERIENT_NAME="${DATE}"
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
@@ -66,7 +66,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 9000000 \
+     --strategy.cap-max 3000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
