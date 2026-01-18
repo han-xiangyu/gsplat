@@ -17,7 +17,7 @@ else
     echo "--- will use standard path ---"
 fi
 SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_${CAM}_cam"
-MODEL_PATH="${BASE_DIR}/models/${PATH_SUFFIX}_${DATE}sky"
+MODEL_PATH="${BASE_DIR}/models/${PATH_SUFFIX}_${DATE}"
 
 model_name=$(basename "$0" .sh)
 export CUDA_HOME=/usr/local/cuda-12.1
