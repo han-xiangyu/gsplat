@@ -2,9 +2,10 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="116_00"
+DATE="118_3sky"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
+CAM="front"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
 if [ "$1" == "difix" ]; then
@@ -15,8 +16,8 @@ else
     echo "--- 'difix' is off ---"
     echo "--- will use standard path ---"
 fi
-SOURCE_PATH="${BASE_DIR}/data/may/small/colmap_output"
-MODEL_PATH="${BASE_DIR}/models/${BASE_PATH_NAME}${PATH_SUFFIX}_${DATE}sky"
+SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_${CAM}_cam"
+MODEL_PATH="${BASE_DIR}/models/${PATH_SUFFIX}_${DATE}sky"
 
 model_name=$(basename "$0" .sh)
 export CUDA_HOME=/usr/local/cuda-12.1
