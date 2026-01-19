@@ -28,7 +28,7 @@ for i in {1..2}; do
         --account=nvr_av_foundations \
         --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
         --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
-        --duration 0.1 \
+        --duration 0.5 \
         --dependency=singleton \
         --name ${job_name} \
         --logdir ${base_logdir}/run_${i} \
