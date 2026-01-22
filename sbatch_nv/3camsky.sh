@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="118exp3camsky"
+JOB_BASE_NAME="122exp3camsky"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 
 JOB_SUFFIX=""
@@ -28,7 +28,7 @@ for i in {1..2}; do
         --account=nvr_av_foundations \
         --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
         --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
-        --duration 4 \
+        --duration 0.5 \
         --dependency=singleton \
         --name ${job_name} \
         --logdir ${base_logdir}/run_${i} \
