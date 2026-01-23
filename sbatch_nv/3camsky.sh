@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="123exp3camsky"
+JOB_BASE_NAME="123exp3camskyposeopt"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 
 JOB_SUFFIX=""
