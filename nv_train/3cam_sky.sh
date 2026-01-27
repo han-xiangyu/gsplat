@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="126_3sky+ground"
+DATE="127_3sky+ground_[5000,5000]"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 CAM="front"
@@ -74,6 +74,8 @@ torchrun --standalone \
      --strategy.densify_portion $densify_portion \
      --use_sky \
      --ground_mask \
+     --ground_curriculum_steps = 10000 \
+     --ground_curriculum_ramp_steps = 10000 \
      #--pose_opt \
 
 echo "Training finished. Starting rendering ..."
