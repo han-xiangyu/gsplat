@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="120_6sky"
+DATE="129_6sky_fov80"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 CAM="all"
@@ -51,7 +51,7 @@ export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 torchrun --standalone \
      --nproc_per_node=8 \
      --nnodes=1 \
-     examples/simple_trainer_sky.py mcmc  \
+     examples/simple_trainer_integrated.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
      --resume \
      --resume_dir $MODEL_PATH \
@@ -73,6 +73,11 @@ torchrun --standalone \
      --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
      --use_sky \
+     --ground_mask \
+     --ground_curriculum_steps 10000 \
+     --ground_curriculum_ramp_steps 10000 \
+     --crop_hfov_deg 80 \
+     --crop_hfov_camera_ids 4 5 6 \
 
 echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
