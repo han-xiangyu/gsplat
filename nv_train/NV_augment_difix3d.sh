@@ -1,7 +1,7 @@
 # NV cluster script
 
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/
-source /lustre/fs12/portfolios/nvr/users/ymingli/miniconda3/etc/profile.d/conda.sh
+source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate gsplat
 
 export PYTHONNOUSERSITE=1
