@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-DATE="130_6sky_fov80_xy"
+DATE="131_6sky_fov80_xy"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 BASE_PATH_NAME="small"
 CAM="all"
@@ -17,7 +17,7 @@ else
     echo "--- will use standard path ---"
 fi
 SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_${CAM}_cam"
-MODEL_PATH="${BASE_DIR}/models/${DATE}sky"
+MODEL_PATH="${BASE_DIR}/models/${DATE}"
 
 model_name=$(basename "$0" .sh)
 export CUDA_HOME=/usr/local/cuda-12.1

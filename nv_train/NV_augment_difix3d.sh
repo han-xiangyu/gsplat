@@ -17,16 +17,13 @@ amplitude=1
 CAM="front"
 BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
 SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_${CAM}_cam"
-MODEL_PATH="${BASE_DIR}/models/${DATE}sky"
-
-source_name=$(basename "$SOURCE_PATH")
-model_name=$(basename "$MODEL_PATH")
+MODEL_PATH="${BASE_DIR}/models/${DATE}"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
 # Render new trajectory
 CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
   --data_dir $SOURCE_PATH \
-  --ply_path $MODEL_PATH/ply/point_cloud_149999.ply  \
+  --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
   --out_img_dir $extrapolated_output_path
 
 # Difix3D repair

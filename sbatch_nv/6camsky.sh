@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="130_6cam_fov80_xy"
+JOB_BASE_NAME="131_6cam_fov80_xy"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 
 JOB_SUFFIX=""
