@@ -3,7 +3,7 @@
 #MODE="difix"
 MODE=""
 
-JOB_BASE_NAME="12911sky_ground"
+JOB_BASE_NAME="131sky_ground"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 
 JOB_SUFFIX=""
@@ -22,18 +22,19 @@ echo "Job Name: $job_name"
 echo "Log Dir:  $base_logdir"
 echo "Mode Arg: [${MODE:-standard}]"
 
-
-submit_job --gpu 8 --cpu 16 --nodes 1 \
-    --partition=grizzly,polar,polar3,polar4 \
-    --account=nvr_av_foundations \
-    --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
-    --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
-    --duration 4 \
-    --dependency=singleton \
-    --name ${job_name} \
-    --logdir ${base_logdir}/run_${i} \
-    --notimestamp \
-    --exclusive \
-    --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/nv_train/3cam_sky.sh $MODE"
+for i in {1..4}; do
+    submit_job --gpu 8 --cpu 16 --nodes 1 \
+        --partition=grizzly,polar,polar3,polar4 \
+        --account=nvr_av_foundations \
+        --image=/lustre/fsw/portfolios/nvr/users/ymingli/dockers/2304py3.sqsh \
+        --mounts=/lustre/:/lustre/,/lustre/fsw/portfolios/nvr/users/ymingli/miniconda3:/home/ymingli/miniconda3 \
+        --duration 4 \
+        --dependency=singleton \
+        --name ${job_name} \
+        --logdir ${base_logdir}/run_${i} \
+        --notimestamp \
+        --exclusive \
+        --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/nv_train/3cam_sky.sh $MODE"
+done
 
 echo "--- Tasks have been submited! ---"
