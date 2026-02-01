@@ -7,7 +7,7 @@ conda activate gsplat
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
-DATE="129_3sky+ground"
+DATE="131_3sky+ground"
 # configs
 export HF_ENDPOINT=https://hf-mirror.com
 export CUDA_LAUNCH_BLOCKING=1
