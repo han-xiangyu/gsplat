@@ -48,7 +48,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=6 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer_integrated.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
@@ -65,7 +65,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 3000000 \
+     --strategy.cap-max 9000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
