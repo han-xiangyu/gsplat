@@ -7,22 +7,29 @@ conda activate gsplat
 export PYTHONNOUSERSITE=1
 export PYTHONPATH=""
 export PYTHONHOME=""
-unset LD_PRELOAD
 
-# ===== 关键：强制使用 conda torch =====
 export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
 export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
-
 export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:$PYTHONPATH
 export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/pycolmap:$PYTHONPATH
-# 可选护栏
 python -c "import torch; print('Using torch:', torch.__file__)"
 
-DATE="131_3sky+ground"
-# configs
+
 export HF_ENDPOINT=https://hf-mirror.com
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
+
+export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
+export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
+export CUDA_HOME=/usr/local/cuda-11.8
+export PATH=$CUDA_HOME/bin:$PATH
+
+export TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
+export FORCE_CUDA=1
+
+rm -rf ~/.cache/torch_extensions/gsplat_cuda
+
+DATE="131_3sky+ground"
 new_traj_mode=sine
 amplitude=1
 CAM="front"
