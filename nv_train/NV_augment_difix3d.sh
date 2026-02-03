@@ -2,7 +2,7 @@
 
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate mars_new
+conda activate gsplat
 
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH
