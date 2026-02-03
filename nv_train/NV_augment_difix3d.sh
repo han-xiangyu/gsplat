@@ -14,7 +14,7 @@ export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
 export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
 
 export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:$PYTHONPATH
-
+export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/pycolmap:$PYTHONPATH
 # 可选护栏
 python -c "import torch; print('Using torch:', torch.__file__)"
 
