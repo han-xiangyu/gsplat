@@ -7,8 +7,6 @@ conda activate gsplat
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH
 export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:$PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat/pycolmap
 DATE="131_3sky+ground"
 # configs
 export HF_ENDPOINT=https://hf-mirror.com
