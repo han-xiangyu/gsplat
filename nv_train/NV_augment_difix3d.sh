@@ -14,7 +14,6 @@ export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:
 export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/pycolmap:$PYTHONPATH
 python -c "import torch; print('Using torch:', torch.__file__)"
 
-
 export HF_ENDPOINT=https://hf-mirror.com
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1 
@@ -26,7 +25,7 @@ export PATH=$CUDA_HOME/bin:$PATH
 export TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
 export FORCE_CUDA=1
 
-rm -rf ~/.cache/torch_extensions/gsplat_cuda
+#rm -rf ~/.cache/torch_extensions/gsplat_cuda
 
 DATE="131_3sky+ground"
 new_traj_mode=sine
