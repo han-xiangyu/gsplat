@@ -23,7 +23,6 @@ export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
 export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
 export CUDA_HOME=/usr/local/cuda-11.8
 export PATH=$CUDA_HOME/bin:$PATH
-
 export TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
 export FORCE_CUDA=1
 
@@ -44,15 +43,15 @@ CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
   --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
   --out_img_dir $extrapolated_output_path
 
-# # Difix3D repair
-# cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/Difix3D
-# conda activate difix3d
+# Difix3D repair
+cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/Difix3D
+conda activate difix3d
 
-# python batched_process_w_ref_dist_gsplat.py \
-#   --input_folder $MODEL_PATH/extrapolated_renders \
-#   --ref_folder $SOURCE_PATH/images \
-#   --output_folder $MODEL_PATH/extrapolated_difixed \
-#   --prompt "remove degradation"
+python batched_process_w_ref_dist_gsplat.py \
+  --input_folder $MODEL_PATH/extrapolated_renders \
+  --ref_folder $SOURCE_PATH/images \
+  --output_folder $MODEL_PATH/extrapolated_difixed \
+  --prompt "remove degradation"
 
 
 # # Register new views using GSplat
