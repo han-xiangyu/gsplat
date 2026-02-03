@@ -5,8 +5,17 @@ source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate gsplat
 
 export PYTHONNOUSERSITE=1
-unset PYTHONPATH
-export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:$PYTHONPATH
+export PYTHONPATH=""
+export PYTHONHOME=""
+unset LD_PRELOAD
+
+# ===== 关键：强制使用 conda torch =====
+export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
+export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
+
+# 可选护栏
+python -c "import torch; print('Using torch:', torch.__file__)"
+
 DATE="131_3sky+ground"
 # configs
 export HF_ENDPOINT=https://hf-mirror.com
