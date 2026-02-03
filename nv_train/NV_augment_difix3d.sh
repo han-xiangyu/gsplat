@@ -6,6 +6,7 @@ conda activate gsplat
 
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH
+export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:$PYTHONPATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/usr/lib/x86_64-linux-gnu
 DATE="131_3sky+ground"
 # configs
