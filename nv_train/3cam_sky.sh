@@ -68,10 +68,8 @@ torchrun --standalone \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
-     --strategy.schedule-mode='original' \
      --strategy.densify_portion $densify_portion \
      --use_sky \
-     --ground_mask \
      --ground_curriculum_steps 10000 \
     #  --ground_curriculum_ramp_steps 10000 \
      #--pose_opt \
