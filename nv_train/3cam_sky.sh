@@ -1,7 +1,7 @@
 #!/bin/bash
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
-cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
+cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 DATE="24_allcam"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 PATH_SUFFIX=""
@@ -27,8 +27,8 @@ export TORCH_CUDA_ARCH_LIST="8.0"
 
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat
-export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat/pycolmap
+export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
+export PYTHONPATH=$PYTHONPATH:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/pycolmap
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
