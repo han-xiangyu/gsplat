@@ -72,8 +72,8 @@ torchrun --standalone \
      --strategy.densify_portion $densify_portion \
      --use_sky \
      --ground_mask \
-     --ground_curriculum_steps 10000 \
-     --ground_curriculum_ramp_steps 10000 \
+    #  --ground_curriculum_steps 10000 \
+    #  --ground_curriculum_ramp_steps 10000 \
      #--pose_opt \
 
 echo "Training finished. Starting rendering ..."
