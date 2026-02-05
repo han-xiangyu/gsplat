@@ -14,7 +14,7 @@ else
     echo "--- 'difix' is off ---"
     echo "--- will use standard path ---"
 fi
-SOURCE_PATH="${BASE_DIR}/data/may/atlanta0113_keyframe_start2k_total1k_front_cams"
+SOURCE_PATH="${BASE_DIR}/data/may/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
 
 model_name=$(basename "$0" .sh)
