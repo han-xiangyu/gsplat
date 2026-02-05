@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
-DATE="25_allcam"
+DATE="25_total1k_front_cams"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
@@ -56,7 +56,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='disabled' \
+     --wandb_mode='online' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
@@ -69,7 +69,6 @@ torchrun --standalone \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
-     --use_sky \
      --ground_curriculum_steps 10000 \
     #  --ground_curriculum_ramp_steps 10000 \
      #--pose_opt \
