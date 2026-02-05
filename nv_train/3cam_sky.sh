@@ -2,7 +2,7 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
-DATE="24_allcam"
+DATE="25_allcam"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
@@ -47,7 +47,7 @@ pose_opt_start=1e5
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 torchrun --standalone \
-     --nproc_per_node=8 \
+     --nproc_per_node=4 \
      --nnodes=1 \
      examples/simple_trainer_integrated.py mcmc  \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
