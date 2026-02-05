@@ -56,7 +56,7 @@ python batched_process_w_ref_dist_gsplat.py \
 # Register new views using GSplat
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/submodules/gsplat/
 conda activate gsplat
-python examples/register_new_views_gsplat.py \
+python examples/register_new_views.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
   --traj_type parallel \
