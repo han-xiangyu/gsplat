@@ -17,6 +17,7 @@ export TORCH_USE_CUDA_DSA=1
 
 export PYTHONPATH=$PYTHONPATH:/root/cbw/gsplat-city
 export PYTHONPATH=$PYTHONPATH:/root/cbw/gsplat-city/pycolmap
+export CPLUS_INCLUDE_PATH=/root/cbw/glm:$CPLUS_INCLUDE_PATH
 
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
