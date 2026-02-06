@@ -1,5 +1,5 @@
 #!/bin/bash
-conda init
+source /root/envs/mars_new/bin/activate
 conda activate mars_new
 cd /root/cbw/gsplat-city
 DATE="26_total1k_front_cams"
