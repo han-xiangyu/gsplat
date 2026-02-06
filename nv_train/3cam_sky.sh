@@ -70,7 +70,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
      --ground_curriculum_steps 10000 \
-    #  --ground_curriculum_ramp_steps 10000 \
+     #--ground_curriculum_ramp_steps 10000 \
      #--pose_opt \
 
 echo "Training finished. Starting rendering ..."
