@@ -1,19 +1,19 @@
 #!/bin/bash
-source /root/envs/mars_new/bin/activate
+conda init
 conda activate mars_new
 cd /root/cbw/gsplat-city
 DATE="26_total1k_front_cams"
 BASE_DIR="/root/datasets/citygs"
-PATH_SUFFIX=""
-ACCOUNT="foundations"
-if [ "$1" == "difix" ]; then
-    echo "--- 'difix' is on ---"
-    echo "--- use '_with_newviews' path ---"
-    PATH_SUFFIX="_with_newviews"
-else
-    echo "--- 'difix' is off ---"
-    echo "--- will use standard path ---"
-fi
+
+# PATH_SUFFIX=""
+# if [ "$1" == "difix" ]; then
+#     echo "--- 'difix' is on ---"
+#     echo "--- use '_with_newviews' path ---"
+#     PATH_SUFFIX="_with_newviews"
+# else
+#     echo "--- 'difix' is off ---"
+#     echo "--- will use standard path ---"
+# fi
 
 SOURCE_PATH="${BASE_DIR}/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
