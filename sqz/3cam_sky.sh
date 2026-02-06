@@ -35,9 +35,8 @@ depth_lambda=2e-3
 
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-# ===== 训练 =====
 torchrun --standalone \
-     --nproc_per_node=1 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer.py mcmc \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
