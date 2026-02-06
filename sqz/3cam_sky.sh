@@ -24,7 +24,7 @@ model_name=$(basename "$0" .sh)
 # export PATH=$CUDA_HOME/bin:$PATH
 # export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-export TORCH_CUDA_ARCH_LIST="8.0"
+export TORCH_CUDA_ARCH_LIST="9.0"
 
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
@@ -50,8 +50,6 @@ torchrun --standalone \
      --nnodes=1 \
      examples/simple_trainer.py mcmc \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
-     --resume \
-     --resume_dir $MODEL_PATH \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
