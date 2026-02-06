@@ -14,6 +14,7 @@ else
     echo "--- 'difix' is off ---"
     echo "--- will use standard path ---"
 fi
+
 SOURCE_PATH="${BASE_DIR}/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
 
