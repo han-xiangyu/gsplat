@@ -5,6 +5,10 @@ export TORCH_CUDA_ARCH_LIST="9.0"
 export CUDA_LAUNCH_BLOCKING=1
 export TORCH_USE_CUDA_DSA=1
 
+export PYTHONPATH=$PYTHONPATH:/root/cbw/gsplat-city
+export PYTHONPATH=$PYTHONPATH:/root/cbw/gsplat-city/pycolmap
+export CPLUS_INCLUDE_PATH=/root/cbw/glm:$CPLUS_INCLUDE_PATH
+
 #rm -rf ~/.cache/torch_extensions/gsplat_cuda
 
 DATE="131_3sky+ground"
