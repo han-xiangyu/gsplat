@@ -31,6 +31,7 @@ echo ">>> Switch to difix3d env"
 source /root/miniconda3/etc/profile.d/conda.sh
 conda activate difix3d
 
+cd /root/cbw/Difix3d
 python batched_process_w_ref_dist_gsplat.py \
   --input_folder $MODEL_PATH/extrapolated_renders \
   --ref_folder $SOURCE_PATH/images \
