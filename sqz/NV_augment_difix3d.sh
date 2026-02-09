@@ -11,7 +11,7 @@ export CPLUS_INCLUDE_PATH=/root/cbw/glm:$CPLUS_INCLUDE_PATH
 
 #rm -rf ~/.cache/torch_extensions/gsplat_cuda
 
-DATE="131_3sky+ground"
+DATE="26_total1k_front_cams"
 new_traj_mode=sine
 amplitude=1
 BASE_DIR="/root/datasets/citygs"
