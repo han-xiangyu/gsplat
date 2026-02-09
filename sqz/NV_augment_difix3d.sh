@@ -1,35 +1,17 @@
 # NV cluster script
 
-cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat
-source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
-conda activate gsplat
-
-export PYTHONNOUSERSITE=1
-export PYTHONPATH=""
-export PYTHONHOME=""
-
-export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
-export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
-export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code:$PYTHONPATH
-export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/pycolmap:$PYTHONPATH
-
-export HF_ENDPOINT=https://hf-mirror.com
+export PATH="/root/envs/mars_new/bin:$PATH"
+export TORCH_CUDA_ARCH_LIST="9.0"
 export CUDA_LAUNCH_BLOCKING=1
-export TORCH_USE_CUDA_DSA=1 
+export TORCH_USE_CUDA_DSA=1
 
-export TORCH_LIB=$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib
-export LD_LIBRARY_PATH=$TORCH_LIB:/usr/local/cuda-11.8/lib64
-export CUDA_HOME=/usr/local/cuda-11.8
-export PATH=$CUDA_HOME/bin:$PATH
-export TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
-export FORCE_CUDA=1
+#rm -rf ~/.cache/torch_extensions/gsplat_cuda
 
 DATE="131_3sky+ground"
 new_traj_mode=sine
 amplitude=1
-CAM="front"
-BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
-SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_${CAM}_cam"
+BASE_DIR="/root/datasets/citygs"
+SOURCE_PATH="${BASE_DIR}/data/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
