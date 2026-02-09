@@ -6,7 +6,7 @@ BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_small_with_newviews"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_frames150_capMax6M_densifyPortion0.005from5kto50k_sky_frontCams_SH1_GroundRegLaterLamda0.04_poseOpt_DepthDisparity1e-1"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_frames150_capMax6M_densifyPortion0.005from5kto50k_sky_frontCams_SH1_GroundRegLaterLamda0.04_poseOpt_DepthDisparity1e-1_difix"
 
 model_name=$(basename "$0" .sh)
 export CUDA_HOME=/usr/local/cuda-12.1
@@ -47,7 +47,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='disabled' \
+     --wandb_mode='online' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
@@ -55,7 +55,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 4000000 \
+     --strategy.cap-max 400000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
