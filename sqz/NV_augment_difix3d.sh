@@ -41,7 +41,7 @@ python batched_process_w_ref_dist_gsplat.py \
 conda deactivate
 # Register new views using GSplat
 
-
+cd /root/cbw/gsplat-city
 python examples/register_new_views.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
