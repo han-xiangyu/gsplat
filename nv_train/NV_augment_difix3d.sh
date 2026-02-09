@@ -33,7 +33,7 @@ SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_g
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
-Render new trajectory
+# Render new trajectory
 CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
   --data_dir $SOURCE_PATH \
   --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
@@ -48,7 +48,6 @@ python batched_process_w_ref_dist_gsplat.py \
   --ref_folder $SOURCE_PATH/images \
   --output_folder $MODEL_PATH/extrapolated_difixed \
   --prompt "remove degradation"
-
 
 # Register new views using GSplat
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city

@@ -5,10 +5,8 @@ export PATH="/root/envs/mars_new/bin:$PATH"
 cd /root/cbw/gsplat-city
 DATE="26_total1k_front_cams"
 BASE_DIR="/root/datasets/citygs"
-
 SOURCE_PATH="${BASE_DIR}/data/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
-
 model_name=$(basename "$0" .sh)
 
 export TORCH_CUDA_ARCH_LIST="9.0"
@@ -26,7 +24,6 @@ export WANDB_SILENT=true
 
 PROJECT_NAME=citygs_newdata
 EXPERIENT_NAME="${DATE}"
-
 max_steps=150_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3

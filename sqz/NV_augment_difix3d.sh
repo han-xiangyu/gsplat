@@ -15,14 +15,16 @@ SOURCE_PATH="${BASE_DIR}/data/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
-Render new trajectory
+# Render new trajectory
 CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
   --data_dir $SOURCE_PATH \
   --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
   --out_img_dir $extrapolated_output_path
 
 # Difix3D repair
-cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/Difix3D
+# ====== Difix3D repair (switch env) ======
+echo ">>> Switch to difix3d env"
+source /root/miniconda3/etc/profile.d/conda.sh
 conda activate difix3d
 
 python batched_process_w_ref_dist_gsplat.py \
@@ -31,10 +33,10 @@ python batched_process_w_ref_dist_gsplat.py \
   --output_folder $MODEL_PATH/extrapolated_difixed \
   --prompt "remove degradation"
 
-
+conda deactivate
 # Register new views using GSplat
-cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
-conda activate gsplat
+cd /root/cbw/gsplat-city
+
 python examples/register_new_views.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
