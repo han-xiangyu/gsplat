@@ -24,13 +24,11 @@ export PATH=$CUDA_HOME/bin:$PATH
 export TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
 export FORCE_CUDA=1
 
-DATE="131_3sky+ground"
 new_traj_mode=sine
 amplitude=1
-CAM="front"
 BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
-SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_${CAM}_cam"
-MODEL_PATH="${BASE_DIR}/models/${DATE}"
+SOURCE_PATH="${BASE_DIR}/data/may/arlington_small"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_frames150_capMax6M_densifyPortion0.005from5kto50k_sky_frontCams_SH1_GroundRegLaterLamda0.04_poseOpt_DepthDisparity1e-1"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
 # Render new trajectory
@@ -55,8 +53,10 @@ conda activate gsplat
 python examples/register_new_views.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
-  --traj_type parallel \
-  --amplitude 1.5
+  --traj_type horizontal_sine \
+  --amplitude 1.5 \
+  --vertical_amp 1.5 \
+  --tilt_deg 2.0 \
 
 # Copy the original dataset to the new folder
 NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews"
