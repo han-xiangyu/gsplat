@@ -1,5 +1,5 @@
 # NV cluster script
-
+export PYTHONWARNINGS="ignore::FutureWarning:transformers.utils.hub"
 export PATH="/root/envs/mars_new/bin:$PATH"
 export TORCH_CUDA_ARCH_LIST="9.0"
 export CUDA_LAUNCH_BLOCKING=1
