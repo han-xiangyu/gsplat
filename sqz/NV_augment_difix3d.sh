@@ -8,7 +8,9 @@ export TORCH_USE_CUDA_DSA=1
 export PYTHONPATH=$PYTHONPATH:/root/cbw/gsplat-city
 export PYTHONPATH=$PYTHONPATH:/root/cbw/gsplat-city/pycolmap
 export CPLUS_INCLUDE_PATH=/root/cbw/glm:$CPLUS_INCLUDE_PATH
-
+export HF_HOME=/root/.cache/huggingface
+export TRANSFORMERS_CACHE=$HF_HOME
+export HF_HUB_CACHE=$HF_HOME/hub
 #rm -rf ~/.cache/torch_extensions/gsplat_cuda
 
 DATE="26_total1k_front_cams"
@@ -27,7 +29,7 @@ cd /root/cbw/gsplat-city
 
 # Difix3D repair
 # ====== Difix3D repair (switch env) ======
-echo ">>> Switch to difix3d env"
+echo ">>> Switch to difix3d env"  
 cd /root/cbw/Difix3D
 /root/miniconda3/envs/difix3d/bin/python batched_process_w_ref_dist_gsplat.py \
   --input_folder $MODEL_PATH/extrapolated_renders \
