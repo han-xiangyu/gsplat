@@ -11,6 +11,14 @@ export CPLUS_INCLUDE_PATH=/root/cbw/glm:$CPLUS_INCLUDE_PATH
 export HF_HOME=/root/.cache/huggingface
 export TRANSFORMERS_CACHE=$HF_HOME
 export HF_HUB_CACHE=$HF_HOME/hub
+# ===== HF mirror + timeout =====
+export HF_ENDPOINT="https://hf-mirror.com"
+export HF_HUB_ENABLE_HF_TRANSFER=1
+export HF_HUB_DOWNLOAD_TIMEOUT=3600
+export TRANSFORMERS_OFFLINE=0
+
+unset http_proxy https_proxy
+
 #rm -rf ~/.cache/torch_extensions/gsplat_cuda
 
 DATE="26_total1k_front_cams"
