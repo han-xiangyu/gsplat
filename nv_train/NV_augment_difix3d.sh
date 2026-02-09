@@ -53,7 +53,7 @@ conda activate gsplat
 python examples/register_new_views.py \
   --data_dir $SOURCE_PATH \
   --output_sparse_dir_name new_sparse \
-  --traj_type horizontal_sine \
+  --traj_type vertical_tilt \
   --amplitude 1.5 \
   --vertical_amp 1.5 \
   --tilt_deg 2.0 \
