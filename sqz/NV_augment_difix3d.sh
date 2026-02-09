@@ -18,7 +18,7 @@ BASE_DIR="/root/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
-
+cd /root/cbw/gsplat-city
 # Render new trajectory
 CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
   --data_dir $SOURCE_PATH \
@@ -39,7 +39,7 @@ python batched_process_w_ref_dist_gsplat.py \
 
 conda deactivate
 # Register new views using GSplat
-cd /root/cbw/gsplat-city
+
 
 python examples/register_new_views.py \
   --data_dir $SOURCE_PATH \
