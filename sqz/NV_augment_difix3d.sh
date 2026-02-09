@@ -20,10 +20,10 @@ MODEL_PATH="${BASE_DIR}/models/${DATE}"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 cd /root/cbw/gsplat-city
 # Render new trajectory
-CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
-  --data_dir $SOURCE_PATH \
-  --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
-  --out_img_dir $extrapolated_output_path
+# CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
+#   --data_dir $SOURCE_PATH \
+#   --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
+#   --out_img_dir $extrapolated_output_path
 
 # Difix3D repair
 # ====== Difix3D repair (switch env) ======
