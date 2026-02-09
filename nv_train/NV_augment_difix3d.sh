@@ -32,10 +32,10 @@ MODEL_PATH="${BASE_DIR}/models/arlington_small_frames150_capMax6M_densifyPortion
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
 # Render new trajectory
-CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
-  --data_dir $SOURCE_PATH \
-  --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
-  --out_img_dir $extrapolated_output_path
+# CUDA_VISIBLE_DEVICES=0 python examples/render_extrapolated_from_ply.py \
+#   --data_dir $SOURCE_PATH \
+#   --ply_path $MODEL_PATH/ply/point_cloud_149999.ply \
+#   --out_img_dir $extrapolated_output_path
 
 # Difix3D repair
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/Difix3D
