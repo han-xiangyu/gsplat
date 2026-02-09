@@ -2,20 +2,11 @@
 source /lustre/fsw/portfolios/nvr/users/ymingli/miniconda3/bin/activate
 conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
-DATE="26_total1k_front_cams"
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 PATH_SUFFIX=""
 ACCOUNT="foundations"
-if [ "$1" == "difix" ]; then
-    echo "--- 'difix' is on ---"
-    echo "--- use '_with_newviews' path ---"
-    PATH_SUFFIX="_with_newviews"
-else
-    echo "--- 'difix' is off ---"
-    echo "--- will use standard path ---"
-fi
-SOURCE_PATH="${BASE_DIR}/data/may/colmap_keyframe_start2k_total1k_front_cams"
-MODEL_PATH="${BASE_DIR}/models/${DATE}"
+SOURCE_PATH="${BASE_DIR}/data/may/arlington_small_with_newviews"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_frames150_capMax6M_densifyPortion0.005from5kto50k_sky_frontCams_SH1_GroundRegLaterLamda0.04_poseOpt_DepthDisparity1e-1"
 
 model_name=$(basename "$0" .sh)
 export CUDA_HOME=/usr/local/cuda-12.1
@@ -56,7 +47,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
+     --wandb_mode='disabled' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
@@ -70,8 +61,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
      --ground_curriculum_steps 10000 \
-     #--ground_curriculum_ramp_steps 10000 \
-     #--pose_opt \
+     --use_sky \
 
 echo "Training finished. Starting rendering ..."
 # python examples/render_from_ply.py \
