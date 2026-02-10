@@ -28,14 +28,6 @@ export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city:
 export TORCH_EXTENSIONS_DIR=/tmp/${USER}/torch_extensions/${SLURM_JOB_ID}
 mkdir -p "$TORCH_EXTENSIONS_DIR"
 
-# python - <<'PY'
-# import sys, gsplat
-# print("PYTHON =", sys.executable)
-# print("gsplat  =", gsplat.__file__)
-# from gsplat import csrc
-# print("Prebuild OK:", csrc)
-# PY
-
 model_name=$(basename "$0" .sh)
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2

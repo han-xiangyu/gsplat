@@ -29,11 +29,17 @@ export TORCH_EXTENSIONS_DIR=/tmp/${USER}/torch_extensions/${SLURM_JOB_ID}
 mkdir -p "$TORCH_EXTENSIONS_DIR"
 
 python - <<'PY'
-import sys, gsplat
+import sys, gsplat, os
 print("PYTHON =", sys.executable)
 print("gsplat  =", gsplat.__file__)
-from gsplat import csrc
-print("Prebuild OK:", csrc)
+
+base = os.path.dirname(gsplat.__file__)
+print("content:", os.listdir(base))
+
+if os.path.exists(os.path.join(base, "csrc.so")):
+    print("✅ Prebuild OK: csrc.so found")
+else:
+    raise RuntimeError("❌ csrc.so not found!")
 PY
 
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${SCENE}"
