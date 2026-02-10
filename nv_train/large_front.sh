@@ -24,7 +24,7 @@ export TORCH_USE_CUDA_DSA=1
 unset PYTHONPATH_CONDA
 unset PYTHONNOUSERSITE
 
-export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/pycolmap
+export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/pycolmap
 export TORCH_EXTENSIONS_DIR=/tmp/${USER}/torch_extensions/${SLURM_JOB_ID}
 mkdir -p "$TORCH_EXTENSIONS_DIR"
 
