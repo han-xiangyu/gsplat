@@ -18,7 +18,7 @@ submit_job --gpu 8 --cpu 16 --nodes 1 \
     --duration 4 \
     --dependency=singleton \
     --name ${job_name} \
-    --logdir ${base_logdir}/run_${i} \
+    --logdir ${base_logdir} \
     --notimestamp \
     --exclusive \
     --command "bash /lustre/fsw/portfolios/nvr/users/ymingli/projects/citygs/code/gsplat/nv_train/large_front.sh"
