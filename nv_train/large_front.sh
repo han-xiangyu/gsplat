@@ -63,7 +63,7 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 
 torchrun --standalone \
-     --nproc_per_node=8 \
+     --nproc_per_node=1 \
      --nnodes=1 \
      examples/simple_trainer.py mcmc \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
