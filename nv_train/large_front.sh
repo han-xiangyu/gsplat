@@ -8,9 +8,9 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 ACCOUNT="foundations"
-
+SCENE="arlington_10k_front"
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_10k_front/colmap_keyframe_start1k_total10k_front_cams"
-MODEL_PATH="${BASE_DIR}/models/arlington_10k_front"
+MODEL_PATH="${BASE_DIR}/models/${SCENE}"
 
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
@@ -36,8 +36,7 @@ from gsplat import csrc
 print("Prebuild OK:", csrc)
 PY
 
-model_name=$(basename "$0" .sh)
-export WANDB_DIR="${BASE_DIR}/wandb_logs/${model_name}"
+export WANDB_DIR="${BASE_DIR}/wandb_logs/${SCENE}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
 export WANDB_INSECURE_DISABLE_SSL=true
 export WANDB_SILENT=true
@@ -45,7 +44,7 @@ export WANDB_SILENT=true
 # mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="arlington_small_with_newviews"
+EXPERIENT_NAME="${SCENE}"
 
 export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
@@ -67,7 +66,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
+     --wandb_mode='disabled' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
