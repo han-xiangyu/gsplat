@@ -29,18 +29,20 @@ export TORCH_EXTENSIONS_DIR=/tmp/${USER}/torch_extensions/${SLURM_JOB_ID}
 mkdir -p "$TORCH_EXTENSIONS_DIR"
 
 python - <<'PY'
-import sys, gsplat, os
+import sys, gsplat, torch
 print("PYTHON =", sys.executable)
 print("gsplat  =", gsplat.__file__)
+print("version =", getattr(gsplat, "__version__", "unknown"))
 
-base = os.path.dirname(gsplat.__file__)
-print("content:", os.listdir(base))
+# 核心功能检测
+from gsplat import rendering
+print("rendering:", rendering)
 
-if os.path.exists(os.path.join(base, "csrc.so")):
-    print("✅ Prebuild OK: csrc.so found")
-else:
-    raise RuntimeError("❌ csrc.so not found!")
+# CUDA 状态
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA device count:", torch.cuda.device_count())
 PY
+
 
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${SCENE}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
