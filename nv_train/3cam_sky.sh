@@ -37,7 +37,7 @@ export WANDB_SILENT=true
 # mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="arlington_small_with_newviews"
+EXPERIENT_NAME="arlington_small_with_newviews_211"
 
 export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
