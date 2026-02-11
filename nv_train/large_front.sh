@@ -8,9 +8,8 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 ACCOUNT="foundations"
-SCENE="arlington_10k_front"
-SOURCE_PATH="${BASE_DIR}/data/may/arlington_10k_front/colmap_keyframe_start1k_total10k_front_cams"
-MODEL_PATH="${BASE_DIR}/models/${SCENE}"
+SOURCE_PATH="${BASE_DIR}/data/may/colmap_keyframe_start2k_total1k_front_cams"
+MODEL_PATH="${BASE_DIR}/models/start2k_total1k_front_cams"
 
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
@@ -27,22 +26,6 @@ unset PYTHONNOUSERSITE
 export PYTHONPATH=/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city:/lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city/pycolmap
 export TORCH_EXTENSIONS_DIR=/tmp/${USER}/torch_extensions/${SLURM_JOB_ID}
 mkdir -p "$TORCH_EXTENSIONS_DIR"
-
-python - <<'PY'
-import sys, gsplat, torch
-print("PYTHON =", sys.executable)
-print("gsplat  =", gsplat.__file__)
-print("version =", getattr(gsplat, "__version__", "unknown"))
-
-# 核心功能检测
-from gsplat import rendering
-print("rendering:", rendering)
-
-# CUDA 状态
-print("CUDA available:", torch.cuda.is_available())
-print("CUDA device count:", torch.cuda.device_count())
-PY
-
 
 export WANDB_DIR="${BASE_DIR}/wandb_logs/${SCENE}"
 export WANDB_API_KEY=42e7b9b31273e3a7a2bc3527a0784472e70848a2
@@ -65,7 +48,7 @@ depth_lambda=2e-3
 pose_opt_start=1e5
 
 torchrun --standalone \
-     --nproc_per_node=1 \
+     --nproc_per_node=8 \
      --nnodes=1 \
      examples/simple_trainer.py mcmc \
      --data_factor 1 --data_dir $SOURCE_PATH --result_dir $MODEL_PATH \
@@ -74,7 +57,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='disabled' \
+     --wandb_mode='online' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
@@ -82,7 +65,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 400000 \
+     --strategy.cap-max 4000000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
