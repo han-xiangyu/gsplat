@@ -42,7 +42,7 @@ EXPERIENT_NAME="arlington_small_with_newviews_211"
 export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
-max_steps=150_000
+max_steps=250_000
 MEANS_LR=2e-3
 MEAN_LR_FINAL_MULT=1e-3
 densify_portion=0.001
