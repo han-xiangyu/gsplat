@@ -53,8 +53,9 @@ torchrun --standalone \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
-     --ground_curriculum_steps 10000
-
+     --ground_curriculum_steps 10000 \
+     --use_difficulty_sampling
+     
 echo "Training finished. Starting rendering ..."
 
 python examples/render_from_ply_sky.py \
