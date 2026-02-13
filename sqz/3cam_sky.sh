@@ -40,7 +40,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='disabled' \
+     --wandb_mode='online' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $MEANS_LR \
@@ -55,7 +55,7 @@ torchrun --standalone \
      --strategy.densify_portion $densify_portion \
      --ground_curriculum_steps 10000 \
      --use_difficulty_sampling
-     
+
 echo "Training finished. Starting rendering ..."
 
 python examples/render_from_ply_sky.py \
