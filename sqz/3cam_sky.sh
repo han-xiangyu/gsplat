@@ -3,7 +3,7 @@
 export PATH="/root/envs/mars_new/bin:$PATH"
 
 cd /root/cbw/gsplat-city
-DATE="26_total1k_front_cams"
+DATE="213_total1k_front_cams_difficulty_sampling"
 BASE_DIR="/root/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
