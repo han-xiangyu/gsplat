@@ -9,8 +9,8 @@ cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 ACCOUNT="foundations"
 
-SOURCE_PATH="${BASE_DIR}/data/may/arlington_small_with_newviews"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_frames150_capMax6M_densifyPortion0.005from5kto50k_sky_frontCams_SH1_GroundRegLaterLamda0.04_poseOpt_DepthDisparity1e-1_difix"
+SOURCE_PATH="${BASE_DIR}/data/may/atlanta_1202_start1k_keyframes5k_downsampled_ground_all_cam"
+MODEL_PATH="${BASE_DIR}/models/atlanta_1202_start1k_keyframes5k_downsampled_ground_all_cam_214"
 
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
@@ -37,7 +37,7 @@ export WANDB_SILENT=true
 # mkdir -p "$TORCH_EXTENSIONS_ROOT"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="arlington_small_with_newviews_211"
+EXPERIENT_NAME="atlanta_1202_start1k_keyframes5k_downsampled_ground_all_cam"
 
 export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
@@ -67,7 +67,7 @@ torchrun --standalone \
      --max_steps $max_steps \
      --depth_loss \
      --depth_lambda $depth_lambda \
-     --strategy.cap-max 400000 \
+     --strategy.cap-max 2500000 \
      --strategy.refine-start-iter 9000 \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
