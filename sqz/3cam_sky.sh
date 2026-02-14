@@ -3,7 +3,7 @@
 export PATH="/root/envs/mars_new/bin:$PATH"
 
 cd /root/cbw/gsplat-city
-DATE="213_total1k_front_cams_difficulty_sampling"
+DATE="214_total1k_front_cams"
 BASE_DIR="/root/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/colmap_keyframe_start2k_total1k_front_cams"
 MODEL_PATH="${BASE_DIR}/models/${DATE}"
@@ -54,7 +54,7 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
      --ground_curriculum_steps 10000 \
-     --use_difficulty_sampling
+     # --use_difficulty_sampling
 
 echo "Training finished. Starting rendering ..."
 
@@ -62,7 +62,6 @@ python examples/render_from_ply_sky.py \
     --data-dir $SOURCE_PATH \
     --ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
     --ckpt-path $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
-    --use-sky \
     --result-dir $MODEL_PATH \
     --fps 15 \
     --channels 2 1 3
