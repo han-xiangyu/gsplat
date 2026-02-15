@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JOB_BASE_NAME="yolo_exp"
+JOB_BASE_NAME="yolo_exp215"
 LOG_BASE_PREFIX="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs/log"
 job_name="${JOB_BASE_NAME}"
 base_logdir="${LOG_BASE_PREFIX}/${job_name}"
