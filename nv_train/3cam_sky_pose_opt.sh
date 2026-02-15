@@ -31,7 +31,7 @@ export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="arlington_small_215"
+EXPERIENT_NAME="arlington_small_215_dynamicmask"
 
 max_steps=150_000
 MEANS_LR=2e-3
