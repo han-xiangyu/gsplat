@@ -6,7 +6,7 @@ conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_small"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_215"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_215_dynamicmask"
 
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
@@ -65,14 +65,16 @@ torchrun --standalone \
      --strategy.refine-stop-iter 50000 \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
-     --ground_curriculum_steps 10000 \
+     --sh_degree 1 \
+     --ground_curriculum_steps 0 \
      --use_sky \
+     --dynamic_mask \
 
 echo "Training finished. Starting rendering ..."
 python examples/render_from_ply_sky.py \
     --data-dir $SOURCE_PATH \
-    --ply-path $MODEL_PATH/ply/point_cloud_249999.ply \
-    --ckpt-path $MODEL_PATH/ckpts/ckpt_249999_rank0.pt \
+    --ply-path $MODEL_PATH/ply/point_cloud_149999.ply \
+    --ckpt-path $MODEL_PATH/ckpts/ckpt_149999_rank0.pt \
     --use-sky \
     --result-dir $MODEL_PATH \
     --fps 15 \
