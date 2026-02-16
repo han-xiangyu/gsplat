@@ -6,7 +6,7 @@ conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_small"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_215_dynamicmask"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_216"
 
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
@@ -31,7 +31,7 @@ export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="arlington_small_215_dynamicmask"
+EXPERIENT_NAME="arlington_small_216"
 
 max_steps=150_000
 MEANS_LR=2e-3

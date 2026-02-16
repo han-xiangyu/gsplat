@@ -28,7 +28,7 @@ new_traj_mode=sine
 amplitude=1
 BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_small"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_215"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_216"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
 #Render new trajectory
