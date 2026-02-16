@@ -41,6 +41,10 @@ densify_portion=0.005
 depth_mode="disparity"
 depth_lambda=1e-1
 pose_opt_start=1e5
+pose_opt_start=1
+pose_opt_reg=1e-5
+pose_opt_lr=1e-3
+ground_curriculum_steps=20000
 
 torchrun --standalone \
      --nproc_per_node=8 \
@@ -66,9 +70,10 @@ torchrun --standalone \
      --strategy.refine-every 100 \
      --strategy.densify_portion $densify_portion \
      --sh_degree 1 \
-     --ground_curriculum_steps 0 \
+     --ground_curriculum_steps $ground_curriculum_steps \
      --use_sky \
      --dynamic_mask \
+     --pose_opt --pose_opt_lr $pose_opt_lr  --pose_opt_start $pose_opt_start --pose_opt_mode 'rig' --pose_opt_reg $pose_opt_reg \
 
 echo "Training finished. Starting rendering ..."
 python examples/render_from_ply_sky.py \
