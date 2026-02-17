@@ -6,7 +6,7 @@ conda activate mars_new
 cd /lustre/fsw/portfolios/nvr/users/ymingli/projects/gsplat-city
 BASE_DIR="/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs"
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_small"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_216"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_217_debug"
 
 export CUDA_HOME=/usr/local/cuda-12.1
 export CUDACXX=$CUDA_HOME/bin/nvcc
@@ -31,7 +31,7 @@ export OMP_NUM_THREADS=1
 export PYTHONWARNINGS="ignore:The pynvml package is deprecated"
 
 PROJECT_NAME=citygs_newdata
-EXPERIENT_NAME="arlington_small_216"
+EXPERIENT_NAME="arlington_small_217_debug"
 
 max_steps=300000
 means_lr=2e-3
@@ -59,7 +59,7 @@ torchrun --standalone \
      --wandb_project=$PROJECT_NAME \
      --wandb_group=gsplat \
      --wandb_name=$EXPERIENT_NAME \
-     --wandb_mode='online' \
+     --wandb_mode='disabled' \
      --wandb_dir=$WANDB_DIR \
      --wandb_log_images_every=50000 \
      --means_lr $means_lr \
