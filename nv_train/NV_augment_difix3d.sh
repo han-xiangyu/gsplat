@@ -28,7 +28,7 @@ new_traj_mode=sine
 amplitude=1
 BASE_DIR=/lustre/fsw/portfolios/nvr/users/ymingli/datasets/citygs
 SOURCE_PATH="${BASE_DIR}/data/may/arlington_small"
-MODEL_PATH="${BASE_DIR}/models/arlington_small_216"
+MODEL_PATH="${BASE_DIR}/models/arlington_small_215_dynamicmask"
 extrapolated_output_path="${MODEL_PATH}/extrapolated_renders/"
 
 #Render new trajectory
@@ -59,7 +59,7 @@ python examples/register_new_views.py \
   --tilt_deg 2.0 \
 
 # Copy the original dataset to the new folder
-NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews_217"
+NEW_SOURCE_PATH="${SOURCE_PATH}_with_newviews_219dynamicmask"
 mkdir -p $NEW_SOURCE_PATH
 rsync -av --progress $SOURCE_PATH/ $NEW_SOURCE_PATH/
 
